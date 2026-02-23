@@ -114,14 +114,14 @@ export const buildRouter = async (admin, fastifyApp) => {
             }
         };
         if (route.method === 'GET') {
-            fastifyApp.get(\\\`\\\${admin.options.rootPath}\\\${path}\\\`, handler);
+            fastifyApp.get(\`\${admin.options.rootPath}\${path}\`, handler);
         }
         if (route.method === 'POST') {
-            fastifyApp.post(\\\`\\\${admin.options.rootPath}\\\${path}\\\`, handler);
+            fastifyApp.post(\`\${admin.options.rootPath}\${path}\`, handler);
         }
     });
     assets.forEach(asset => {
-        fastifyApp.get(\\\`\\\${admin.options.rootPath}\\\${asset.path}\\\`, async (_req, reply) => {
+        fastifyApp.get(\`\${admin.options.rootPath}\${asset.path}\`, async (_req, reply) => {
             const mimeType = mime.lookup(asset.src);
             const file = await readFile(path.resolve(asset.src));
             if (mimeType) {
@@ -131,7 +131,7 @@ export const buildRouter = async (admin, fastifyApp) => {
         });
     });
 };
-`;
+`
 
 try {
     fs.writeFileSync(targetFile, patchedContent, 'utf8');
