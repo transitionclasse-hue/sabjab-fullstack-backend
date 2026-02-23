@@ -1,0 +1,210 @@
+import { Order, DeliveryPartner, Payout } from "../models/index.js";
+
+const getDateRange = (filter) => {
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+
+  switch (filter) {
+    case "Today":
+      return { start, end: now };
+    case "This Week":
+      const day = start.getDay();
+      const weekStart = new Date(start);
+      weekStart.setDate(start.getDate() - (day === 0 ? 6 : day - 1));
+      return { start: weekStart, end: now };
+    case "This Month":
+      start.setDate(1);
+      return { start, end: now };
+    default:
+      return null;
+  }
+};
+
+export const getWalletStats = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const driver = await DeliveryPartner.findById(userId);
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+
+    const deliveredQuery = { deliveryPartner: userId, status: "delivered" };
+    const deliveredOrders = await Order.find(deliveredQuery);
+
+    const totalEarnings = deliveredOrders.reduce((sum, o) => sum + (o.driverEarning || 0), 0);
+    const totalTrips = deliveredOrders.length;
+
+    const now = new Date();
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - (todayStart.getDay() === 0 ? 6 : todayStart.getDay() - 1));
+    const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1);
+
+    const todayEarnings = deliveredOrders
+      .filter((o) => new Date(o.updatedAt || o.createdAt) >= todayStart)
+      .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
+    const weekEarnings = deliveredOrders
+      .filter((o) => new Date(o.updatedAt || o.createdAt) >= weekStart)
+      .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
+    const monthEarnings = deliveredOrders
+      .filter((o) => new Date(o.updatedAt || o.createdAt) >= monthStart)
+      .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
+
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      const next = new Date(d);
+      next.setDate(next.getDate() + 1);
+      const dayEarnings = deliveredOrders
+        .filter((o) => {
+          const od = new Date(o.updatedAt || o.createdAt);
+          return od >= d && od < next;
+        })
+        .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
+      last7Days.push({ date: d.toISOString().slice(0, 10), amount: dayEarnings });
+    }
+
+    return reply.send({
+      totalEarnings,
+      totalTrips,
+      todayEarnings,
+      weekEarnings,
+      monthEarnings,
+      last7Days,
+    });
+  } catch (error) {
+    console.error("getWalletStats error:", error);
+    return reply.status(500).send({ message: "Failed to fetch wallet stats", error: error.message });
+  }
+};
+
+export const getPayouts = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const payouts = await Payout.find({ deliveryPartner: userId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const pending = payouts.filter((p) => p.status === "pending" || p.status === "processing");
+    const history = payouts.filter((p) => p.status === "completed" || p.status === "failed");
+    const pendingTotal = pending.reduce((sum, p) => sum + p.amount, 0);
+
+    return reply.send({
+      pending: pending.map((p) => ({
+        id: p._id,
+        amount: p.amount,
+        date: p.createdAt,
+        status: p.status,
+      })),
+      history: history.map((p) => ({
+        id: p._id,
+        amount: p.amount,
+        date: p.completedAt || p.createdAt,
+        status: p.status,
+        txnId: p.txnId,
+      })),
+      pendingTotal,
+    });
+  } catch (error) {
+    console.error("getPayouts error:", error);
+    return reply.status(500).send({ message: "Failed to fetch payouts", error: error.message });
+  }
+};
+
+export const getBankAccount = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const driver = await DeliveryPartner.findById(userId).select("bankAccount").lean();
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+    const bank = driver.bankAccount;
+    const hasBankAccount = bank && (bank.bankName || bank.accountLast4 || bank.ifsc);
+    return reply.send({
+      hasBankAccount: !!hasBankAccount,
+      bankName: bank?.bankName || null,
+      accountLast4: bank?.accountLast4 || null,
+      ifsc: bank?.ifsc || null,
+    });
+  } catch (error) {
+    console.error("getBankAccount error:", error);
+    return reply.status(500).send({ message: "Failed to fetch bank account", error: error.message });
+  }
+};
+
+export const updateBankAccount = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const { bankName, accountNumber, ifsc } = req.body || {};
+    if (!bankName || !accountNumber || !ifsc) {
+      return reply.status(400).send({ message: "bankName, accountNumber, and ifsc are required" });
+    }
+    const last4 = String(accountNumber).slice(-4);
+    const driver = await DeliveryPartner.findByIdAndUpdate(
+      userId,
+      {
+        bankAccount: {
+          bankName: String(bankName).trim(),
+          accountLast4: last4,
+          ifsc: String(ifsc).trim().toUpperCase(),
+        },
+      },
+      { new: true }
+    );
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+    return reply.send({
+      message: "Bank account updated",
+      bankName: driver.bankAccount?.bankName,
+      accountLast4: driver.bankAccount?.accountLast4,
+      ifsc: driver.bankAccount?.ifsc,
+    });
+  } catch (error) {
+    console.error("updateBankAccount error:", error);
+    return reply.status(500).send({ message: "Failed to update bank account", error: error.message });
+  }
+};
+
+export const getDriverStats = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const deliveredCount = await Order.countDocuments({ deliveryPartner: userId, status: "delivered" });
+    const totalAssigned = await Order.countDocuments({ deliveryPartner: userId });
+    const cancelledCount = await Order.countDocuments({
+      deliveryPartner: userId,
+      status: "cancelled",
+    });
+    const acceptanceRate = totalAssigned > 0 ? Math.round(((totalAssigned - cancelledCount) / totalAssigned) * 100) : 0;
+    const cancellationRate = totalAssigned > 0 ? Math.round((cancelledCount / totalAssigned) * 100) : 0;
+
+    return reply.send({
+      totalDeliveries: deliveredCount,
+      acceptanceRate,
+      cancellationRate,
+    });
+  } catch (error) {
+    console.error("getDriverStats error:", error);
+    return reply.status(500).send({ message: "Failed to fetch driver stats", error: error.message });
+  }
+};
+
+export const getCodStatus = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const COD_LIMIT = 1000;
+    const deliveredOrders = await Order.find({
+      deliveryPartner: userId,
+      status: "delivered",
+    }).lean();
+    const codCollected = deliveredOrders.reduce((sum, o) => sum + (o.codCollected || 0), 0);
+    return reply.send({ collected: codCollected, limit: COD_LIMIT });
+  } catch (error) {
+    console.error("getCodStatus error:", error);
+    return reply.status(500).send({ message: "Failed to fetch COD status", error: error.message });
+  }
+};

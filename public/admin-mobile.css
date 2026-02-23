@@ -1,0 +1,92 @@
+/* ==========================================================
+ * admin-mobile.css 
+ * Overriding rigid AdminJS logic for a jaw-dropping Mobile UI
+ * ========================================================== */
+
+/* 1. SCROLLABLE TABLES ON MOBILE */
+@media screen and (max-width: 768px) {
+
+  /* Wrap tables in a scroll container */
+  section[data-css="records-table-wrapper"],
+  .sc-AxhCb {
+    /* fallback hashed class */
+    display: block !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    /* smooth iOS */
+    padding-bottom: 20px;
+    border-radius: 12px;
+  }
+
+  /* Prevent columns from squishing text into oblivion */
+  table th,
+  table td {
+    white-space: nowrap !important;
+    padding: 18px 14px !important;
+    font-size: 13px !important;
+  }
+
+  /* 2. RESPONSIVE SIDEBAR (DRAWER) */
+  nav[data-css="sidebar"] {
+    position: absolute !important;
+    z-index: 1000 !important;
+    height: 100vh !important;
+    /* By default hide it under a hamburger menu provided by the header */
+    transform: translateX(0);
+  }
+
+  /* Make room for the header sandwich menu */
+  .sc-AxiKw,
+  /* Header padding wrapper */
+  section[data-css="page-body"] {
+    padding-left: 0px !important;
+    padding-top: 60px !important;
+  }
+
+  /* 3. FAT-FINGER FRIENDLY BUTTONS */
+  /* Target Edit/Delete actions in tables */
+  a[data-testid^="action-"],
+  button[data-testid^="action-"] {
+    padding: 10px 14px !important;
+    margin: 4px !important;
+    border-radius: 8px !important;
+  }
+
+  /* Larger Add New buttons */
+  a[data-css="button-new"] {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    padding: 16px !important;
+  }
+
+  /* 4. FORM OVERRIDES */
+  form[data-css="record-edit-form"] {
+    padding: 10px !important;
+  }
+}
+
+/* ==================
+   GLOBAL AESTHETICS
+   ================== */
+/* Modernize inputs */
+input,
+textarea,
+select {
+  border-radius: 10px !important;
+  border: 1px solid #444 !important;
+  background: #222 !important;
+  color: #FFF !important;
+}
+
+input:focus,
+textarea:focus {
+  border-color: #6F4E37 !important;
+  /* Premium Coffee Brown */
+  box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.2) !important;
+}
+
+/* Rounded Cards */
+section {
+  border-radius: 14px !important;
+}
