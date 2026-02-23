@@ -48,8 +48,18 @@ export const getStoreStatus = async (req, reply) => {
 };
 
 const buildStoreStatusResponse = (config) => {
+  // ✅ Force IST (Asia/Kolkata) regardless of server location (e.g. Render/UTC)
   const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const istString = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  }).format(now);
+
+  const [istHours, istMinutes] = istString.split(":").map(Number);
+  const nowMinutes = istHours * 60 + istMinutes;
+
   const openingMinutes = toMinutes(config.openingTime, 9 * 60);
   const closingMinutes = toMinutes(config.closingTime, 22 * 60);
   const alertBeforeMinutes = Number(config.alertBeforeMinutes) || 30;
