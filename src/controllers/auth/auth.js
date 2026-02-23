@@ -321,4 +321,35 @@ export const fetchUser = async (req, reply) => {
   }
 };
 
-export const refreshToken = async (req, reply) => { /* logic */ };
+export const refreshToken = async (req, reply) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return reply.status(401).send({ message: "Refresh token required" });
+    }
+
+    // Verify Refresh Token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    // Find User (Customer or DeliveryPartner)
+    const user =
+      (await Customer.findById(decoded.userId)) ||
+      (await DeliveryPartner.findById(decoded.userId));
+
+    if (!user) {
+      return reply.status(403).send({ message: "Invalid refresh token" });
+    }
+
+    // Generate New Tokens
+    const tokens = generateTokens(user);
+
+    return reply.send({
+      message: "Token refreshed successfully",
+      ...tokens,
+    });
+  } catch (error) {
+    console.error("❌ REFRESH TOKEN ERROR:", error.message);
+    return reply.status(403).send({ message: "Refresh token invalid or expired" });
+  }
+};
