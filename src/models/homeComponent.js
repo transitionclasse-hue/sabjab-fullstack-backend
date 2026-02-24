@@ -27,11 +27,6 @@ const homeComponentSchema = new mongoose.Schema({
     buttonText: { // NEW: For CTA buttons
         type: String,
     },
-    order: {
-        type: Number,
-        required: true,
-        default: 1,
-    },
     // Used explicitly for "FEATURED_DEALS" section type
     bigDeal: {
         type: mongoose.Schema.Types.ObjectId,

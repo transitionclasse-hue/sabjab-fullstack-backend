@@ -29,7 +29,6 @@ export const getHomeLayout = async (req, reply) => {
                 .populate("bigDeal")
                 .populate("miniDeals")
                 .populate("products")
-                .sort({ order: 1 })
                 .limit(10)
                 .lean();
         } else {
@@ -55,7 +54,6 @@ export const getHomeLayout = async (req, reply) => {
                 .populate("bigDeal")
                 .populate("miniDeals")
                 .populate("products")
-                .sort({ order: 1 })
                 .limit(10)
                 .lean();
         }
