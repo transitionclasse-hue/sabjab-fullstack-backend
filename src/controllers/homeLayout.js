@@ -18,7 +18,7 @@ export const getHomeLayout = async (req, reply) => {
         }
 
         // 2. Fetch components for this variation
-        const components = await HomeComponent.find({
+        let components = await HomeComponent.find({
             variation: variation?._id,
             isActive: true
         })
@@ -27,6 +27,30 @@ export const getHomeLayout = async (req, reply) => {
             .populate("products")
             .sort({ order: 1 })
             .lean();
+
+        // 🚀 FALLBACK: If no components found for this variation, try unassigned ones (Legacy support)
+        if (components.length === 0) {
+            components = await HomeComponent.find({
+                variation: { $exists: false },
+                isActive: true
+            })
+                .populate("bigDeal")
+                .populate("miniDeals")
+                .populate("products")
+                .sort({ order: 1 })
+                .lean();
+        }
+
+        // Second fallback: if still empty and it's default, just get any active components
+        if (components.length === 0 && (!variationId || variation?.isDefault)) {
+            components = await HomeComponent.find({ isActive: true })
+                .populate("bigDeal")
+                .populate("miniDeals")
+                .populate("products")
+                .sort({ order: 1 })
+                .limit(10)
+                .lean();
+        }
 
         // 3. Dynamic Fallback for components
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
