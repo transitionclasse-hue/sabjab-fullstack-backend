@@ -786,31 +786,51 @@ export async function buildAdminRouter(app) {
             },
             subTitle: {
               label: "Secondary Text (e.g. 'Upto 50% Off')",
-              helpText: "Appears below the main title for extra detail.",
-              isVisible: (context) => ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO"].includes(context.record?.params?.type)
+              helpText: "Appears below the main title. Type 'Dove' to search anytime!",
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO"];
+                return !!(type && visibleTypes.includes(type));
+              }
             },
             buttonText: {
               label: "CTA Button Text (e.g. 'Explore' or 'Shop Now')",
-              helpText: "Text for the action button. Only for banners, heroes, or deals.",
-              isVisible: (context) => ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(context.record?.params?.type)
+              helpText: "Text for the action button.",
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"];
+                return !!(type && visibleTypes.includes(type));
+              }
             },
             bigDeal: {
               label: "Primary Featured Product (Large)",
-              helpText: "Type to search (e.g. 'Dove') to see all 290+ products. Only for Bento/Deals.",
-              remote: true,
-              isVisible: (context) => ["FEATURED_DEALS", "BENTO_GRID"].includes(context.record?.params?.type)
+              helpText: "SEARCH TIP: Type 'Dove' below to see all products matching that name.",
+              remote: true, // Enables full database search
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const visibleTypes = ["FEATURED_DEALS", "BENTO_GRID"];
+                return !!(type && visibleTypes.includes(type));
+              }
             },
             miniDeals: {
               label: "Supporting Products (Small)",
-              helpText: "Select 2-4 products. Type to search names. Only for Bento/Deals.",
-              remote: true,
-              isVisible: (context) => ["FEATURED_DEALS", "BENTO_GRID"].includes(context.record?.params?.type)
+              helpText: "Select multiple. You can search for 'Dove', 'Soap', etc. to find items.",
+              remote: true, // Enables full database search
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const visibleTypes = ["FEATURED_DEALS", "BENTO_GRID"];
+                return !!(type && visibleTypes.includes(type));
+              }
             },
             products: {
               label: "Main Product Collection",
-              helpText: "Select exactly 4 for 2x2 Grid. Type to search (e.g. 'Dove') to find any product.",
-              remote: true,
-              isVisible: (context) => ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(context.record?.params?.type)
+              helpText: "SEARCH TIP: Start typing 'Dove' and wait a second to see all versions.",
+              remote: true, // Enables full database search
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"];
+                return !!(type && visibleTypes.includes(type));
+              }
             },
             bannerImage: {
               isVisible: { list: true, filter: false, show: true, edit: false },
@@ -818,19 +838,26 @@ export async function buildAdminRouter(app) {
             },
             uploadBanner: {
               label: "Component Banner/Hero Image",
-              helpText: "Upload a high-quality image. Required for Heroes, Promo Banners, and 2x2 Grids.",
-              isVisible: (context) => ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO"].includes(context.record?.params?.type)
+              helpText: "Required for Heroes and banners. Hidden for simple grids.",
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const visibleTypes = ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO"];
+                return !!(type && visibleTypes.includes(type));
+              }
             },
             carouselImages: {
               label: "Carousel URLs (Comma Separated)",
-              helpText: "Paste multiple image URLs separated by commas. Only for Carousel Slider.",
-              isVisible: (context) => (context.record?.params?.type === "IMAGE_CAROUSEL")
+              helpText: "Paste image URLs. Only for Slider type.",
+              isVisible: (context) => !!(context.record?.params?.type === "IMAGE_CAROUSEL")
             },
             themeColor: {
               label: "Custom Brand/Theme Color (HEX)",
-              description: "Used for gradients, buttons, and matching the brand vibe.",
-              helpText: "Enter a hex code like #FF5733 (Orange) or #22C55E (Green).",
-              isVisible: (context) => context.record?.params?.type && !["IMAGE_CAROUSEL", "CATEGORY_STRIP"].includes(context.record.params.type)
+              description: "Enter #FF5733 (Orange) or #22C55E (Green).",
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const hiddenTypes = ["IMAGE_CAROUSEL", "CATEGORY_STRIP"];
+                return !!(type && !hiddenTypes.includes(type));
+              }
             },
           },
         },
