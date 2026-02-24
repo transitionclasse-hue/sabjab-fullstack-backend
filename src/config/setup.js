@@ -31,6 +31,7 @@ const Components = {
   SupportReply: componentLoader.add('SupportReply', path.join(__dirname, '../components/SupportReply.jsx')),
   SupportDashboard: componentLoader.add('SupportDashboard', path.join(__dirname, '../components/SupportDashboard.jsx')),
   SendNotification: componentLoader.add('SendNotification', path.join(__dirname, '../components/SendNotification.jsx')),
+  Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../components/Dashboard.jsx')),
 };
 
 const hydrateOrderForTracking = async (orderId) => {
@@ -1182,6 +1183,9 @@ export async function buildAdminRouter(app) {
     rootPath: "/admin",
     resources,
     componentLoader,
+    dashboard: {
+      component: Components.Dashboard,
+    },
     pages: {
       'Live Support': {
         component: Components.SupportDashboard,
@@ -1189,23 +1193,23 @@ export async function buildAdminRouter(app) {
       }
     },
     branding: {
-      companyName: "SabJab Premium Store",
+      companyName: "SabJab Premium Admin",
       withMadeWithLove: false,
       logo: "https://res.cloudinary.com/dponzgerb/image/upload/v1723444869/category/uic8gcnbzknosdvva13o.png",
       theme: {
         colors: {
-          primary100: "#6F4E37", // Espresso Coffee
-          primary80: "#8B5A2B",  // Caramel Brown
-          primary60: "#A0522D",  // Sienna
-          accent: "#3C2A21",     // Dark Roast Macchiato
-          love: "#6F4E37",
-          grey100: "#1A110B", // Dark Sidebar (Almost Black/Brown)
-          grey80: "#2B1D14",  // Section Headers
-          grey60: "#3D2A1C",  // Card borders
-          grey40: "#AAAAAA",
-          grey20: "#DDDDDD",
-          filterBg: "#120B06", // Deepest background
-          white: "#F5F0EB", // Warm text inverse
+          primary100: "#00F5FF", // Neon Cyan
+          primary80: "#00E5EE",
+          primary60: "#00C5CD",
+          accent: "#22c55e",     // Premium Green
+          love: "#FF2E63",       // Neon Red/Pink
+          grey100: "#0D0D0D", // Deep Black Sidebar
+          grey80: "#1A1A1A",  // Header background
+          grey60: "#262626",  // Table header
+          grey40: "#333333",  // Borders
+          grey20: "#4D4D4D",
+          filterBg: "#050505", // Deepest background
+          white: "#F0F0F0",   // Warm text
         },
       },
     },

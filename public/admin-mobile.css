@@ -1,92 +1,130 @@
 /* ==========================================================
  * admin-mobile.css 
- * Overriding rigid AdminJS logic for a jaw-dropping Mobile UI
+ * Overriding rigid AdminJS logic for a jaw-dropping Premium UI
  * ========================================================== */
+
+/* 0. ROOT VARIABLES FOR NEON THEME */
+:root {
+  --neon-cyan: #00F5FF;
+  --neon-green: #22c55e;
+  --dark-bg: #050505;
+  --card-bg: rgba(26, 26, 26, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
 
 /* 1. SCROLLABLE TABLES ON MOBILE */
 @media screen and (max-width: 768px) {
-
-  /* Wrap tables in a scroll container */
-  section[data-css="records-table-wrapper"],
-  .sc-AxhCb {
-    /* fallback hashed class */
+  section[data-css="records-table-wrapper"] {
     display: block !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    /* smooth iOS */
     padding-bottom: 20px;
     border-radius: 12px;
+    background: var(--card-bg) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
   }
 
-  /* Prevent columns from squishing text into oblivion */
   table th,
   table td {
     white-space: nowrap !important;
     padding: 18px 14px !important;
     font-size: 13px !important;
   }
-
-  /* 2. RESPONSIVE SIDEBAR (DRAWER) */
-  nav[data-css="sidebar"] {
-    position: absolute !important;
-    z-index: 1000 !important;
-    height: 100vh !important;
-    /* By default hide it under a hamburger menu provided by the header */
-    transform: translateX(0);
-  }
-
-  /* Make room for the header sandwich menu */
-  .sc-AxiKw,
-  /* Header padding wrapper */
-  section[data-css="page-body"] {
-    padding-left: 0px !important;
-    padding-top: 60px !important;
-  }
-
-  /* 3. FAT-FINGER FRIENDLY BUTTONS */
-  /* Target Edit/Delete actions in tables */
-  a[data-testid^="action-"],
-  button[data-testid^="action-"] {
-    padding: 10px 14px !important;
-    margin: 4px !important;
-    border-radius: 8px !important;
-  }
-
-  /* Larger Add New buttons */
-  a[data-css="button-new"] {
-    width: 100% !important;
-    justify-content: center !important;
-    font-size: 16px !important;
-    padding: 16px !important;
-  }
-
-  /* 4. FORM OVERRIDES */
-  form[data-css="record-edit-form"] {
-    padding: 10px !important;
-  }
 }
 
-/* ==================
-   GLOBAL AESTHETICS
-   ================== */
-/* Modernize inputs */
+/* 2. GLOBAL UI ENHANCEMENTS */
+body {
+  background-color: var(--dark-bg) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Glassmorphic Cards */
+section[data-css="page-body"],
+div[data-css="box"],
+.sc-AxjAm {
+  background: var(--card-bg) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+  margin-bottom: 24px !important;
+}
+
+/* Sidebar Styling */
+nav[data-css="sidebar"] {
+  background: #0D0D0D !important;
+  border-right: 1px solid var(--glass-border) !important;
+}
+
+nav[data-css="sidebar"] a:hover {
+  background: rgba(0, 245, 255, 0.1) !important;
+  color: var(--neon-cyan) !important;
+  border-left: 3px solid var(--neon-cyan) !important;
+}
+
+/* Premium Buttons */
+button,
+a.sc-AxiKw {
+  border-radius: 12px !important;
+  text-transform: uppercase !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.3s ease !important;
+}
+
+button[data-variant="primary"],
+a[data-variant="primary"] {
+  background: linear-gradient(135deg, var(--neon-cyan), #00C5CD) !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3) !important;
+}
+
+button[data-variant="primary"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0, 245, 255, 0.5) !important;
+}
+
+/* Form Styling */
 input,
 textarea,
 select {
-  border-radius: 10px !important;
-  border: 1px solid #444 !important;
-  background: #222 !important;
+  border-radius: 12px !important;
+  border: 1px solid #333 !important;
+  background: rgba(0, 0, 0, 0.3) !important;
   color: #FFF !important;
+  padding: 12px !important;
 }
 
-input:focus,
-textarea:focus {
-  border-color: #6F4E37 !important;
-  /* Premium Coffee Brown */
-  box-shadow: 0 0 0 2px rgba(111, 78, 55, 0.2) !important;
+input:focus {
+  border-color: var(--neon-cyan) !important;
+  box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2) !important;
 }
 
-/* Rounded Cards */
-section {
-  border-radius: 14px !important;
+/* Table Headers */
+thead th {
+  background: rgba(255, 255, 255, 0.03) !important;
+  text-transform: uppercase !important;
+  font-size: 11px !important;
+  letter-spacing: 1px !important;
+  color: var(--neon-cyan) !important;
+}
+
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D0D0D;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-cyan);
 }
