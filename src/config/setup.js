@@ -786,41 +786,26 @@ export async function buildAdminRouter(app) {
             },
             subTitle: {
               label: "Secondary Text (e.g. 'Upto 50% Off')",
-              isVisible: {
-                list: false, filter: false, show: true,
-                edit: ({ record }) => ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO"].includes(record?.params?.type)
-              }
+              isVisible: ({ record }) => record?.params?.type && ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO"].includes(record.params.type)
             },
             buttonText: {
               label: "CTA Button Text (e.g. 'Explore' or 'Shop Now')",
-              isVisible: {
-                list: false, filter: false, show: true,
-                edit: ({ record }) => ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record?.params?.type)
-              }
+              isVisible: ({ record }) => record?.params?.type && ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type)
             },
             bigDeal: {
               label: "Large Product (For Bento Grid or Deals Section)",
               remote: true,
-              isVisible: {
-                list: false, filter: false, show: true,
-                edit: ({ record }) => ["FEATURED_DEALS", "BENTO_GRID"].includes(record?.params?.type)
-              }
+              isVisible: ({ record }) => record?.params?.type && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type)
             },
             miniDeals: {
               label: "Small Products (For Bento Grid or Deals Section)",
               remote: true,
-              isVisible: {
-                list: false, filter: false, show: true,
-                edit: ({ record }) => ["FEATURED_DEALS", "BENTO_GRID"].includes(record?.params?.type)
-              }
+              isVisible: ({ record }) => record?.params?.type && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type)
             },
             products: {
               label: "Product Collection (Select Exactly 4 for 2x2 Grid)",
               remote: true,
-              isVisible: {
-                list: false, filter: false, show: true,
-                edit: ({ record }) => ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record?.params?.type)
-              }
+              isVisible: ({ record }) => record?.params?.type && ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type)
             },
             bannerImage: {
               isVisible: { list: true, filter: false, show: true, edit: false },
@@ -828,25 +813,16 @@ export async function buildAdminRouter(app) {
             },
             uploadBanner: {
               label: "Upload Image (Required for clusters, banners, or heroes)",
-              isVisible: {
-                list: true, filter: false, show: true,
-                edit: ({ record }) => ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO"].includes(record?.params?.type)
-              }
+              isVisible: ({ record }) => record?.params?.type && ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO"].includes(record.params.type)
             },
             carouselImages: {
               label: "Carousel URLs (Comma separated - Only for Slider type)",
-              isVisible: {
-                list: false, filter: false, show: true,
-                edit: ({ record }) => record?.params?.type === "IMAGE_CAROUSEL"
-              }
+              isVisible: ({ record }) => record?.params?.type && record.params.type === "IMAGE_CAROUSEL"
             },
             themeColor: {
               label: "Brand/Theme Color (Hex code, e.g. #FF5733)",
               description: "Used for Hero backgrounds, buttons, and custom branding for this block.",
-              isVisible: {
-                list: false, filter: false, show: true,
-                edit: ({ record }) => record?.params?.type && !["IMAGE_CAROUSEL", "CATEGORY_STRIP"].includes(record.params.type)
-              }
+              isVisible: ({ record }) => record?.params?.type && !["IMAGE_CAROUSEL", "CATEGORY_STRIP"].includes(record.params.type)
             },
           },
         },

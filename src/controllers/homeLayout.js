@@ -39,7 +39,7 @@ export const getHomeLayout = async (req, reply) => {
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
             if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(comp.type)) {
                 if (!comp.products || comp.products.length === 0) {
-                    const fallback = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(20).lean();
+                    const fallback = await Product.find({ isAvailable: true }).sort({ createdAt: -1 }).limit(20).lean();
                     comp.resolvedProducts = fallback;
                 } else {
                     comp.resolvedProducts = comp.products;
@@ -56,7 +56,7 @@ export const getHomeLayout = async (req, reply) => {
             return comp;
         }));
 
-        // 4. Fetch Occasions for the strip
+        // 4. Fetch ALL Occasions for the strip
         const occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
 
         // 5. Fetch Store Status
