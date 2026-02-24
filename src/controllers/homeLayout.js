@@ -39,8 +39,8 @@ export const getHomeLayout = async (req, reply) => {
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
             if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(comp.type)) {
                 if (!comp.products || comp.products.length === 0) {
-                    const latest = await Product.find({ isAvailable: true }).sort({ createdAt: -1 }).limit(8);
-                    comp.resolvedProducts = latest;
+                    const fallback = await Product.find({ isActive: true }).sort({ createdAt: -1 }).limit(20).lean();
+                    comp.resolvedProducts = fallback;
                 } else {
                     comp.resolvedProducts = comp.products;
                 }
@@ -56,10 +56,13 @@ export const getHomeLayout = async (req, reply) => {
             return comp;
         }));
 
-        // 4. Fetch Store Status
+        // 4. Fetch Occasions for the strip
+        const occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
+
+        // 5. Fetch Store Status
         const storeStatus = await StoreStatus.findOne({ key: "primary" }).lean();
 
-        // 5. Build unified response
+        // 6. Build unified response
         return reply.send({
             variation: variation ? {
                 id: variation._id,
@@ -72,6 +75,8 @@ export const getHomeLayout = async (req, reply) => {
                 icon: variation.icon
             } : null,
             layout: hydratedComponents,
+            categories: occasions, // Restored for frontend
+            customCategories: occasions, // Fallback for various strip implementations
             storeStatus
         });
 
