@@ -13,10 +13,19 @@ const homeComponentSchema = new mongoose.Schema({
             "FEATURED_DEALS",
             "PRODUCT_SCROLLER",
             "PRODUCT_GRID",
-            "PROMO_BANNER", // ✅ New: Large Promotional Banner
-            "IMAGE_CAROUSEL" // ✅ New: Image Slider 
+            "PROMO_BANNER",
+            "IMAGE_CAROUSEL",
+            "BENTO_GRID",    // ✅ NEW: 1 Large + 2 Small
+            "STORY_STRIP",   // ✅ NEW: Circular entries
+            "GRADIENT_HERO"  // ✅ NEW: High-impact section
         ],
         required: true,
+    },
+    subTitle: { // NEW: For descriptive headers
+        type: String,
+    },
+    buttonText: { // NEW: For CTA buttons
+        type: String,
     },
     order: {
         type: Number,

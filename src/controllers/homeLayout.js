@@ -62,7 +62,7 @@ export const getHomeLayout = async (req, reply) => {
 
         // 3. Dynamic Fallback for components
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
-            if (comp.type === "PRODUCT_GRID" || comp.type === "PRODUCT_SCROLLER" || comp.type === "CATEGORY_CLUSTERS") {
+            if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(comp.type)) {
                 if (!comp.products || comp.products.length === 0) {
                     const latest = await Product.find({ isAvailable: true }).sort({ createdAt: -1 }).limit(8);
                     comp.resolvedProducts = latest;
@@ -90,6 +90,8 @@ export const getHomeLayout = async (req, reply) => {
                 id: variation._id,
                 name: variation.name,
                 themeColor: variation.themeColor,
+                themeMode: variation.themeMode || 'auto',
+                nameAlignment: variation.nameAlignment || 'left',
                 showBanner: variation.showBanner,
                 banner: variation.banner,
                 icon: variation.icon

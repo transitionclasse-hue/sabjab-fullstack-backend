@@ -762,8 +762,8 @@ export async function buildAdminRouter(app) {
             name: "Home Page Builder",
             icon: "Layout",
           },
-          listProperties: ["order", "title", "type", "isActive"],
-          editProperties: ["title", "type", "isActive", "order", "bigDeal", "miniDeals", "products", "bannerImage", "carouselImages"],
+          listProperties: ["title", "type", "isActive"],
+          editProperties: ["title", "subTitle", "type", "isActive", "order", "bigDeal", "miniDeals", "products", "bannerImage", "carouselImages", "buttonText"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -777,20 +777,36 @@ export async function buildAdminRouter(app) {
                 { value: "PRODUCT_SCROLLER", label: "Product Horizontal Scroller" },
                 { value: "PRODUCT_GRID", label: "Modern Product Grid" },
                 { value: "PROMO_BANNER", label: "Promotional Banner" },
-                { value: "IMAGE_CAROUSEL", label: "Image Carousel Slider" }
+                { value: "IMAGE_CAROUSEL", label: "Image Carousel Slider" },
+                { value: "BENTO_GRID", label: "Premium Bento Grid (1 Large + 2 Small)" },
+                { value: "STORY_STRIP", label: "Instagram-Style Story Strip" },
+                { value: "GRADIENT_HERO", label: "High-Impact Gradient Hero" }
               ],
+            },
+            subTitle: {
+              label: "Sub-Title / Description",
+              helpText: "Visible in certain card styles like Gradient Hero.",
+              isVisible: ({ record, action }) => !record || record.params.type !== "CATEGORY_STRIP"
+            },
+            buttonText: {
+              label: "CTA Button Text",
+              helpText: "Text for the 'Shop Now' or 'Explore' button.",
+              isVisible: ({ record, action }) => record && ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type)
             },
             bigDeal: {
               label: "Primary Big Deal (Optional)",
-              description: "ONLY effective if type is 'Deals Section'. Select 1 main product to spotlight.",
+              description: "Effective for 'Deals Section' or 'Bento Grid' (as large item).",
+              isVisible: ({ record, action }) => record && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type)
             },
             miniDeals: {
               label: "Mini Deals (Optional)",
-              description: "ONLY effective if type is 'Deals Section'. Select up to 4 smaller products.",
+              description: "Effective for 'Deals Section' or 'Bento Grid' (as small items).",
+              isVisible: ({ record, action }) => record && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type)
             },
             products: {
               label: "Products Array (Optional)",
-              description: "Select products for Product Scroller, Modern Product Grid, OR Category Clusters collections.",
+              description: "Select products for Grid, Scroller, Story Strip, or Clusters collections.",
+              isVisible: ({ record, action }) => record && ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type)
             },
             bannerImage: {
               isVisible: { list: true, filter: false, show: true, edit: false },
@@ -798,10 +814,12 @@ export async function buildAdminRouter(app) {
             },
             uploadBanner: {
               label: "Click to Upload Banner Image to Cloudinary",
+              isVisible: ({ record, action }) => record && ["PROMO_BANNER", "GRADIENT_HERO"].includes(record.params.type)
             },
             carouselImages: {
               label: "Carousel Image URLs (Optional)",
               description: "ONLY effective if type is 'Image Carousel Slider'. Add list of image links.",
+              isVisible: ({ record, action }) => record && record.params.type === "IMAGE_CAROUSEL"
             },
           },
         },
