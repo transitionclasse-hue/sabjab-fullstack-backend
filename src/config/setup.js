@@ -790,7 +790,7 @@ export async function buildAdminRouter(app) {
             },
             products: {
               label: "Products Array (Optional)",
-              description: "ONLY effective if type is 'Product Scroller' or 'Modern Product Grid'. Select products to display.",
+              description: "Select products for Product Scroller, Modern Product Grid, OR Category Clusters collections.",
             },
             bannerImage: {
               isVisible: { list: true, filter: false, show: true, edit: false },

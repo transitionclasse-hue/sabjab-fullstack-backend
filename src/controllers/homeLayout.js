@@ -12,7 +12,7 @@ export const getHomeLayout = async (req, reply) => {
 
         // Dynamic Fallback: If a component has no products/deals selected, fetch latest
         const finalComponents = await Promise.all(components.map(async (comp) => {
-            if (comp.type === "PRODUCT_GRID" || comp.type === "PRODUCT_SCROLLER") {
+            if (comp.type === "PRODUCT_GRID" || comp.type === "PRODUCT_SCROLLER" || comp.type === "CATEGORY_CLUSTERS") {
                 if (!comp.products || comp.products.length === 0) {
                     const latest = await Product.find({ isAvailable: true })
                         .sort({ createdAt: -1 })
