@@ -785,8 +785,8 @@ export async function buildAdminRouter(app) {
               ],
             },
             subTitle: {
-              label: "Secondary Text (e.g. 'Upto 50% Off' - Hidden for Category Strip)",
-              isVisible: ({ record }) => record && record.params.type !== "CATEGORY_STRIP"
+              label: "Secondary Text (e.g. 'Upto 50% Off')",
+              isVisible: ({ record }) => record && ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO"].includes(record.params.type)
             },
             buttonText: {
               label: "CTA Button Text (e.g. 'Explore' or 'Shop Now')",
@@ -809,8 +809,8 @@ export async function buildAdminRouter(app) {
               isRequired: false,
             },
             uploadBanner: {
-              label: "Upload Image (Required for Banner or Gradient Hero)",
-              isVisible: ({ record }) => record && ["PROMO_BANNER", "GRADIENT_HERO"].includes(record.params.type)
+              label: "Upload Image (Required for clusters, banners, or heroes)",
+              isVisible: ({ record }) => record && ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO"].includes(record.params.type)
             },
             carouselImages: {
               label: "Carousel URLs (Comma separated - Only for Slider type)",
@@ -819,6 +819,7 @@ export async function buildAdminRouter(app) {
             themeColor: {
               label: "Brand/Theme Color (Hex code, e.g. #FF5733)",
               description: "Used for Hero backgrounds, buttons, and custom branding for this block.",
+              isVisible: ({ record }) => record && record.params.type !== "IMAGE_CAROUSEL" && record.params.type !== "CATEGORY_STRIP"
             },
           },
         },
