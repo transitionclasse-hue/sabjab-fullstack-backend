@@ -64,6 +64,30 @@ nav[data-css="sidebar"] a:hover {
   border-left: 3px solid var(--neon-cyan) !important;
 }
 
+/* Icon Styling & Hover Effects */
+nav[data-css="sidebar"] svg,
+nav[data-css="sidebar"] i {
+  color: #888 !important;
+  /* Muted default icon color */
+  transition: all 0.3s ease !important;
+  margin-right: 12px !important;
+}
+
+nav[data-css="sidebar"] a:hover svg,
+nav[data-css="sidebar"] a:hover i,
+nav[data-css="sidebar"] a.active svg,
+nav[data-css="sidebar"] a.active i {
+  color: var(--neon-cyan) !important;
+  filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.5)) !important;
+  transform: scale(1.1) !important;
+}
+
+/* Global Icon Accent */
+svg[data-icon],
+i.icon {
+  color: var(--neon-cyan) !important;
+}
+
 /* Premium Buttons */
 button,
 a.sc-AxiKw {
