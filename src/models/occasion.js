@@ -38,7 +38,21 @@ const occasionSchema = new mongoose.Schema({
     isDefault: {
         type: Boolean,
         default: false
-    }
+    },
+    nameAlignment: { // New: Controls name position in UI
+        type: String,
+        enum: ["left", "right"],
+        default: "left"
+    },
+    themeMode: { // New: Force Dark or Light theme for this occasion
+        type: String,
+        enum: ["dark", "light", "auto"],
+        default: "auto"
+    },
+    components: [{ // ✅ MODULAR: Ordered list of reusable components
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "HomeComponent"
+    }]
 });
 
 const Occasion = mongoose.model("Occasion", occasionSchema);

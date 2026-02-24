@@ -10,35 +10,43 @@ export const getHomeLayout = async (req, reply) => {
         // 1. Find the target variation (requested or default)
         let variation;
         if (variationId) {
-            variation = await Occasion.findById(variationId).lean();
+            variation = await Occasion.findById(variationId).populate("components").lean();
         }
 
         if (!variation) {
-            variation = await Occasion.findOne({ isDefault: true }).lean() || await Occasion.findOne({ isActive: true }).sort({ order: 1 }).lean();
+            variation = await Occasion.findOne({ isDefault: true }).populate("components").lean() ||
+                await Occasion.findOne({ isActive: true }).populate("components").sort({ order: 1 }).lean();
         }
 
         // 2. Fetch components for this variation
-        let components = await HomeComponent.find({
-            variation: variation?._id,
-            isActive: true
-        })
-            .populate("bigDeal")
-            .populate("miniDeals")
-            .populate("products")
-            .sort({ order: 1 })
-            .lean();
+        let components = variation?.components || [];
 
         // 🚀 FALLBACK: If no components found for this variation, try unassigned ones (Legacy support)
         if (components.length === 0) {
             components = await HomeComponent.find({
-                variation: { $exists: false },
                 isActive: true
             })
                 .populate("bigDeal")
                 .populate("miniDeals")
                 .populate("products")
                 .sort({ order: 1 })
+                .limit(10)
                 .lean();
+        } else {
+            // Need to manually populate the sub-fields of components since the top-level was populated
+            // but didn't recursively populate deals/products
+            components = await HomeComponent.find({
+                _id: { $in: components.map(c => c._id || c) },
+                isActive: true
+            })
+                .populate("bigDeal")
+                .populate("miniDeals")
+                .populate("products")
+                .lean();
+
+            // Restore Order from Occasion.components array
+            const orderMap = variation.components.map(c => String(c._id || c));
+            components.sort((a, b) => orderMap.indexOf(String(a._id)) - orderMap.indexOf(String(b._id)));
         }
 
         // Second fallback: if still empty and it's default, just get any active components

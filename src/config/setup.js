@@ -762,8 +762,8 @@ export async function buildAdminRouter(app) {
             name: "Home Page Builder",
             icon: "Layout",
           },
-          listProperties: ["order", "title", "variation", "type", "isActive"],
-          editProperties: ["variation", "title", "type", "isActive", "order", "bigDeal", "miniDeals", "products", "bannerImage", "carouselImages"],
+          listProperties: ["order", "title", "type", "isActive"],
+          editProperties: ["title", "type", "isActive", "order", "bigDeal", "miniDeals", "products", "bannerImage", "carouselImages"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -953,12 +953,23 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["name", "themeColor", "showBanner", "isDefault", "isActive"],
-          editProperties: ["name", "icon", "banner", "themeColor", "showBanner", "isDefault", "isActive", "order"],
+          editProperties: ["name", "nameAlignment", "icon", "banner", "themeColor", "showBanner", "isDefault", "isActive", "order", "components"],
           properties: {
             name: { label: "Variation Name (e.g. Holi Special)" },
+            nameAlignment: {
+              label: "Name Alignment (UI)",
+              availableValues: [
+                { value: "left", label: "Left Aligned" },
+                { value: "right", label: "Right Aligned" }
+              ]
+            },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
             showBanner: { label: "Show Occasion Banner?" },
-            isDefault: { label: "Is Default Variation?", helpText: "Only one should be default." }
+            isDefault: { label: "Is Default Variation?", helpText: "Only one should be default." },
+            components: {
+              label: "Assigned Home Components",
+              description: "Select and order components for this variation screen."
+            }
           }
         }
       };
