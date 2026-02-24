@@ -786,43 +786,51 @@ export async function buildAdminRouter(app) {
             },
             subTitle: {
               label: "Secondary Text (e.g. 'Upto 50% Off')",
-              isVisible: ({ record }) => Boolean(record?.params?.type && ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO"].includes(record.params.type))
+              helpText: "Appears below the main title for extra detail.",
+              isVisible: (context) => ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO"].includes(context.record?.params?.type)
             },
             buttonText: {
               label: "CTA Button Text (e.g. 'Explore' or 'Shop Now')",
-              isVisible: ({ record }) => Boolean(record?.params?.type && ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type))
+              helpText: "Text for the action button. Only for banners, heroes, or deals.",
+              isVisible: (context) => ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(context.record?.params?.type)
             },
             bigDeal: {
-              label: "Large Product (For Bento Grid or Deals Section)",
+              label: "Primary Featured Product (Large)",
+              helpText: "Type to search (e.g. 'Dove') to see all 290+ products. Only for Bento/Deals.",
               remote: true,
-              isVisible: ({ record }) => Boolean(record?.params?.type && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type))
+              isVisible: (context) => ["FEATURED_DEALS", "BENTO_GRID"].includes(context.record?.params?.type)
             },
             miniDeals: {
-              label: "Small Products (For Bento Grid or Deals Section)",
+              label: "Supporting Products (Small)",
+              helpText: "Select 2-4 products. Type to search names. Only for Bento/Deals.",
               remote: true,
-              isVisible: ({ record }) => Boolean(record?.params?.type && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type))
+              isVisible: (context) => ["FEATURED_DEALS", "BENTO_GRID"].includes(context.record?.params?.type)
             },
             products: {
-              label: "Product Collection (Select Exactly 4 for 2x2 Grid)",
+              label: "Main Product Collection",
+              helpText: "Select exactly 4 for 2x2 Grid. Type to search (e.g. 'Dove') to find any product.",
               remote: true,
-              isVisible: ({ record }) => Boolean(record?.params?.type && ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type))
+              isVisible: (context) => ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(context.record?.params?.type)
             },
             bannerImage: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
             },
             uploadBanner: {
-              label: "Upload Image (Required for clusters, banners, or heroes)",
-              isVisible: ({ record }) => Boolean(record?.params?.type && ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO"].includes(record.params.type))
+              label: "Component Banner/Hero Image",
+              helpText: "Upload a high-quality image. Required for Heroes, Promo Banners, and 2x2 Grids.",
+              isVisible: (context) => ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO"].includes(context.record?.params?.type)
             },
             carouselImages: {
-              label: "Carousel URLs (Comma separated - Only for Slider type)",
-              isVisible: ({ record }) => Boolean(record?.params?.type && record.params.type === "IMAGE_CAROUSEL")
+              label: "Carousel URLs (Comma Separated)",
+              helpText: "Paste multiple image URLs separated by commas. Only for Carousel Slider.",
+              isVisible: (context) => (context.record?.params?.type === "IMAGE_CAROUSEL")
             },
             themeColor: {
-              label: "Brand/Theme Color (Hex code, e.g. #FF5733)",
-              description: "Used for Hero backgrounds, buttons, and custom branding for this block.",
-              isVisible: ({ record }) => Boolean(record?.params?.type && !["IMAGE_CAROUSEL", "CATEGORY_STRIP"].includes(record.params.type))
+              label: "Custom Brand/Theme Color (HEX)",
+              description: "Used for gradients, buttons, and matching the brand vibe.",
+              helpText: "Enter a hex code like #FF5733 (Orange) or #22C55E (Green).",
+              isVisible: (context) => context.record?.params?.type && !["IMAGE_CAROUSEL", "CATEGORY_STRIP"].includes(context.record.params.type)
             },
           },
         },
