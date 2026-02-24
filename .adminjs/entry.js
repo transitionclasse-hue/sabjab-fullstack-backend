@@ -9,6 +9,8 @@ import SupportDashboard from '../src/components/SupportDashboard'
 AdminJS.UserComponents.SupportDashboard = SupportDashboard
 import SendNotification from '../src/components/SendNotification'
 AdminJS.UserComponents.SendNotification = SendNotification
+import Dashboard from '../src/components/Dashboard'
+AdminJS.UserComponents.Dashboard = Dashboard
 import UploadEditComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadEditComponent'
 AdminJS.UserComponents.UploadEditComponent = UploadEditComponent
 import UploadListComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadListComponent'
