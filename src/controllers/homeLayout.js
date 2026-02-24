@@ -18,24 +18,11 @@ export const getHomeLayout = async (req, reply) => {
                 await Occasion.findOne({ isActive: true }).populate("components").sort({ order: 1 }).lean();
         }
 
-        // 2. Fetch components for this variation
-        let components = variation?.components || [];
-
-        // 🚀 FALLBACK: If no components found for this variation, try unassigned ones (Legacy support)
-        if (components.length === 0) {
+        // 2. Fetch components explicitly assigned to this variation
+        let components = [];
+        if (variation) {
             components = await HomeComponent.find({
-                isActive: true
-            })
-                .populate("bigDeal")
-                .populate("miniDeals")
-                .populate("products")
-                .limit(10)
-                .lean();
-        } else {
-            // Need to manually populate the sub-fields of components since the top-level was populated
-            // but didn't recursively populate deals/products
-            components = await HomeComponent.find({
-                _id: { $in: components.map(c => c._id || c) },
+                _id: { $in: variation.components.map(c => c._id || c) },
                 isActive: true
             })
                 .populate("bigDeal")
@@ -43,19 +30,9 @@ export const getHomeLayout = async (req, reply) => {
                 .populate("products")
                 .lean();
 
-            // Restore Order from Occasion.components array
+            // Restore Order from variation.components array
             const orderMap = variation.components.map(c => String(c._id || c));
             components.sort((a, b) => orderMap.indexOf(String(a._id)) - orderMap.indexOf(String(b._id)));
-        }
-
-        // Second fallback: if still empty and it's default, just get any active components
-        if (components.length === 0 && (!variationId || variation?.isDefault)) {
-            components = await HomeComponent.find({ isActive: true })
-                .populate("bigDeal")
-                .populate("miniDeals")
-                .populate("products")
-                .limit(10)
-                .lean();
         }
 
         // 3. Dynamic Fallback for components

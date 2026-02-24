@@ -785,28 +785,23 @@ export async function buildAdminRouter(app) {
               ],
             },
             subTitle: {
-              label: "Sub-Title / Description",
-              helpText: "Secondary text (e.g., 'Upto 50% Off'). Hidden for Category Strip.",
-              isVisible: ({ record }) => !record || record.params.type !== "CATEGORY_STRIP"
+              label: "Secondary Text (e.g. 'Upto 50% Off' - Hidden for Category Strip)",
+              isVisible: ({ record }) => record && record.params.type !== "CATEGORY_STRIP"
             },
             buttonText: {
-              label: "CTA Button Text",
-              helpText: "Text for the 'Shop Now' or 'Explore' button.",
+              label: "CTA Button Text (e.g. 'Explore' or 'Shop Now')",
               isVisible: ({ record }) => record && ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type)
             },
             bigDeal: {
-              label: "Primary Big Deal (Optional)",
-              description: "Effective for 'Deals Section' or 'Bento Grid' (as large item).",
+              label: "Large Product (For Bento Grid or Deals Section)",
               isVisible: ({ record }) => record && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type)
             },
             miniDeals: {
-              label: "Mini Deals (Optional)",
-              description: "Effective for 'Deals Section' or 'Bento Grid' (as small items).",
+              label: "Small Products (For Bento Grid or Deals Section)",
               isVisible: ({ record }) => record && ["FEATURED_DEALS", "BENTO_GRID"].includes(record.params.type)
             },
             products: {
-              label: "Products Array (Optional)",
-              description: "Essential for 2x2 Grid (Select 4), Scroller, Story Strip, or Clusters collections.",
+              label: "Product Collection (Select Exactly 4 for 2x2 Grid)",
               isVisible: ({ record }) => record && ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(record.params.type)
             },
             bannerImage: {
@@ -814,12 +809,11 @@ export async function buildAdminRouter(app) {
               isRequired: false,
             },
             uploadBanner: {
-              label: "Click to Upload Banner Image to Cloudinary",
+              label: "Upload Image (Required for Banner or Gradient Hero)",
               isVisible: ({ record }) => record && ["PROMO_BANNER", "GRADIENT_HERO"].includes(record.params.type)
             },
             carouselImages: {
-              label: "Carousel Image URLs (Optional)",
-              description: "ONLY effective if type is 'Image Carousel Slider'. Add list of image links.",
+              label: "Carousel URLs (Comma separated - Only for Slider type)",
               isVisible: ({ record }) => record && record.params.type === "IMAGE_CAROUSEL"
             },
           },
