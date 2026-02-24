@@ -26,6 +26,18 @@ const occasionSchema = new mongoose.Schema({
     order: {
         type: Number,
         default: 1
+    },
+    themeColor: {
+        type: String,
+        default: "#22c55e"
+    },
+    showBanner: {
+        type: Boolean,
+        default: true
+    },
+    isDefault: {
+        type: Boolean,
+        default: false
     }
 });
 

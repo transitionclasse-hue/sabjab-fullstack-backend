@@ -762,8 +762,8 @@ export async function buildAdminRouter(app) {
             name: "Home Page Builder",
             icon: "Layout",
           },
-          listProperties: ["order", "title", "type", "isActive"],
-          editProperties: ["title", "type", "isActive", "order", "bigDeal", "miniDeals", "products", "bannerImage", "carouselImages"],
+          listProperties: ["order", "title", "variation", "type", "isActive"],
+          editProperties: ["variation", "title", "type", "isActive", "order", "bigDeal", "miniDeals", "products", "bannerImage", "carouselImages"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -941,6 +941,26 @@ export async function buildAdminRouter(app) {
             },
           }),
         ],
+      };
+    }
+
+    if (model.modelName === "Occasion") {
+      return {
+        resource: model,
+        options: {
+          navigation: {
+            name: "Home Page Builder",
+            icon: "Layout",
+          },
+          listProperties: ["name", "themeColor", "showBanner", "isDefault", "isActive"],
+          editProperties: ["name", "icon", "banner", "themeColor", "showBanner", "isDefault", "isActive", "order"],
+          properties: {
+            name: { label: "Variation Name (e.g. Holi Special)" },
+            themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
+            showBanner: { label: "Show Occasion Banner?" },
+            isDefault: { label: "Is Default Variation?", helpText: "Only one should be default." }
+          }
+        }
       };
     }
 

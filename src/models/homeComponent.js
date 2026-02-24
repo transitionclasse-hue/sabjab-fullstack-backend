@@ -51,6 +51,11 @@ const homeComponentSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true,
+    },
+    variation: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Occasion",
+        required: true
     }
 });
 
