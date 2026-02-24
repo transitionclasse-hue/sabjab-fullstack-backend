@@ -764,7 +764,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["title", "type", "isActive"],
-          editProperties: ["title", "subTitle", "type", "isActive", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText"],
+          editProperties: ["title", "subTitle", "type", "isActive", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -815,6 +815,10 @@ export async function buildAdminRouter(app) {
             carouselImages: {
               label: "Carousel URLs (Comma separated - Only for Slider type)",
               isVisible: ({ record }) => record && record.params.type === "IMAGE_CAROUSEL"
+            },
+            themeColor: {
+              label: "Brand/Theme Color (Hex code, e.g. #FF5733)",
+              description: "Used for Hero backgrounds, buttons, and custom branding for this block.",
             },
           },
         },

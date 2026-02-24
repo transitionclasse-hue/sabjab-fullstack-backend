@@ -52,6 +52,10 @@ const homeComponentSchema = new mongoose.Schema({
             type: String,
         }
     ],
+    themeColor: {
+        type: String,
+        default: null,
+    },
     isActive: {
         type: Boolean,
         default: true,
