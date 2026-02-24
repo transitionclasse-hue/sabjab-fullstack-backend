@@ -56,6 +56,11 @@ const homeComponentSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    themeMode: { // ✅ NEW: Per-component theme variations
+        type: String,
+        enum: ["light", "dark", "glass"],
+        default: "glass",
+    },
     isActive: {
         type: Boolean,
         default: true,

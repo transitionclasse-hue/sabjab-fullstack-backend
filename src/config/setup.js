@@ -764,7 +764,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["title", "type", "isActive"],
-          editProperties: ["title", "subTitle", "type", "isActive", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor"],
+          editProperties: ["title", "subTitle", "type", "isActive", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -848,11 +848,25 @@ export async function buildAdminRouter(app) {
             carouselImages: {
               label: "Carousel URLs (Comma Separated)",
               helpText: "Paste image URLs. Only for Slider type.",
-              isVisible: (context) => !!(context.record?.params?.type === "IMAGE_CAROUSEL")
+              isVisible: (context) => Boolean(context.record?.params?.type === "IMAGE_CAROUSEL"),
             },
             themeColor: {
-              label: "Custom Brand/Theme Color (HEX)",
-              description: "Enter #FF5733 (Orange) or #22C55E (Green).",
+              label: "Component Override Color (HEX)",
+              helpText: "Overrides the global Occasion color. Leave blank to stay synced.",
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const hiddenTypes = ["IMAGE_CAROUSEL", "CATEGORY_STRIP"];
+                return !!(type && !hiddenTypes.includes(type));
+              }
+            },
+            themeMode: {
+              label: "Visual Style / Mode",
+              availableValues: [
+                { value: "glass", label: "Glassmorphism (Premium / Translucent)" },
+                { value: "light", label: "Minimalist Light" },
+                { value: "dark", label: "Midnight Dark" }
+              ],
+              helpText: "Choose the visual vibe for this specific block.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
                 const hiddenTypes = ["IMAGE_CAROUSEL", "CATEGORY_STRIP"];
