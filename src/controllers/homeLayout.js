@@ -35,23 +35,26 @@ export const getHomeLayout = async (req, reply) => {
             components.sort((a, b) => orderMap.indexOf(String(a._id)) - orderMap.indexOf(String(b._id)));
         }
 
-        // 3. Dynamic Fallback for components
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
-            if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO"].includes(comp.type)) {
-                if (!comp.products || comp.products.length === 0) {
-                    const fallback = await Product.find({ isAvailable: true }).sort({ createdAt: -1 }).limit(20).lean();
-                    comp.resolvedProducts = fallback;
-                } else {
-                    comp.resolvedProducts = comp.products;
-                }
-            } else if (comp.type === "FEATURED_DEALS") {
-                if (!comp.bigDeal && (!comp.miniDeals || comp.miniDeals.length === 0)) {
-                    const bestDeals = await Product.find({ isAvailable: true, discountPrice: { $gt: 0 } }).sort({ createdAt: -1 }).limit(5);
-                    if (bestDeals.length > 0) {
-                        comp.bigDeal = bestDeals[0];
-                        comp.miniDeals = bestDeals.slice(1, 5);
-                    }
-                }
+            if (comp.type === "BENTO_GRID") {
+                // HYBRID: Prioritize curated fields, then fill with generic products (deduplicated)
+                const curated = [];
+                if (comp.bigDeal) curated.push(comp.bigDeal);
+                if (comp.miniDeals?.length) curated.push(...comp.miniDeals);
+
+                const fallback = comp.products || [];
+                const combined = [...curated, ...fallback];
+
+                // Deduplicate by ID
+                const seenIds = new Set();
+                comp.resolvedProducts = combined.filter(p => {
+                    const id = String(p._id || p.id || p);
+                    if (!id || seenIds.has(id)) return false;
+                    seenIds.add(id);
+                    return true;
+                });
+            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO"].includes(comp.type)) {
+                comp.resolvedProducts = comp.products || [];
             }
             return comp;
         }));
