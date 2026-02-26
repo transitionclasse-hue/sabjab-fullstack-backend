@@ -86,11 +86,11 @@ export const getHomeLayout = async (req, reply) => {
                 banner: variation.banner,
                 icon: variation.icon
             } : null,
-            layout: hydratedComponents,
-            categories: occasions, // Restored for frontend
-            customCategories: occasions, // Fallback for various strip implementations
-            storeStatus,
-            specialOccasion // ✅ NEW: Sent for the Search Bar area
+            layout: hydratedComponents || [],
+            categories: occasions || [],
+            customCategories: occasions || [],
+            storeStatus: storeStatus || { status: "open", mode: "schedule" },
+            specialOccasion: specialOccasion || null
         });
 
     } catch (error) {
