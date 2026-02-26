@@ -5,6 +5,7 @@ import {
   updateBankAccount,
   getDriverStats,
   getCodStatus,
+  updatePushToken,
 } from "../controllers/driver.js";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -23,4 +24,5 @@ export const driverRoutes = async (fastify) => {
   fastify.put("/driver/bank", updateBankAccount);
   fastify.get("/driver/stats", getDriverStats);
   fastify.get("/driver/cod", getCodStatus);
+  fastify.put("/driver/update-push-token", updatePushToken);
 };

@@ -249,6 +249,25 @@ export async function buildAdminRouter(app) {
     }
 
 
+    const inventoryModels = ["SuperCategory", "Category", "SubCategory"];
+    if (inventoryModels.includes(model.modelName)) {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "Inventory & Catalog", icon: "Archive" },
+        },
+      };
+    }
+
+    if (model.modelName === "Counter") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "App Settings", icon: "Settings" },
+        },
+      };
+    }
+
     if (model.modelName === "SupportMessage") {
       return {
         resource: model,
@@ -292,6 +311,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
+          navigation: { name: "App Settings", icon: "Settings" },
           listProperties: [
             "freeDeliveryEnabled",
             "freeDeliveryThreshold",
@@ -971,7 +991,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "Inventory", icon: "Package" },
+          navigation: { name: "Inventory & Catalog", icon: "Archive" },
           listProperties: ["name", "price", "stock", "isAvailable", "quantity", "superCategory", "category", "subCategory", "image"],
           editProperties: ["name", "description", "uploadFile", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "variations"],
           showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "image", "variations"],
@@ -1120,7 +1140,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "Driver Management", icon: "Truck" },
+          navigation: { name: "Delivery Management", icon: "Truck" },
         },
       };
     }
@@ -1132,6 +1152,11 @@ export async function buildAdminRouter(app) {
     return {
       resource: model,
       options: {
+        navigation: { name: "Delivery Management", icon: "Truck" },
+        sort: {
+          sortBy: 'createdAt',
+          direction: 'desc'
+        },
         actions: {
           assignDriver: {
             actionType: "record",
@@ -1161,10 +1186,18 @@ export async function buildAdminRouter(app) {
                     ...populatedOrder.toObject(),
                     deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
                   });
-                  // Notify the specific driver
+                  // Notify the specific driver via Socket
                   app.io.to(String(driverId)).emit("driver:order-assigned", {
                     order: populatedOrder
                   });
+                  // Notify via Push Notification
+                  await sendPushNotification(
+                    String(driverId),
+                    "New Order Assigned! 📦",
+                    `You have a new order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || 'SabJab'}.`,
+                    { orderId: String(populatedOrder._id), type: 'ORDER_ASSIGNED' },
+                    'DeliveryPartner'
+                  );
                   // Broad notification for admin UI
                   app.io.emit("admin:order-assigned", {
                     orderId: String(populatedOrder._id),
@@ -1228,6 +1261,14 @@ export async function buildAdminRouter(app) {
                   ...populatedOrder.toObject(),
                   deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
                 });
+                // Notify via Push Notification
+                await sendPushNotification(
+                  String(driver._id),
+                  "New Order Assigned! 📦",
+                  `You have a new order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || 'SabJab'}.`,
+                  { orderId: String(populatedOrder._id), type: 'ORDER_ASSIGNED' },
+                  'DeliveryPartner'
+                );
                 app.io.emit("admin:order-assigned", {
                   orderId: String(populatedOrder._id),
                   orderNumber: populatedOrder.orderId,

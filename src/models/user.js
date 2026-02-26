@@ -80,6 +80,8 @@ const deliveryPartnerSchema = new mongoose.Schema({
     accountLast4: { type: String },
     ifsc: { type: String },
   },
+  pushToken: { type: String, default: null },
+  notificationsEnabled: { type: Boolean, default: true },
 }, { timestamps: true });
 
 // ================= ADMIN =================

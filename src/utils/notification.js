@@ -1,27 +1,28 @@
 import { Expo } from "expo-server-sdk";
-import { Customer } from "../models/user.js";
+import { Customer, DeliveryPartner } from "../models/user.js";
 import { Notification } from "../models/notification.js";
 
 const expo = new Expo();
 
 /**
- * Send push notification to a specific user
+ * Send push notification to a specific user (Customer or DeliveryPartner)
  */
-export const sendPushNotification = async (customerId, title, body, data = {}) => {
+export const sendPushNotification = async (userId, title, body, data = {}, userType = 'Customer') => {
     try {
-        const customer = await Customer.findById(customerId);
-        if (!customer || !customer.pushToken || !customer.notificationsEnabled) {
-            console.log(`Skipping notification for ${customerId}: No token or disabled.`);
+        const Model = userType === 'Customer' ? Customer : DeliveryPartner;
+        const user = await Model.findById(userId);
+        if (!user || !user.pushToken || !user.notificationsEnabled) {
+            console.log(`Skipping notification for ${userId} (${userType}): No token or disabled.`);
             return null;
         }
 
-        if (!Expo.isExpoPushToken(customer.pushToken)) {
-            console.error(`Push token ${customer.pushToken} is not a valid Expo push token`);
+        if (!Expo.isExpoPushToken(user.pushToken)) {
+            console.error(`Push token ${user.pushToken} is not a valid Expo push token`);
             return null;
         }
 
         const messages = [{
-            to: customer.pushToken,
+            to: user.pushToken,
             sound: "default",
             title,
             body,
@@ -40,12 +41,13 @@ export const sendPushNotification = async (customerId, title, body, data = {}) =
             }
         }
 
-        // Save to history
+        // Save to history (we can track which user type it was in data or separate field if needed)
         await Notification.create({
-            customer: customerId,
+            customer: userType === 'Customer' ? userId : null,
+            // Optionally add a driver field to Notification model if tracking is needed for history
             title,
             body,
-            data,
+            data: { ...data, userType },
             status: "sent",
             type: "individual",
             sentAt: new Date()

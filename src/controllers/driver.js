@@ -208,3 +208,28 @@ export const getCodStatus = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to fetch COD status", error: error.message });
   }
 };
+export const updatePushToken = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const { pushToken } = req.body || {};
+
+    if (!pushToken) {
+      return reply.status(400).send({ message: "pushToken is required" });
+    }
+
+    const driver = await DeliveryPartner.findByIdAndUpdate(
+      userId,
+      { pushToken },
+      { new: true }
+    );
+
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+
+    return reply.send({ message: "Push token updated successfully", pushToken: driver.pushToken });
+  } catch (error) {
+    console.error("updatePushToken error:", error);
+    return reply.status(500).send({ message: "Failed to update push token", error: error.message });
+  }
+};
