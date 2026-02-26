@@ -132,6 +132,12 @@ export const createOrder = async (req, reply) => {
             ...populatedOrder.toObject(),
             deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
         });
+
+        // Notify all online drivers about the new available order
+        req.server.io.emit("driver:new-order", {
+            order: populatedOrder
+        });
+
         return reply.status(201).send({ order: savedOrder, message: "Order created successfully" });
     } catch (error) {
         console.error("Order Creation Error:", error);
@@ -363,7 +369,11 @@ export const getOrders = async (req, reply) => {
         if (role === "Customer") {
             query.customer = userId;
         } else if (role === "DeliveryPartner") {
-            query.deliveryPartner = userId;
+            // Drivers can see orders assigned to them OR available orders
+            query.$or = [
+                { deliveryPartner: userId },
+                { status: "available" }
+            ];
         } else if (role === "Admin" || role === "Manager") {
             // Admin/Manager can filter by any ID
             if (customerId) query.customer = customerId;
