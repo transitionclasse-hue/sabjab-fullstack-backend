@@ -162,8 +162,8 @@ export const confirmOrder = async (req, reply) => {
             return reply.status(404).send({ message: "Order not found" }); //
         }
 
-        if (order.status !== "available") {
-            return reply.status(400).send({ message: "Order is not available" }); //
+        if (!["available", "assigned"].includes(order.status)) {
+            return reply.status(400).send({ message: "Order is not available for confirmation" }); //
         }
 
         order.status = "confirmed"; //
@@ -185,50 +185,55 @@ export const confirmOrder = async (req, reply) => {
             driverName: populatedOrder?.deliveryPartner?.name || "Delivery Partner",
         });
 
-        return reply.send(order); //
+        return reply.send(order);
     } catch (error) {
-        return reply.status(500).send({ message: "Failed to confirm order", error }); //
+        return reply.status(500).send({ message: "Failed to confirm order", error });
     }
 };
 
 // Update Order Status (Live Tracking Updates)
 export const updateOrderStatus = async (req, reply) => {
     try {
-        const { orderId } = req.params; //
-        const { status, deliveryPersonLocation } = req.body; //
-        const { userId } = req.user; //
+        const { orderId } = req.params;
+        const { status, deliveryPersonLocation } = req.body;
+        const { userId } = req.user;
 
-        const deliveryPerson = await DeliveryPartner.findById(userId); //
+        const deliveryPerson = await DeliveryPartner.findById(userId);
         if (!deliveryPerson) {
-            return reply.status(404).send({ message: "Delivery Person not found" }); //
+            return reply.status(404).send({ message: "Delivery Person not found" });
         }
 
-        const order = await Order.findById(orderId); //
+        const order = await Order.findById(orderId);
         if (!order) {
-            return reply.status(404).send({ message: "Order not found" }); //
+            return reply.status(404).send({ message: "Order not found" });
         }
 
         if (["cancelled", "delivered"].includes(order.status)) {
-            return reply.status(400).send({ message: "Order cannot be updated" }); //
+            return reply.status(400).send({ message: "Order cannot be updated" });
         }
 
         if (order.deliveryPartner.toString() !== userId) {
-            return reply.status(403).send({ message: "Unauthorized" }); //
+            return reply.status(403).send({ message: "Unauthorized" });
         }
 
         const oldStatus = order.status;
         order.status = status;
         order.deliveryPersonLocation = deliveryPersonLocation;
+
         if (status === "delivered" && oldStatus !== "delivered") {
-            // Driver Earning
-            if (!order.driverEarning) {
-                const config = await PricingConfig.findOne({ key: "primary" });
-                const baseFee = config?.baseDeliveryFee ?? 20;
-                const freeThreshold = config?.freeDeliveryThreshold ?? 199;
-                const freeEnabled = config?.freeDeliveryEnabled ?? true;
-                const itemsTotal = order.totalPrice || 0;
-                order.driverEarning = freeEnabled && itemsTotal >= freeThreshold ? 0 : baseFee;
+            console.log(`📦 Order ${orderId} delivered. Payment Method: ${order.paymentMethod}`);
+            if (order.paymentMethod === "COD") {
+                order.codCollected = order.totalPrice;
+                console.log(`💰 COD Collected for Order ${orderId}: ${order.codCollected}`);
             }
+
+            // Driver Earning Logic
+            const config = await PricingConfig.findOne({ key: "primary" });
+            const baseFee = config?.baseDeliveryFee ?? 20;
+            const freeThreshold = config?.freeDeliveryThreshold ?? 199;
+            const freeEnabled = config?.freeDeliveryEnabled ?? true;
+            const itemsTotal = order.totalPrice || 0;
+            order.driverEarning = freeEnabled && itemsTotal >= freeThreshold ? 0 : baseFee;
 
             // Award Green Points to Customer
             try {
@@ -245,8 +250,6 @@ export const updateOrderStatus = async (req, reply) => {
                             `Reward for Order #${order.orderId || order._id}`,
                             order.orderId || order._id
                         );
-
-                        // Sync balance to customer model for fast access
                         await Customer.findByIdAndUpdate(order.customer, {
                             greenPointsBalance: gpRecord.totalBalance
                         });
@@ -256,33 +259,21 @@ export const updateOrderStatus = async (req, reply) => {
                 console.error("Failed to award Green Points:", gpError);
             }
 
-            // --- REFERRAL BONUS (On Delivery) ---
+            // Referral Logic
             try {
-                const gpConfig = await GreenPointsConfig.getConfig();
-                const refSettings = gpConfig.earnRules.referral;
+                const customer = await Customer.findById(order.customer);
+                if (customer?.referredBy) {
+                    const orderCount = await Order.countDocuments({ customer: order.customer, status: "delivered" });
 
-                if (refSettings.enabled && refSettings.trigger === "first_purchase") {
-                    // Check if customer was referred
-                    const customer = await Customer.findById(order.customer);
+                    if (orderCount === 1) {
+                        const referral = await Referral.findOne({ referee: order.customer, bonusesAwarded: false });
+                        if (referral) {
+                            const gpConfig = await GreenPointsConfig.getConfig();
+                            const rules = gpConfig.earnRules.referral;
 
-                    if (customer.referredBy) {
-                        // Check if this is the customer's first delivered order
-                        const deliveredCount = await Order.countDocuments({
-                            customer: order.customer,
-                            status: "delivered"
-                        });
-
-                        // If count is 1 (this order), it's the first one!
-                        if (deliveredCount === 1) {
-                            const referral = await Referral.findOne({
-                                referrer: customer.referredBy,
-                                referee: order.customer,
-                                bonusesAwarded: false
-                            });
-
-                            if (referral) {
-                                const awardToReferrer = ["referrer", "both"].includes(refSettings.awardTo);
-                                const awardToReferee = ["referee", "both"].includes(refSettings.awardTo);
+                            if (rules?.enabled) {
+                                const awardToReferrer = ["referrer", "both"].includes(rules.awardTo);
+                                const awardToReferee = ["referee", "both"].includes(rules.awardTo);
 
                                 if (awardToReferrer) {
                                     const referrerGP = await GreenPoints.getOrCreate(referral.referrer);
@@ -309,9 +300,7 @@ export const updateOrderStatus = async (req, reply) => {
                                         greenPointsBalance: refereeGP.totalBalance
                                     });
                                 }
-
                                 await referral.markBonusesAwarded();
-                                console.log(`✅ Referral bonuses awarded for order ${order._id}`);
                             }
                         }
                     }
@@ -319,10 +308,9 @@ export const updateOrderStatus = async (req, reply) => {
             } catch (refError) {
                 console.error("Failed to award Referral Bonus:", refError);
             }
-            // -------------------------------------
         }
 
-        // --- STOCK RESTORATION ON CANCELLATION ---
+        // Stock Restoration
         if (status === "cancelled" && oldStatus !== "cancelled") {
             for (const orderItem of order.items) {
                 const product = await Product.findById(orderItem.item);
@@ -332,85 +320,81 @@ export const updateOrderStatus = async (req, reply) => {
                 }
             }
         }
-        // -----------------------------------------
 
         await order.save();
 
         const populatedOrder = await Order.findById(order._id).populate(
             "customer branch items.item deliveryPartner"
         );
-        req.server.io.to(orderId).emit("liveTrackingUpdates", {
-            ...populatedOrder.toObject(),
-            deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
-        }); //
 
-        req.server.io.emit("admin:system-alert", {
-            message: `Order #${populatedOrder.orderId || order._id.toString().substring(0, 8)} status updated to ${status}`,
-            orderId: String(order._id),
-            status: status
-        });
+        if (req.server.io) {
+            req.server.io.to(orderId).emit("liveTrackingUpdates", {
+                ...populatedOrder.toObject(),
+                deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
+            });
 
-        return reply.send(order); //
+            req.server.io.emit("admin:order-status-update", {
+                orderId: String(order._id),
+                status: status,
+                orderNumber: populatedOrder.orderId
+            });
+        }
+
+        return reply.send(populatedOrder);
     } catch (error) {
-        return reply.status(500).send({ message: "Failed to update order status", error }); //
+        console.error("updateOrderStatus global error:", error);
+        return reply.status(500).send({ message: "Failed to update order status", error: error.message });
     }
 };
 
 // Fetch all orders with optional filters
 export const getOrders = async (req, reply) => {
     try {
-        const { status, customerId, deliveryPartnerId, branchId } = req.query; //
+        const { status, customerId, deliveryPartnerId, branchId } = req.query;
         const { userId, role } = req.user || {};
         let query = {};
 
-        if (status) query.status = status; //
+        if (status) query.status = status;
 
-        // Enforce tenant isolation based on authenticated role.
         if (role === "Customer") {
             query.customer = userId;
         } else if (role === "DeliveryPartner") {
-            // Drivers can see orders assigned to them OR available orders
             query.$or = [
                 { deliveryPartner: userId },
                 { status: "available" }
             ];
         } else if (role === "Admin" || role === "Manager") {
-            // Admin/Manager can filter by any ID
             if (customerId) query.customer = customerId;
             if (deliveryPartnerId) query.deliveryPartner = deliveryPartnerId;
         } else {
-            // Safety: If role is unknown, return nothing rather than everything
             return reply.send([]);
         }
 
-        if (branchId) {
-            query.branch = branchId;
-        }
+        if (branchId) query.branch = branchId;
 
         const orders = await Order.find(query).populate(
-            "customer branch items.item deliveryPartner" //
+            "customer branch items.item deliveryPartner"
         );
 
-        return reply.send(orders); //
+        return reply.send(orders);
     } catch (error) {
-        return reply.status(500).send({ message: "Failed to retrieve orders", error }); //
+        return reply.status(500).send({ message: "Failed to retrieve orders", error: error.message });
     }
 };
 
 // Fetch a single order by ID
 export const getOrderById = async (req, reply) => {
     try {
-        const { orderId } = req.params; //
+        const { orderId } = req.params;
         const { userId, role } = req.user || {};
         const order = await Order.findById(orderId).populate(
-            "customer branch items.item deliveryPartner" //
+            "customer branch items.item deliveryPartner"
         );
 
         if (!order) {
-            return reply.status(404).send({ message: "Order not found" }); //
+            return reply.status(404).send({ message: "Order not found" });
         }
 
-        // Enforce access control on single-order fetch.
         const orderCustomerId = order.customer?._id || order.customer;
         const orderPartnerId = order.deliveryPartner?._id || order.deliveryPartner;
 
@@ -422,8 +406,8 @@ export const getOrderById = async (req, reply) => {
             return reply.status(403).send({ message: "Unauthorized access to this order" });
         }
 
-        return reply.send(order); //
+        return reply.send(order);
     } catch (error) {
-        return reply.status(500).send({ message: "Failed to retrieve order", error }); //
+        return reply.status(500).send({ message: "Failed to retrieve order", error: error.message });
     }
 };

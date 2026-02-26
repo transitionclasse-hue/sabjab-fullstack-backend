@@ -45,7 +45,8 @@ const assignDriverToOrder = async (order, driver) => {
 
   order.deliveryPartner = driver._id;
   if (order.status === "available") {
-    order.status = "confirmed";
+    order.status = "assigned";
+    order.assignedAt = new Date();
   }
 
   const lat = driver.liveLocation?.latitude ?? order.pickupLocation?.latitude;
@@ -55,6 +56,21 @@ const assignDriverToOrder = async (order, driver) => {
     longitude: lng,
     address: "Assigned from admin panel",
   };
+
+  // Pre-calculate driver earning if not set
+  if (!order.driverEarning) {
+    try {
+      const PricingConfig = mongoose.models.PricingConfig;
+      const config = await PricingConfig.findOne({ key: "primary" });
+      const baseFee = config?.baseDeliveryFee ?? 20;
+      const freeThreshold = config?.freeDeliveryThreshold ?? 199;
+      const freeEnabled = config?.freeDeliveryEnabled ?? true;
+      const itemsTotal = order.totalPrice || 0;
+      order.driverEarning = freeEnabled && itemsTotal >= freeThreshold ? 0 : baseFee;
+    } catch (e) {
+      order.driverEarning = 20; // Fallback
+    }
+  }
 
   await order.save();
   return hydrateOrderForTracking(order._id);
@@ -1322,7 +1338,8 @@ export async function buildAdminRouter(app) {
                   }
 
                   if (dbOrder.status === "available") {
-                    dbOrder.status = "confirmed";
+                    dbOrder.status = "assigned";
+                    dbOrder.assignedAt = new Date();
                     changed = true;
                   }
                 }

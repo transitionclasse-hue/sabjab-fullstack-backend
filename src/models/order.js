@@ -65,9 +65,11 @@ const orderSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ["available", "confirmed", "arriving", "delivered", "cancelled"],
+    enum: ["available", "assigned", "confirmed", "arriving", "delivered", "cancelled"],
     default: "available",
   },
+
+  assignedAt: { type: Date },
 
   totalPrice: { type: Number, required: true },
   couponCode: { type: String, uppercase: true, trim: true },
@@ -84,6 +86,7 @@ const orderSchema = new mongoose.Schema({
   },
 
   driverEarning: { type: Number, default: 0 },
+  codCollected: { type: Number, default: 0 },
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
