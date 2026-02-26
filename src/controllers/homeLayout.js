@@ -75,6 +75,10 @@ export const getHomeLayout = async (req, reply) => {
         }
 
         // 7. Build unified response
+        const filteredOccasions = specialOccasion
+            ? occasions.filter(o => String(o._id) !== String(specialOccasion._id))
+            : occasions;
+
         return reply.send({
             variation: variation ? {
                 id: variation._id,
@@ -87,8 +91,8 @@ export const getHomeLayout = async (req, reply) => {
                 icon: variation.icon
             } : null,
             layout: hydratedComponents || [],
-            categories: occasions || [],
-            customCategories: occasions || [],
+            categories: filteredOccasions || [],
+            customCategories: filteredOccasions || [],
             storeStatus: storeStatus || { status: "open", mode: "schedule" },
             specialOccasion: specialOccasion || null
         });
