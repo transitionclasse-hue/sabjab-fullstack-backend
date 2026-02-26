@@ -253,174 +253,33 @@ export const updateOrderStatus = async (req, reply) => {
         }
 
         const oldStatus = order.status;
-        console.log(`[StatusUpdate] Transitioning order ${orderId} from ${oldStatus} to ${status}`);
+        console.log(`[StatusUpdate] START: Order ${orderId} | New: ${status} | Old: ${oldStatus}`);
 
         // Assign driver if accepting an available order
         if (status === ORDER_STATUS.CONFIRMED && !order.deliveryPartner) {
-            console.log(`[StatusUpdate] Assigning driver ${userId} to order ${orderId}`);
+            console.log(`[StatusUpdate] AUTO-ASSIGN: Driver ${userId} to order ${orderId}`);
             order.deliveryPartner = userId;
         }
 
         order.status = status;
         order.deliveryPersonLocation = deliveryPersonLocation;
 
-        await order.save();
-        console.log(`[StatusUpdate] Order ${orderId} saved successfully`);
-
-        // 1. Send push notification to customer - Non-blocking
-        try {
-            if (order.customer) {
-                console.log(`[StatusUpdate] Sending notification to customer ${order.customer} for status ${status}`);
-                await sendPushNotification(
-                    String(order.customer),
-                    `Order ${status.toUpperCase()}`,
-                    `Your order #${order.orderId} is now ${status.replace("_", " ")}`,
-                    { orderId: String(order._id), type: 'ORDER_STATUS_UPDATE' },
-                    'Customer'
-                );
-            }
-        } catch (pushError) {
-            console.error("[StatusUpdate] Push notification failed:", pushError.message);
-        }
-
-        // 2. Extra notifications for specific status
-        if (status === ORDER_STATUS.AT_LOCATION && oldStatus !== ORDER_STATUS.AT_LOCATION) {
-            try {
-                if (order.customer) {
-                    await sendPushNotification(
-                        String(order.customer),
-                        "Driver is nearby",
-                        "Your delivery partner has reached near your location.",
-                        { orderId: String(order._id), type: "ORDER_AT_LOCATION" },
-                        "Customer"
-                    );
-                }
-            } catch (pushError) {
-                console.error("[StatusUpdate] Nearby notification failed:", pushError.message);
-            }
-        }
-
-        console.log(`[StatusUpdate] Hydrating order ${orderId}`);
-        const populatedOrder = await Order.findById(order._id).populate(
-            "customer branch items.item deliveryPartner"
-        );
-
-        if (!populatedOrder) {
-            console.error(`[StatusUpdate] Failed to refetch populated order ${orderId}`);
-            return reply.status(500).send({ message: "Failed to retrieve updated order" });
-        }
-
-        // 3. Real-time update
-        if (req.server.io) {
-            console.log(`[StatusUpdate] Emitting real-time updates for order ${orderId}`);
-            try {
-                req.server.io.to(orderId).emit("liveTrackingUpdates", {
-                    ...populatedOrder.toObject(),
-                    deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
-                });
-
-                req.server.io.emit("admin:order-status-update", {
-                    orderId: String(order._id),
-                    status: status,
-                    orderNumber: populatedOrder.orderId
-                });
-            } catch (ioError) {
-                console.error("[StatusUpdate] Socket emission failed:", ioError.message);
-            }
-        }
-
-        // 4. Status-specific logic (DELIVERED)
+        // 1. Status-specific logic (DO NOT SAVE HERE, modify order object)
         if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
-            console.log(`[StatusUpdate] Processing post-delivery logic for order ${orderId}`);
+            console.log(`[StatusUpdate] BUSINESS LOGIC: Processing delivery for ${orderId}`);
             try {
                 if (order.paymentMethod === "COD") {
                     order.codCollected = order.totalPrice;
-                    await order.save();
                 }
-
                 // Driver Earning Logic
                 order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
-                await order.save();
-
-                // Award Green Points to Customer
-                if (order.customer) {
-                    console.log(`[StatusUpdate] Awarding Green Points to ${order.customer}`);
-                    const gpConfig = await GreenPointsConfig.getConfig();
-                    if (gpConfig?.earnRules?.sustainablePurchase?.enabled) {
-                        const pointsPerHundred = gpConfig.earnRules.sustainablePurchase.pointsPerHundred || 1;
-                        const points = Math.floor((order.totalPrice / 100) * pointsPerHundred);
-
-                        if (points > 0) {
-                            const gpRecord = await GreenPoints.getOrCreate(order.customer);
-                            await gpRecord.earnPoints(
-                                "sustainable_purchase",
-                                points,
-                                `Reward for Order #${order.orderId || order._id}`,
-                                order.orderId || order._id
-                            );
-                            await Customer.findByIdAndUpdate(order.customer, {
-                                greenPointsBalance: gpRecord.totalBalance
-                            });
-                        }
-                    }
-                }
-
-                // Referral Logic
-                if (order.customer) {
-                    console.log(`[StatusUpdate] Checking referral for ${order.customer}`);
-                    const customer = await Customer.findById(order.customer);
-                    if (customer?.referredBy) {
-                        const orderCount = await Order.countDocuments({ customer: order.customer, status: "delivered" });
-                        if (orderCount === 1) {
-                            const referral = await Referral.findOne({ referee: order.customer, bonusesAwarded: false });
-                            if (referral) {
-                                console.log(`[StatusUpdate] Awarding referral bonuses for referral ${referral._id}`);
-                                const gpConfig = await GreenPointsConfig.getConfig();
-                                const rules = gpConfig.earnRules.referral;
-
-                                if (rules?.enabled) {
-                                    const awardToReferrer = ["referrer", "both"].includes(rules.awardTo);
-                                    const awardToReferee = ["referee", "both"].includes(rules.awardTo);
-
-                                    if (awardToReferrer) {
-                                        const referrerGP = await GreenPoints.getOrCreate(referral.referrer);
-                                        await referrerGP.earnPoints(
-                                            "referral",
-                                            referral.referrerPoints,
-                                            `Referral bonus for ${customer.name || 'Friend'}'s first order`,
-                                            referral.referralCode
-                                        );
-                                        await Customer.findByIdAndUpdate(referral.referrer, {
-                                            greenPointsBalance: referrerGP.totalBalance
-                                        });
-                                    }
-
-                                    if (awardToReferee) {
-                                        const refereeGP = await GreenPoints.getOrCreate(order.customer);
-                                        await refereeGP.earnPoints(
-                                            "referral",
-                                            referral.refereePoints,
-                                            "First order referral bonus",
-                                            referral.referralCode
-                                        );
-                                        await Customer.findByIdAndUpdate(order.customer, {
-                                            greenPointsBalance: refereeGP.totalBalance
-                                        });
-                                    }
-                                    await referral.markBonusesAwarded();
-                                }
-                            }
-                        }
-                    }
-                }
-            } catch (postDeliveryError) {
-                console.error("[StatusUpdate] Post-delivery business logic failed:", postDeliveryError);
+            } catch (calcError) {
+                console.error("[StatusUpdate] Earning calculation failed:", calcError.message);
             }
         }
 
-        // 5. Status-specific logic (CANCELLED)
         if (status === ORDER_STATUS.CANCELLED && oldStatus !== ORDER_STATUS.CANCELLED) {
-            console.log(`[StatusUpdate] Returning stock for cancelled order ${orderId}`);
+            console.log(`[StatusUpdate] BUSINESS LOGIC: Stock return for ${orderId}`);
             try {
                 for (const orderItem of order.items) {
                     const product = await Product.findById(orderItem.item);
@@ -429,16 +288,100 @@ export const updateOrderStatus = async (req, reply) => {
                         await product.save();
                     }
                 }
-            } catch (cancelError) {
-                console.error("[StatusUpdate] Stock return failed:", cancelError);
+            } catch (stockError) {
+                console.error("[StatusUpdate] Stock return failed:", stockError.message);
             }
         }
 
-        console.log(`[StatusUpdate] Request completed successfully for order ${orderId}`);
+        // 2. CONSOLIDATED SAVE
+        console.log(`[StatusUpdate] DB_SAVE: Order ${orderId}`);
+        await order.save();
+        console.log(`[StatusUpdate] DB_SAVE_SUCCESS: Order ${orderId}`);
+
+        // 3. Post-Save Side Effects (Non-blocking)
+        try {
+            // Notifications & Points logic (wrapped in catch-all for extreme safety)
+            (async () => {
+                try {
+                    // Push Notification
+                    if (order.customer) {
+                        await sendPushNotification(
+                            String(order.customer),
+                            `Order ${status.toUpperCase()}`,
+                            `Your order #${order.orderId} is now ${status.replace("_", " ")}`,
+                            { orderId: String(order._id), type: 'ORDER_STATUS_UPDATE' },
+                            'Customer'
+                        );
+                    }
+
+                    // Green Points & Referral (Only on Delivered)
+                    if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
+                        const gpConfig = await GreenPointsConfig.getConfig();
+                        if (gpConfig?.earnRules?.sustainablePurchase?.enabled && order.customer) {
+                            const points = Math.floor((order.totalPrice / 100) * (gpConfig.earnRules.sustainablePurchase.pointsPerHundred || 1));
+                            if (points > 0) {
+                                const gpRecord = await GreenPoints.getOrCreate(order.customer);
+                                await gpRecord.earnPoints("sustainable_purchase", points, `Order #${order.orderId}`, order._id);
+                                await Customer.findByIdAndUpdate(order.customer, { greenPointsBalance: gpRecord.totalBalance });
+                            }
+                        }
+
+                        // Referral
+                        const customer = await Customer.findById(order.customer);
+                        if (customer?.referredBy) {
+                            const orderCount = await Order.countDocuments({ customer: order.customer, status: "delivered" });
+                            if (orderCount === 1) {
+                                const referral = await Referral.findOne({ referee: order.customer, bonusesAwarded: false });
+                                if (referral && gpConfig?.earnRules?.referral?.enabled) {
+                                    const rGP = await GreenPoints.getOrCreate(referral.referrer);
+                                    await rGP.earnPoints("referral", referral.referrerPoints, `Referral bonus`, referral.referralCode);
+                                    const refGP = await GreenPoints.getOrCreate(order.customer);
+                                    await refGP.earnPoints("referral", referral.refereePoints, `Welcome bonus`, referral.referralCode);
+                                    await Promise.all([
+                                        Customer.findByIdAndUpdate(referral.referrer, { greenPointsBalance: rGP.totalBalance }),
+                                        Customer.findByIdAndUpdate(order.customer, { greenPointsBalance: refGP.totalBalance }),
+                                        referral.markBonusesAwarded()
+                                    ]);
+                                }
+                            }
+                        }
+                    }
+                } catch (innerError) {
+                    console.error("[StatusUpdate] Async side-effects error:", innerError.message);
+                }
+            })();
+        } catch (ignored) { }
+
+        // 4. Final Response Preparation
+        console.log(`[StatusUpdate] HYDRATE: Order ${orderId}`);
+        const populatedOrder = await Order.findById(order._id).populate("customer branch items.item deliveryPartner");
+
+        if (req.server.io && populatedOrder) {
+            console.log(`[StatusUpdate] SOCKET_EMIT: Order ${orderId}`);
+            try {
+                req.server.io.to(orderId).emit("liveTrackingUpdates", {
+                    ...populatedOrder.toObject(),
+                    deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
+                });
+                req.server.io.emit("admin:order-status-update", {
+                    orderId: String(order._id),
+                    status: status,
+                    orderNumber: populatedOrder.orderId
+                });
+            } catch (socketError) {
+                console.error("[StatusUpdate] Socket error:", socketError.message);
+            }
+        }
+
+        console.log(`[StatusUpdate] COMPLETED: Order ${orderId}`);
         return reply.send(populatedOrder);
     } catch (error) {
-        console.error("updateOrderStatus global error:", error);
-        return reply.status(500).send({ message: "Failed to update order status", error: error.message });
+        console.error("updateOrderStatus CRITICAL ERROR:", error);
+        return reply.status(500).send({
+            message: "Failed to update order status",
+            error: error.message,
+            stack: process.env.NODE_ENV === "development" ? error.stack : undefined
+        });
     }
 };
 
