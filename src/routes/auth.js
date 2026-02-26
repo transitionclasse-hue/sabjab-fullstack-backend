@@ -20,6 +20,7 @@ export const authRoutes = async (fastify) => {
 
     // Delivery Partner Endpoint
     fastify.post("/delivery/login", loginDeliveryPartner);
+    fastify.post("/auth/login", loginAdmin); // For Manager App
 
     // System Endpoints
     fastify.post("/customer/refresh-token", refreshToken);

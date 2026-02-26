@@ -1,4 +1,4 @@
-import { Customer, DeliveryPartner } from '../../models/user.js';
+import { Customer, DeliveryPartner, Admin } from '../../models/user.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -240,6 +240,36 @@ export const loginDeliveryPartner = async (req, reply) => {
     });
   } catch (error) {
     return reply.code(500).send({ message: "Driver login failed", error: error.message });
+  }
+};
+
+/* ===========================
+   ADMIN/MANAGER LOGIN
+=========================== */
+export const loginAdmin = async (req, reply) => {
+  try {
+    const { email: rawEmail, password: rawPassword } = req.body;
+    const email = String(rawEmail || "").trim().toLowerCase();
+    const password = String(rawPassword || "").trim();
+
+    console.log(`[AUTH DEBUG] Attempting Admin Login: ${email}`);
+
+    const user = await Admin.findOne({ email });
+
+    if (!user || user.password !== password) {
+      return reply.code(401).send({ message: "Invalid admin credentials" });
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    return reply.send({
+      message: "Admin login successful",
+      token: accessToken, // Manager app expects 'token'
+      refreshToken,
+      user
+    });
+  } catch (error) {
+    return reply.code(500).send({ message: "Admin login failed", error: error.message });
   }
 };
 
