@@ -37,6 +37,11 @@ const orderSchema = new mongoose.Schema({
         required: true,
       },
       count: { type: Number, required: true },
+      variation: {
+        name: { type: String },
+        price: { type: Number },
+        discountPrice: { type: Number },
+      },
     },
   ],
 

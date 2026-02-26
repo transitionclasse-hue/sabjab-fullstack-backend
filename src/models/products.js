@@ -28,6 +28,15 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  variations: [
+    {
+      name: { type: String, required: true },
+      price: { type: Number, required: true },
+      discountPrice: { type: Number },
+      stock: { type: Number, default: 0 },
+      isAvailable: { type: Boolean, default: true },
+    },
+  ],
 });
 
 // Pre-save hook to convert category string to ObjectId

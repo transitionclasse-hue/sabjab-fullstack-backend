@@ -929,8 +929,8 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           listProperties: ["name", "price", "stock", "isAvailable", "quantity", "superCategory", "category", "subCategory", "image"],
-          editProperties: ["name", "description", "uploadFile", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "image"],
+          editProperties: ["name", "description", "uploadFile", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "image", "variations"],
           actions: {
             new: { after: [replaceKeyWithUrl] },
             edit: { after: [replaceKeyWithUrl] },
@@ -983,6 +983,11 @@ export async function buildAdminRouter(app) {
                 edit: Components.FilteredSubCategory,
               },
             },
+            'variations.name': { label: 'Variation Label (e.g. 500g)' },
+            'variations.price': { label: 'MRP Price (₹)' },
+            'variations.discountPrice': { label: 'Sale Price (₹)' },
+            'variations.stock': { label: 'Stock Count' },
+            'variations.isAvailable': { label: 'In Stock?' },
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
