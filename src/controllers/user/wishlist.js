@@ -3,8 +3,12 @@ import { Customer } from "../../models/user.js";
 // Toggle Wishlist Item
 export const toggleWishlist = async (req, reply) => {
     try {
-        const { userId } = req.user;
+        const { userId, role } = req.user;
         const { productId } = req.body;
+
+        if (role !== "Customer") {
+            return reply.code(403).send({ message: "Only customers can have wishlists" });
+        }
 
         if (!productId) {
             return reply.code(400).send({ message: "Product ID is required" });
@@ -12,7 +16,7 @@ export const toggleWishlist = async (req, reply) => {
 
         const customer = await Customer.findById(userId);
         if (!customer) {
-            return reply.code(404).send({ message: "Customer not found" });
+            return reply.code(404).send({ message: "Customer account not found" });
         }
 
         const index = customer.wishlist.indexOf(productId);
@@ -36,11 +40,16 @@ export const toggleWishlist = async (req, reply) => {
 // Get User Wishlist
 export const getWishlist = async (req, reply) => {
     try {
-        const { userId } = req.user;
+        const { userId, role } = req.user;
+
+        if (role !== "Customer") {
+            // If they are not a customer, just return an empty wishlist rather than erroring 404
+            return reply.send({ wishlist: [], message: "Wishlist is only available for customers" });
+        }
 
         const customer = await Customer.findById(userId).populate("wishlist");
         if (!customer) {
-            return reply.code(404).send({ message: "Customer not found" });
+            return reply.code(404).send({ message: "Customer account not found" });
         }
 
         return reply.send({ wishlist: customer.wishlist });
