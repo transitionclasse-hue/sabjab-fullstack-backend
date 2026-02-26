@@ -928,6 +928,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
+          navigation: { name: "Inventory", icon: "Package" },
           listProperties: ["name", "price", "stock", "isAvailable", "quantity", "superCategory", "category", "subCategory", "image"],
           editProperties: ["name", "description", "uploadFile", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "variations"],
           showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "image", "variations"],
@@ -937,7 +938,7 @@ export async function buildAdminRouter(app) {
           },
           properties: {
             name: {
-              label: "Product Name",
+              label: "Product Name (V-TEST)",
               isRequired: true,
             },
             description: {
@@ -983,11 +984,32 @@ export async function buildAdminRouter(app) {
                 edit: Components.FilteredSubCategory,
               },
             },
-            'variations.name': { label: 'Variation Label (e.g. 500g)' },
-            'variations.price': { label: 'MRP Price (₹)' },
-            'variations.discountPrice': { label: 'Sale Price (₹)' },
-            'variations.stock': { label: 'Stock Count' },
-            'variations.isAvailable': { label: 'In Stock?' },
+            variations: {
+              label: "Product Variations / Swatches",
+              type: 'mixed',
+              description: "Add different sizes, weights, or packs here."
+            },
+            'variations.name': {
+              label: 'Variation Label (e.g. 500g)',
+              isRequired: true
+            },
+            'variations.price': {
+              label: 'MRP Price (₹)',
+              type: 'number',
+              isRequired: true
+            },
+            'variations.discountPrice': {
+              label: 'Sale Price (₹)',
+              type: 'number'
+            },
+            'variations.stock': {
+              label: 'Stock Count',
+              type: 'number'
+            },
+            'variations.isAvailable': {
+              label: 'In Stock?',
+              type: 'boolean'
+            },
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
