@@ -2,6 +2,7 @@ import {
     requestEmailOtp,
     verifyOtp,
     loginDeliveryPartner,
+    loginAdmin,
     refreshToken,
     fetchUser,
     checkPhone,
