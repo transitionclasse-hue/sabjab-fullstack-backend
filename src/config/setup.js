@@ -1099,6 +1099,16 @@ export async function buildAdminRouter(app) {
       };
     }
 
+    const driverModels = ["DeliveryPartner", "Payout", "WalletTransaction"];
+    if (driverModels.includes(model.modelName)) {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "Driver Management", icon: "Truck" },
+        },
+      };
+    }
+
     if (model.modelName !== "Order") {
       return { resource: model };
     }
@@ -1118,7 +1128,7 @@ export async function buildAdminRouter(app) {
                 const Order = mongoose.models.Order;
                 const DeliveryPartner = mongoose.models.DeliveryPartner;
 
-                const dbOrder = await Order.findById(record.params._id);
+                const dbOrder = await Order.findById(record.id);
                 const driver = await DeliveryPartner.findById(driverId);
 
                 if (!dbOrder || !driver) {
@@ -1176,7 +1186,7 @@ export async function buildAdminRouter(app) {
               const Order = mongoose.models.Order;
               const DeliveryPartner = mongoose.models.DeliveryPartner;
 
-              const dbOrder = await Order.findById(record.params._id);
+              const dbOrder = await Order.findById(record.id);
               if (!dbOrder) {
                 return {
                   notice: { message: "Order not found", type: "error" },
@@ -1229,7 +1239,7 @@ export async function buildAdminRouter(app) {
               }
 
               const Order = mongoose.models.Order;
-              const dbOrder = await Order.findById(record.params._id);
+              const dbOrder = await Order.findById(record.id);
 
               if (!dbOrder.deliveryPartner) {
                 return { notice: { message: "Assign a Driver first!", type: "error" } };
@@ -1263,7 +1273,7 @@ export async function buildAdminRouter(app) {
               }
 
               const Order = mongoose.models.Order;
-              const dbOrder = await Order.findById(record.params._id);
+              const dbOrder = await Order.findById(record.id);
 
               dbOrder.status = "delivered";
               await dbOrder.save();
