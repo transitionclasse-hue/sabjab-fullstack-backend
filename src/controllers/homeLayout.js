@@ -65,7 +65,16 @@ export const getHomeLayout = async (req, reply) => {
         // 5. Fetch Store Status
         const storeStatus = await StoreStatus.findOne({ key: "primary" }).lean();
 
-        // 6. Build unified response
+        // 6. Fetch Global Special Occasion
+        const GlobalConfig = mongoose.models.GlobalConfig;
+        const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
+
+        let specialOccasion = null;
+        if (config && config.value) {
+            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor").lean();
+        }
+
+        // 7. Build unified response
         return reply.send({
             variation: variation ? {
                 id: variation._id,
@@ -80,7 +89,8 @@ export const getHomeLayout = async (req, reply) => {
             layout: hydratedComponents,
             categories: occasions, // Restored for frontend
             customCategories: occasions, // Fallback for various strip implementations
-            storeStatus
+            storeStatus,
+            specialOccasion // ✅ NEW: Sent for the Search Bar area
         });
 
     } catch (error) {

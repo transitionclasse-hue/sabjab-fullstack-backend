@@ -134,6 +134,23 @@ export async function buildAdminRouter(app) {
       },
       { upsert: true, new: true }
     );
+
+    // ✅ Seed Special Occasion ID if not exists (for header banner)
+    const Occasion = mongoose.models.Occasion;
+    const ramadan = await Occasion.findOne({ name: "Ramadan Specials" });
+    if (ramadan) {
+      await mongoose.models.GlobalConfig.findOneAndUpdate(
+        { key: "header_special_occasion" },
+        {
+          $setOnInsert: {
+            key: "header_special_occasion",
+            value: ramadan._id,
+            description: "Active occasion displayed next to search bar"
+          }
+        },
+        { upsert: true, new: true }
+      );
+    }
   }
 
   const resources = Object.values(mongoose.models).map((model) => {
