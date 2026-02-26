@@ -163,6 +163,13 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "App Settings", icon: "Settings" },
           listProperties: ["key", "value", "description"],
+          properties: {
+            value: {
+              type: 'string',
+              description: 'Occasion ID (e.g., from Occasion list)',
+            },
+            key: { isId: true, isReadOnly: true },
+          }
         },
       };
     }
@@ -224,16 +231,6 @@ export async function buildAdminRouter(app) {
       };
     }
 
-    if (model.modelName === "GlobalConfig") {
-      return {
-        resource: model,
-        options: {
-          navigation: { name: "App Settings", icon: "Settings" },
-          listProperties: ["key", "value", "description"],
-          editProperties: ["key", "value", "description"],
-        },
-      };
-    }
 
     if (model.modelName === "SupportMessage") {
       return {
@@ -1078,7 +1075,7 @@ export async function buildAdminRouter(app) {
             name: "Home Page Builder",
             icon: "Layout",
           },
-          listProperties: ["name", "themeColor", "showBanner", "isDefault", "isActive"],
+          listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
           editProperties: ["name", "nameAlignment", "icon", "banner", "themeColor", "showBanner", "isDefault", "isActive", "order", "components"],
           properties: {
             name: { label: "Variation Name (e.g. Holi Special)" },
