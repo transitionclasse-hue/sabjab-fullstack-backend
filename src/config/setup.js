@@ -32,7 +32,7 @@ const Components = {
   SupportDashboard: componentLoader.add('SupportDashboard', path.join(__dirname, '../components/SupportDashboard.jsx')),
   SendNotification: componentLoader.add('SendNotification', path.join(__dirname, '../components/SendNotification.jsx')),
   Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../components/Dashboard.jsx')),
-  AssignDriver: componentLoader.add('AssignDriver', path.join(__dirname, '../components/AssignDriver.jsx')),
+  AssignDriver: componentLoader.add('AssignDriverComponent', path.join(__dirname, '../components/AssignDriver.jsx')),
 };
 
 const hydrateOrderForTracking = async (orderId) => {
