@@ -117,6 +117,13 @@ const start = async () => {
           }
         });
 
+        socket.on("joinRoom", (roomId) => {
+          if (roomId) {
+            socket.join(String(roomId));
+            console.log(`📦 Socket ${socket.id} joined tracking room ${roomId}`);
+          }
+        });
+
         socket.on("disconnect", () => {
           console.log("🔴 User disconnected");
         });

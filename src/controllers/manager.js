@@ -9,7 +9,7 @@ export const getManagerOverview = async (req, reply) => {
   try {
     const [totalOrders, activeOrders, deliveredOrders, customers, drivers] = await Promise.all([
       Order.countDocuments({}),
-      Order.countDocuments({ status: { $in: ["available", "confirmed", "arriving"] } }),
+      Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
       Order.countDocuments({ status: "delivered" }),
       Customer.countDocuments({}),
       DeliveryPartner.countDocuments({}),
@@ -32,7 +32,7 @@ export const getManagerOrders = async (req, reply) => {
     const { status, activeOnly } = req.query || {};
     const query = {};
     if (status) query.status = status;
-    if (parseBool(activeOnly)) query.status = { $in: ["available", "confirmed", "arriving"] };
+    if (parseBool(activeOnly)) query.status = { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] };
 
     const orders = await Order.find(query)
       .sort({ createdAt: -1 })
