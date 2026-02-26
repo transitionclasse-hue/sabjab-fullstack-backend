@@ -108,7 +108,14 @@ const start = async () => {
     app.ready().then(() => {
       app.io.on("connection", (socket) => {
 
-        console.log("🟢 User Connected");
+        console.log("🟢 User Connected:", socket.id);
+
+        socket.on("join", (userId) => {
+          if (userId) {
+            socket.join(String(userId));
+            console.log(`👥 User ${userId} joined room`);
+          }
+        });
 
         socket.on("disconnect", () => {
           console.log("🔴 User disconnected");

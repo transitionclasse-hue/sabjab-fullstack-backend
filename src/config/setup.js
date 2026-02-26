@@ -32,6 +32,7 @@ const Components = {
   SupportDashboard: componentLoader.add('SupportDashboard', path.join(__dirname, '../components/SupportDashboard.jsx')),
   SendNotification: componentLoader.add('SendNotification', path.join(__dirname, '../components/SendNotification.jsx')),
   Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../components/Dashboard.jsx')),
+  AssignDriver: componentLoader.add('AssignDriver', path.join(__dirname, '../components/AssignDriver.jsx')),
 };
 
 const hydrateOrderForTracking = async (orderId) => {
@@ -1106,6 +1107,60 @@ export async function buildAdminRouter(app) {
       resource: model,
       options: {
         actions: {
+          assignDriver: {
+            actionType: "record",
+            icon: "UserCheck",
+            component: Components.AssignDriver,
+            handler: async (request, response, context) => {
+              const { record } = context;
+              if (request.method === "post") {
+                const { driverId } = request.payload;
+                const Order = mongoose.models.Order;
+                const DeliveryPartner = mongoose.models.DeliveryPartner;
+
+                const dbOrder = await Order.findById(record.params._id);
+                const driver = await DeliveryPartner.findById(driverId);
+
+                if (!dbOrder || !driver) {
+                  return {
+                    notice: { message: "Order or Driver not found", type: "error" },
+                  };
+                }
+
+                const populatedOrder = await assignDriverToOrder(dbOrder, driver);
+
+                if (app.io && populatedOrder) {
+                  // Notify the customer tracking room
+                  app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
+                    ...populatedOrder.toObject(),
+                    deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                  });
+                  // Notify the specific driver
+                  app.io.to(String(driverId)).emit("driver:order-assigned", {
+                    order: populatedOrder
+                  });
+                  // Broad notification for admin UI
+                  app.io.emit("admin:order-assigned", {
+                    orderId: String(populatedOrder._id),
+                    orderNumber: populatedOrder.orderId,
+                    driverName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                  });
+                }
+
+                return {
+                  record: record.toJSON(context.currentAdmin),
+                  notice: {
+                    message: `Successfully assigned ${driver.name} to order ${dbOrder.orderId}`,
+                    type: "success",
+                  },
+                };
+              }
+
+              return {
+                record: record.toJSON(context.currentAdmin),
+              };
+            },
+          },
           assignMockDriver: {
             actionType: "record",
             icon: "UserPlus",
