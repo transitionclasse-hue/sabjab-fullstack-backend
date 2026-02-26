@@ -2,6 +2,7 @@ import HomeComponent from "../models/homeComponent.js";
 import Product from "../models/products.js";
 import Occasion from "../models/occasion.js";
 import StoreStatus from "../models/storeStatus.js";
+import GlobalConfig from "../models/globalConfig.js";
 
 export const getHomeLayout = async (req, reply) => {
     try {
@@ -66,7 +67,6 @@ export const getHomeLayout = async (req, reply) => {
         const storeStatus = await StoreStatus.findOne({ key: "primary" }).lean();
 
         // 6. Fetch Global Special Occasion
-        const GlobalConfig = mongoose.models.GlobalConfig;
         const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
 
         let specialOccasion = null;
