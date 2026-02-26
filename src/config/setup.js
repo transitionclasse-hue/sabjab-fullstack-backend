@@ -138,13 +138,16 @@ export async function buildAdminRouter(app) {
     // ✅ Seed Special Occasion ID if not exists (for header banner)
     const Occasion = mongoose.models.Occasion;
     const ramadan = await Occasion.findOne({ name: "Ramadan Specials" });
-    if (ramadan) {
+    const diwali = await Occasion.findOne({ name: /Diwali/i });
+    const activeOccasion = ramadan || diwali;
+
+    if (activeOccasion) {
       await mongoose.models.GlobalConfig.findOneAndUpdate(
         { key: "header_special_occasion" },
         {
           $setOnInsert: {
             key: "header_special_occasion",
-            value: ramadan._id,
+            value: activeOccasion._id,
             description: "Active occasion displayed next to search bar"
           }
         },
@@ -154,6 +157,15 @@ export async function buildAdminRouter(app) {
   }
 
   const resources = Object.values(mongoose.models).map((model) => {
+    if (model.modelName === "GlobalConfig") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "App Settings", icon: "Settings" },
+          listProperties: ["key", "value", "description"],
+        },
+      };
+    }
     if (model.modelName === "Customer") {
       return {
         resource: model,
