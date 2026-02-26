@@ -72,7 +72,7 @@ const AssignDriver = (props) => {
     return (
         <Box variant="white" padding="xl" minHeight="400px">
             <Text variant="lg" mb="xl">
-                Assign Driver to Order {record.params.orderId || record.id}
+                Assign Driver to Order {record.params.orderId || "N/A"}
             </Text>
 
             <FormGroup>
