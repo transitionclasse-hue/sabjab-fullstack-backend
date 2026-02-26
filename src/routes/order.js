@@ -3,6 +3,7 @@ import {
     createOrder, 
     getOrderById, 
     getOrders, 
+    releaseOrderAssignment,
     updateOrderStatus 
 } from "../controllers/order/order.js"; //
 import { verifyToken } from "../middleware/auth.js"; //
@@ -19,6 +20,7 @@ export const orderRoutes = async (fastify, options) => {
     fastify.post("/order", createOrder); //
     fastify.get("/order", getOrders); //
     fastify.patch("/order/:orderId/status", updateOrderStatus); //
+    fastify.patch("/order/:orderId/release-assignment", releaseOrderAssignment); //
     fastify.post("/order/:orderId/confirm", confirmOrder); //
     fastify.get("/order/:orderId", getOrderById); //
 };

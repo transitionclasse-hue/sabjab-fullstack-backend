@@ -11,6 +11,7 @@ const ORDER_STATUS = {
     DELIVERED: "delivered",
     CANCELLED: "cancelled",
 };
+const ASSIGNMENT_TIMEOUT_MS = 5 * 60 * 1000;
 
 const VALID_DRIVER_STATUSES = new Set([
     ORDER_STATUS.CONFIRMED,
@@ -26,6 +27,49 @@ const calculateDriverEarning = async (orderTotal = 0) => {
     const freeThreshold = config?.freeDeliveryThreshold ?? 199;
     const freeEnabled = config?.freeDeliveryEnabled ?? true;
     return freeEnabled && Number(orderTotal) >= freeThreshold ? 0 : baseFee;
+};
+
+const isAssignmentExpired = (assignedAt) =>
+    Boolean(assignedAt) && (Date.now() - new Date(assignedAt).getTime() >= ASSIGNMENT_TIMEOUT_MS);
+
+export const expireStaleAssignedOrders = async (io = null) => {
+    const cutoff = new Date(Date.now() - ASSIGNMENT_TIMEOUT_MS);
+    const staleOrders = await Order.find({
+        status: ORDER_STATUS.ASSIGNED,
+        assignedAt: { $lte: cutoff },
+        deliveryPartner: { $ne: null },
+    });
+
+    if (!staleOrders.length) return 0;
+
+    for (const staleOrder of staleOrders) {
+        const previousDriverId = staleOrder.deliveryPartner ? String(staleOrder.deliveryPartner) : null;
+        staleOrder.status = ORDER_STATUS.AVAILABLE;
+        staleOrder.deliveryPartner = undefined;
+        staleOrder.assignedAt = undefined;
+        staleOrder.deliveryPersonLocation = undefined;
+        await staleOrder.save();
+
+        if (io) {
+            io.to(String(staleOrder._id)).emit("liveTrackingUpdates", {
+                ...staleOrder.toObject(),
+                deliveryPartnerName: "",
+            });
+            io.emit("admin:order-status-update", {
+                orderId: String(staleOrder._id),
+                status: ORDER_STATUS.AVAILABLE,
+                orderNumber: staleOrder.orderId,
+            });
+            if (previousDriverId) {
+                io.to(previousDriverId).emit("driver:assignment-expired", {
+                    orderId: String(staleOrder._id),
+                    orderNumber: staleOrder.orderId,
+                });
+            }
+        }
+    }
+
+    return staleOrders.length;
 };
 
 // Create a new order (Initial Customer Action)
@@ -188,6 +232,15 @@ export const confirmOrder = async (req, reply) => {
         const order = await Order.findById(orderId); //
         if (!order) {
             return reply.status(404).send({ message: "Order not found" }); //
+        }
+
+        if (order.status === ORDER_STATUS.ASSIGNED && isAssignmentExpired(order.assignedAt)) {
+            order.status = ORDER_STATUS.AVAILABLE;
+            order.deliveryPartner = undefined;
+            order.assignedAt = undefined;
+            order.deliveryPersonLocation = undefined;
+            await order.save();
+            return reply.status(400).send({ message: "Assignment expired. Order returned to manager." });
         }
 
         if (![ORDER_STATUS.AVAILABLE, ORDER_STATUS.ASSIGNED].includes(order.status)) {
@@ -388,6 +441,8 @@ export const updateOrderStatus = async (req, reply) => {
 // Fetch all orders with optional filters
 export const getOrders = async (req, reply) => {
     try {
+        await expireStaleAssignedOrders(req.server.io);
+
         const { status, customerId, deliveryPartnerId, branchId } = req.query;
         const { userId, role } = req.user || {};
         let query = {};
@@ -417,6 +472,54 @@ export const getOrders = async (req, reply) => {
         return reply.send(orders);
     } catch (error) {
         return reply.status(500).send({ message: "Failed to retrieve orders", error: error.message });
+    }
+};
+
+export const releaseOrderAssignment = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { userId, role } = req.user || {};
+
+        const order = await Order.findById(orderId);
+        if (!order) return reply.status(404).send({ message: "Order not found" });
+
+        if (order.status !== ORDER_STATUS.ASSIGNED) {
+            return reply.status(400).send({ message: "Order is not in assigned state" });
+        }
+
+        const assignedDriverId = order.deliveryPartner ? String(order.deliveryPartner) : "";
+        const isManager = role === "Manager" || role === "Admin";
+        const isAssignedDriver = role === "DeliveryPartner" && assignedDriverId === String(userId);
+
+        if (!isManager && !isAssignedDriver) {
+            return reply.status(403).send({ message: "Unauthorized to release assignment" });
+        }
+
+        order.status = ORDER_STATUS.AVAILABLE;
+        order.deliveryPartner = undefined;
+        order.assignedAt = undefined;
+        order.deliveryPersonLocation = undefined;
+        await order.save();
+
+        const populatedOrder = await Order.findById(order._id).populate(
+            "customer branch items.item deliveryPartner"
+        );
+
+        if (req.server.io) {
+            req.server.io.to(String(order._id)).emit("liveTrackingUpdates", {
+                ...populatedOrder.toObject(),
+                deliveryPartnerName: "",
+            });
+            req.server.io.emit("admin:order-status-update", {
+                orderId: String(order._id),
+                status: ORDER_STATUS.AVAILABLE,
+                orderNumber: populatedOrder.orderId,
+            });
+        }
+
+        return reply.send(populatedOrder);
+    } catch (error) {
+        return reply.status(500).send({ message: "Failed to release assignment", error: error.message });
     }
 };
 

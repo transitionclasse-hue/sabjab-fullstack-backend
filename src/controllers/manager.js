@@ -2,11 +2,13 @@ import { Order, DeliveryPartner, Branch, Customer } from "../models/index.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import Referral from "../models/referral.js";
+import { expireStaleAssignedOrders } from "./order/order.js";
 
 const parseBool = (v) => String(v).toLowerCase() === "true";
 
 export const getManagerOverview = async (req, reply) => {
   try {
+    await expireStaleAssignedOrders(req.server.io);
     const [totalOrders, activeOrders, deliveredOrders, customers, drivers] = await Promise.all([
       Order.countDocuments({}),
       Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
@@ -29,6 +31,7 @@ export const getManagerOverview = async (req, reply) => {
 
 export const getManagerOrders = async (req, reply) => {
   try {
+    await expireStaleAssignedOrders(req.server.io);
     const { status, activeOnly } = req.query || {};
     const query = {};
     if (status) query.status = status;
@@ -68,7 +71,8 @@ export const assignDriverByManager = async (req, reply) => {
     if (!driver) return reply.status(404).send({ message: "Driver not found" });
 
     order.deliveryPartner = driver._id;
-    order.status = order.status === "available" ? "confirmed" : order.status;
+    order.status = "assigned";
+    order.assignedAt = new Date();
     order.deliveryPersonLocation = {
       latitude: driver.liveLocation?.latitude ?? order.pickupLocation?.latitude,
       longitude: driver.liveLocation?.longitude ?? order.pickupLocation?.longitude,
@@ -89,6 +93,9 @@ export const assignDriverByManager = async (req, reply) => {
       orderId: String(order._id),
       orderNumber: order.orderId,
       driverName: populatedOrder?.deliveryPartner?.name || "Delivery Partner",
+    });
+    req.server.io.to(String(driver._id)).emit("driver:order-assigned", {
+      order: populatedOrder,
     });
 
     return reply.send(populatedOrder);
