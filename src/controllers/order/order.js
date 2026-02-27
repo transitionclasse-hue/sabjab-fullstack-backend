@@ -23,8 +23,8 @@ const VALID_DRIVER_STATUSES = new Set([
 
 const calculateDriverEarning = async (orderTotal = 0) => {
     const config = await PricingConfig.findOne({ key: "primary" });
-    const baseFee = config?.baseDeliveryFee ?? 30; // UPDATED: Default 30
-    return baseFee; // UPDATED: Driver always gets paid even if free for customer
+    const driverFee = config?.defaultDriverEarning ?? 30; // UPDATED: Use defaultDriverEarning config
+    return driverFee;
 };
 
 const isAssignmentExpired = (assignedAt) =>
@@ -392,11 +392,14 @@ export const updateOrderStatus = async (req, reply) => {
 
             try {
                 // Driver Earning Logic - Update BEFORE creating transaction
-                order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
+                // Preserve custom earning if set by manager
+                if (!order.driverEarning || order.driverEarning <= 0) {
+                    order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
+                }
 
                 // Handle Driver Earnings Transaction
                 if (order.deliveryPartner && order.driverEarning > 0) {
-                    await WalletTransaction.create({
+                    const feeTxn = await WalletTransaction.create({
                         deliveryPartner: order.deliveryPartner,
                         order: order._id,
                         amount: order.driverEarning,
@@ -405,13 +408,14 @@ export const updateOrderStatus = async (req, reply) => {
                         description: `Delivery fee for order #${order.orderId}`,
                         status: "completed"
                     });
+                    console.log(`[OrderUpdate] SUCCESS: Created delivery fee transaction ${feeTxn._id} for driver ${order.deliveryPartner}`);
                 }
 
                 // Handle COD Collection Tracking
                 if (order.paymentMethod === "COD") {
                     order.codCollected = order.totalPrice; // Assuming totalAmount is totalPrice
                     if (order.deliveryPartner) {
-                        await WalletTransaction.create({
+                        const codTxn = await WalletTransaction.create({
                             deliveryPartner: order.deliveryPartner,
                             order: order._id,
                             amount: order.totalPrice, // Assuming totalAmount is totalPrice
@@ -420,6 +424,7 @@ export const updateOrderStatus = async (req, reply) => {
                             description: `COD collected for order #${order.orderId}`,
                             status: "completed"
                         });
+                        console.log(`[OrderUpdate] SUCCESS: Created COD collection transaction ${codTxn._id} for driver ${order.deliveryPartner}`);
                     }
                 }
             } catch (calcError) {

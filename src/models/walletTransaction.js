@@ -55,14 +55,18 @@ walletTransactionSchema.post("save", async function (doc) {
                 if (doc.txnType === "delivery_fee" || doc.txnType === "payout" || doc.txnType === "referral_bonus") {
                     // Wallet balance updates
                     const change = doc.type === "credit" ? doc.amount : -doc.amount;
-                    driver.walletBalance = (driver.walletBalance || 0) + change;
+                    const oldBalance = driver.walletBalance || 0;
+                    driver.walletBalance = oldBalance + change;
+                    console.log(`[WalletSync] DRIVER_WALLET: ${doc.txnType} | Old: ${oldBalance} | Change: ${change} | New: ${driver.walletBalance}`);
                 } else if (doc.txnType === "cod_collection" || doc.txnType === "cod_settlement") {
                     // Cash in hand updates
                     const change = doc.txnType === "cod_collection" ? doc.amount : -doc.amount;
-                    driver.cashInHand = (driver.cashInHand || 0) + change;
+                    const oldCash = driver.cashInHand || 0;
+                    driver.cashInHand = oldCash + change;
+                    console.log(`[WalletSync] DRIVER_CASH: ${doc.txnType} | Old: ${oldCash} | Change: ${change} | New: ${driver.cashInHand}`);
                 }
                 await driver.save();
-                console.log(`[WalletSync] Updated Driver ${driver._id} balance. Wallet: ${driver.walletBalance}, Cash: ${driver.cashInHand}`);
+                console.log(`[WalletSync] SUCCESS: Driver ${driver._id} balances committed.`);
             }
         }
 
