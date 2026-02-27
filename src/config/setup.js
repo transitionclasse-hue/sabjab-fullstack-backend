@@ -175,7 +175,9 @@ export async function buildAdminRouter(app) {
     }
   }
 
+  console.log("🛠️ Building Admin Router... Models found:", Object.keys(mongoose.models).length);
   const resources = Object.values(mongoose.models).map((model) => {
+    console.log("📍 Registering model:", model.modelName);
     if (model.modelName === "GlobalConfig") {
       return {
         resource: model,
@@ -1494,6 +1496,7 @@ export async function buildAdminRouter(app) {
   });
 
   // Simplified Order Assignment Resource for Delivery app integration
+  console.log("📦 Adding OrderAssignment Resource...");
   resources.push({
     resource: mongoose.models.Order,
     options: {
@@ -1580,23 +1583,24 @@ export async function buildAdminRouter(app) {
       }
     },
     branding: {
-      companyName: "SabJab Premium Admin",
+      companyName: "SabJab Premium Store Admin",
       withMadeWithLove: false,
       logo: "https://res.cloudinary.com/dponzgerb/image/upload/v1723444869/category/uic8gcnbzknosdvva13o.png",
       theme: {
         colors: {
-          primary100: "#00F5FF", // Neon Cyan
-          primary80: "#00E5EE",
-          primary60: "#00C5CD",
-          accent: "#22c55e",     // Premium Green
-          love: "#FF2E63",       // Neon Red/Pink
-          grey100: "#0D0D0D", // Deep Black Sidebar
-          grey80: "#1A1A1A",  // Header background
-          grey60: "#262626",  // Table header
-          grey40: "#333333",  // Borders
-          grey20: "#4D4D4D",
-          filterBg: "#050505", // Deepest background
-          white: "#F0F0F0",   // Warm text
+          primary100: "#22c55e", // Professional Emerald Green
+          primary80: "#16a34a",
+          primary60: "#15803d",
+          accent: "#1e293b",     // Deep Navy Accent
+          love: "#e11d48",       // Warning/Error Red
+          grey100: "#f9fafb",    // Page Background
+          grey80: "#ffffff",     // Card background
+          grey60: "#d1d5db",     // Table header
+          grey40: "#e5e7eb",     // Borders
+          grey20: "#6b7280",     // Muted text
+          filterBg: "#ffffff",   // Filter panel
+          white: "#ffffff",      // Pure white
+          black: "#111827",      // Deep Charcoal Text
         },
       },
     },

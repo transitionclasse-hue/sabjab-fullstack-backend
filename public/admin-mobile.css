@@ -1,15 +1,17 @@
 /* ==========================================================
  * admin-mobile.css 
- * Overriding rigid AdminJS logic for a jaw-dropping Premium UI
+ * Professional Premium Light Theme
  * ========================================================== */
 
-/* 0. ROOT VARIABLES FOR NEON THEME */
 :root {
-  --neon-cyan: #00F5FF;
-  --neon-green: #22c55e;
-  --dark-bg: #050505;
-  --card-bg: rgba(26, 26, 26, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --primary-green: #22c55e;
+  --primary-hover: #16a34a;
+  --deep-navy: #1e293b;
+  --bg-light: #f9fafb;
+  --white: #ffffff;
+  --border-color: #e5e7eb;
+  --text-main: #111827;
+  --text-muted: #6b7280;
 }
 
 /* 1. SCROLLABLE TABLES ON MOBILE */
@@ -20,135 +22,151 @@
     -webkit-overflow-scrolling: touch !important;
     padding-bottom: 20px;
     border-radius: 12px;
-    background: var(--card-bg) !important;
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--glass-border);
+    background: var(--white) !important;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   table th,
   table td {
     white-space: nowrap !important;
-    padding: 18px 14px !important;
+    padding: 14px 12px !important;
     font-size: 13px !important;
   }
 }
 
 /* 2. GLOBAL UI ENHANCEMENTS */
 body {
-  background-color: var(--dark-bg) !important;
+  background-color: var(--bg-light) !important;
+  color: var(--text-main) !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
 }
 
-/* Glassmorphic Cards */
+/* Premium Cards */
 section[data-css="page-body"],
 div[data-css="box"],
 .sc-AxjAm {
-  background: var(--card-bg) !important;
-  backdrop-filter: blur(16px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border: 1px solid var(--glass-border) !important;
-  border-radius: 20px !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+  background: var(--white) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
   margin-bottom: 24px !important;
 }
 
 /* Sidebar Styling */
 nav[data-css="sidebar"] {
-  background: #0D0D0D !important;
-  border-right: 1px solid var(--glass-border) !important;
+  background: var(--white) !important;
+  border-right: 1px solid var(--border-color) !important;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02) !important;
+}
+
+nav[data-css="sidebar"] a {
+  color: var(--text-main) !important;
+  font-weight: 500 !important;
 }
 
 nav[data-css="sidebar"] a:hover {
-  background: rgba(0, 245, 255, 0.1) !important;
-  color: var(--neon-cyan) !important;
-  border-left: 3px solid var(--neon-cyan) !important;
+  background: #f0fdf4 !important;
+  /* Extremely light green */
+  color: var(--primary-green) !important;
+  border-left: 4px solid var(--primary-green) !important;
 }
 
-/* Icon Styling & Hover Effects */
+/* Icon Styling */
 nav[data-css="sidebar"] svg,
-nav[data-css="sidebar"] i {
-  color: #888 !important;
-  /* Muted default icon color */
-  transition: all 0.3s ease !important;
-  margin-right: 12px !important;
+nav[data-css="sidebar"] i,
+svg[data-icon] {
+  color: var(--text-muted) !important;
+  transition: all 0.2s ease !important;
 }
 
 nav[data-css="sidebar"] a:hover svg,
-nav[data-css="sidebar"] a:hover i,
 nav[data-css="sidebar"] a.active svg,
+nav[data-css="sidebar"] a:hover i,
 nav[data-css="sidebar"] a.active i {
-  color: var(--neon-cyan) !important;
-  filter: drop-shadow(0 0 5px rgba(0, 245, 255, 0.5)) !important;
-  transform: scale(1.1) !important;
-}
-
-/* Global Icon Accent */
-svg[data-icon],
-i.icon {
-  color: var(--neon-cyan) !important;
+  color: var(--primary-green) !important;
 }
 
 /* Premium Buttons */
 button,
 a.sc-AxiKw {
-  border-radius: 12px !important;
-  text-transform: uppercase !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.5px !important;
-  transition: all 0.3s ease !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
 }
 
 button[data-variant="primary"],
 a[data-variant="primary"] {
-  background: linear-gradient(135deg, var(--neon-cyan), #00C5CD) !important;
-  border: none !important;
-  box-shadow: 0 4px 15px rgba(0, 245, 255, 0.3) !important;
+  background: var(--primary-green) !important;
+  color: #fff !important;
+  border: 1px solid var(--primary-hover) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 button[data-variant="primary"]:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(0, 245, 255, 0.5) !important;
+  background: var(--primary-hover) !important;
+  transform: translateY(-1px) !important;
 }
 
 /* Form Styling */
 input,
 textarea,
 select {
-  border-radius: 12px !important;
-  border: 1px solid #333 !important;
-  background: rgba(0, 0, 0, 0.3) !important;
-  color: #FFF !important;
-  padding: 12px !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-color) !important;
+  background: var(--white) !important;
+  color: var(--text-main) !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+  transition: border-color 0.2s ease !important;
 }
 
-input:focus {
-  border-color: var(--neon-cyan) !important;
-  box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2) !important;
+input:focus,
+textarea:focus {
+  border-color: var(--primary-green) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1) !important;
+}
+
+label {
+  color: var(--text-main) !important;
+  font-weight: 600 !important;
+  margin-bottom: 6px !important;
 }
 
 /* Table Headers */
 thead th {
-  background: rgba(255, 255, 255, 0.03) !important;
+  background: #f8fafc !important;
   text-transform: uppercase !important;
   font-size: 11px !important;
-  letter-spacing: 1px !important;
-  color: var(--neon-cyan) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  color: var(--text-muted) !important;
+  border-bottom: 2px solid var(--border-color) !important;
 }
 
-/* Custom Scrollbar for Premium Feel */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0D0D0D;
+  background: var(--bg-light);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 10px;
+  background: #d1d5db;
+  border-radius: 5px;
+  border: 2px solid var(--bg-light);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--neon-cyan);
+  background: #9ca3af;
+}
+
+/* High Visibility for Specific Resource Labels */
+[data-testid="resource-header"] h1 {
+  color: var(--deep-navy) !important;
+  font-weight: 800 !important;
 }
