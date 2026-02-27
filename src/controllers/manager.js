@@ -94,8 +94,19 @@ export const assignDriverByManager = async (req, reply) => {
       orderNumber: order.orderId,
       driverName: populatedOrder?.deliveryPartner?.name || "Delivery Partner",
     });
+    req.server.io.emit("admin:order-status-update", {
+      orderId: String(order._id),
+      status: "assigned",
+      orderNumber: order.orderId,
+    });
     req.server.io.to(String(driver._id)).emit("driver:order-assigned", {
       order: populatedOrder,
+    });
+    req.server.io.to(String(driver._id)).emit("driver:order-status-update", {
+      orderId: String(order._id),
+      status: "assigned",
+      order: populatedOrder,
+      orderNumber: order.orderId,
     });
 
     return reply.send(populatedOrder);
@@ -125,6 +136,19 @@ export const updateOrderStatusByManager = async (req, reply) => {
       ...populatedOrder.toObject(),
       status,
     });
+    req.server.io.emit("admin:order-status-update", {
+      orderId: String(order._id),
+      status,
+      orderNumber: populatedOrder.orderId,
+    });
+    if (order.deliveryPartner) {
+      req.server.io.to(String(order.deliveryPartner)).emit("driver:order-status-update", {
+        orderId: String(order._id),
+        status,
+        order: populatedOrder,
+        orderNumber: populatedOrder.orderId,
+      });
+    }
 
     return reply.send(populatedOrder);
   } catch (error) {

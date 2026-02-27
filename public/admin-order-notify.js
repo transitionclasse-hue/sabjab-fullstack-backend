@@ -124,6 +124,27 @@
     }, 4500);
   }
 
+  function refreshOrderList() {
+    // Check if on the Order list page or OrderAssignment page
+    var isOrderPage = window.location.pathname.indexOf('/admin/resources/Order') !== -1 &&
+      window.location.pathname.indexOf('/admin/resources/Order/records/') === -1;
+    var isAssignmentPage = window.location.pathname.indexOf('/admin/resources/OrderAssignment') !== -1 &&
+      window.location.pathname.indexOf('/admin/resources/OrderAssignment/records/') === -1;
+
+    if (isOrderPage || isAssignmentPage) {
+      console.log("📦 Order/Assignment Page Detected - Refreshing Data Strip");
+
+      // Target AdminJS Refresh Button if exists
+      var refreshBtn = document.querySelector('button[data-testid="action-refresh"]');
+      if (refreshBtn) {
+        refreshBtn.click();
+      } else {
+        // Fallback: Soft reload to fetch latest records
+        setTimeout(function () { window.location.reload(); }, 1500);
+      }
+    }
+  }
+
   function handleNewOrder(payload) {
     var id = payload && (payload.orderId || payload._id);
     if (!id || played[id]) return;
@@ -131,6 +152,7 @@
     ringBell();
     beep();
     showBanner("New order received: " + (payload.orderNumber || id));
+    refreshOrderList();
   }
 
   function initSocket() {
@@ -143,6 +165,10 @@
         "Driver assigned: " +
         (payload && payload.driverName ? payload.driverName : "Delivery Partner");
       showBanner(msg);
+      refreshOrderList();
+    });
+    socket.on("admin:order-status-update", function (payload) {
+      refreshOrderList();
     });
   }
 

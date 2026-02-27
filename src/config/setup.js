@@ -33,6 +33,8 @@ const Components = {
   SendNotification: componentLoader.add('SendNotification', path.join(__dirname, '../components/SendNotification.jsx')),
   Dashboard: componentLoader.add('Dashboard', path.join(__dirname, '../components/Dashboard.jsx')),
   AssignDriver: componentLoader.add('AssignDriverComponent', path.join(__dirname, '../components/AssignDriver.jsx')),
+  OrderStatus: componentLoader.add('OrderStatusBadge', path.join(__dirname, '../components/OrderStatusBadge.jsx')),
+  DriverStatus: componentLoader.add('DriverStatusBadge', path.join(__dirname, '../components/DriverStatusBadge.jsx')),
 };
 
 const hydrateOrderForTracking = async (orderId) => {
@@ -1152,10 +1154,42 @@ export async function buildAdminRouter(app) {
     return {
       resource: model,
       options: {
-        navigation: { name: "Delivery Management", icon: "Truck" },
+        navigation: { name: "Operations & Sales", icon: "ShoppingCart" },
         sort: {
           sortBy: 'createdAt',
           direction: 'desc'
+        },
+        listProperties: ["orderId", "customer", "deliveryPartner", "status", "totalPrice", "createdAt"],
+        filterProperties: ["orderId", "status", "deliveryPartner", "paymentStatus", "createdAt"],
+        properties: {
+          deliveryPartner: {
+            label: "Delivery Partner",
+            description: "ASSIGN A DRIVER TO CLEAR THE 'NOT ASSIGNED' MARK",
+            components: {
+              list: Components.DriverStatus,
+            },
+          },
+          status: {
+            components: {
+              list: Components.OrderStatus,
+            },
+            availableValues: [
+              { value: "available", label: "🟢 Order Placed (Unassigned)" },
+              { value: "assigned", label: "🟡 Driver Assigned" },
+              { value: "confirmed", label: "🔵 Store Confirmed" },
+              { value: "arriving", label: "🚚 Out for Delivery" },
+              { value: "at_location", label: "📍 At Customer Location" },
+              { value: "delivered", label: "✅ Delivered" },
+              { value: "cancelled", label: "❌ Cancelled" },
+            ],
+          },
+          paymentStatus: {
+            availableValues: [
+              { value: "Pending", label: "⏳ Pending" },
+              { value: "Paid", label: "💰 Paid" },
+              { value: "Refunded", label: "↩️ Refunded" },
+            ]
+          }
         },
         actions: {
           assignDriver: {
@@ -1203,6 +1237,17 @@ export async function buildAdminRouter(app) {
                     orderId: String(populatedOrder._id),
                     orderNumber: populatedOrder.orderId,
                     driverName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                  });
+                  app.io.emit("admin:order-status-update", {
+                    orderId: String(populatedOrder._id),
+                    status: populatedOrder.status,
+                    orderNumber: populatedOrder.orderId,
+                  });
+                  app.io.to(String(driverId)).emit("driver:order-status-update", {
+                    orderId: String(populatedOrder._id),
+                    status: populatedOrder.status,
+                    order: populatedOrder,
+                    orderNumber: populatedOrder.orderId,
                   });
                 }
 
@@ -1274,6 +1319,17 @@ export async function buildAdminRouter(app) {
                   orderNumber: populatedOrder.orderId,
                   driverName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
                 });
+                app.io.emit("admin:order-status-update", {
+                  orderId: String(populatedOrder._id),
+                  status: populatedOrder.status,
+                  orderNumber: populatedOrder.orderId,
+                });
+                app.io.to(String(driver._id)).emit("driver:order-status-update", {
+                  orderId: String(populatedOrder._id),
+                  status: populatedOrder.status,
+                  order: populatedOrder,
+                  orderNumber: populatedOrder.orderId,
+                });
               }
 
               return {
@@ -1311,6 +1367,19 @@ export async function buildAdminRouter(app) {
                   ...populatedOrder.toObject(),
                   deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
                 });
+                if (populatedOrder.deliveryPartner?._id) {
+                  app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
+                    orderId: String(populatedOrder._id),
+                    status: populatedOrder.status,
+                    order: populatedOrder,
+                    orderNumber: populatedOrder.orderId,
+                  });
+                }
+                app.io.emit("admin:order-status-update", {
+                  orderId: String(populatedOrder._id),
+                  status: populatedOrder.status,
+                  orderNumber: populatedOrder.orderId,
+                });
               }
 
               return {
@@ -1340,6 +1409,19 @@ export async function buildAdminRouter(app) {
                 app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
                   ...populatedOrder.toObject(),
                   deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                });
+                if (populatedOrder.deliveryPartner?._id) {
+                  app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
+                    orderId: String(populatedOrder._id),
+                    status: populatedOrder.status,
+                    order: populatedOrder,
+                    orderNumber: populatedOrder.orderId,
+                  });
+                }
+                app.io.emit("admin:order-status-update", {
+                  orderId: String(populatedOrder._id),
+                  status: populatedOrder.status,
+                  orderNumber: populatedOrder.orderId,
                 });
               }
 
@@ -1396,6 +1478,11 @@ export async function buildAdminRouter(app) {
                   ...populatedOrder.toObject(),
                   deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
                 });
+                app.io.emit("admin:order-status-update", {
+                  orderId: String(populatedOrder._id),
+                  status: populatedOrder.status,
+                  orderNumber: populatedOrder.orderId,
+                });
               }
 
               return originalResponse;
@@ -1404,6 +1491,79 @@ export async function buildAdminRouter(app) {
         },
       },
     };
+  });
+
+  // Simplified Order Assignment Resource for Delivery app integration
+  resources.push({
+    resource: mongoose.models.Order,
+    options: {
+      id: "OrderAssignment",
+      navigation: { name: "Delivery Management", icon: "Truck" },
+      listProperties: ["orderId", "status", "deliveryPartner", "driverEarning", "createdAt"],
+      editProperties: ["deliveryPartner", "driverEarning"],
+      filterProperties: ["orderId", "status", "deliveryPartner"],
+      properties: {
+        orderId: { isId: true },
+        driverEarning: {
+          label: "Driver Earning (₹)",
+          helpText: "Set the delivery fee for the partner.",
+          type: 'number'
+        },
+        deliveryPartner: {
+          label: "Assign Driver",
+          components: {
+            list: Components.DriverStatus,
+          },
+        },
+        status: {
+          components: {
+            list: Components.OrderStatus,
+          },
+        }
+      },
+      actions: {
+        assignDriver: {
+          actionType: "record",
+          icon: "UserCheck",
+          component: Components.AssignDriver,
+          handler: async (request, response, context) => {
+            // Reuse logic or redirect? Let's keep it simple and reuse the handler logic if needed, 
+            // but usually AdminJS handles multiple resources of same model fine.
+            // For now, mirroring the main assignDriver action is safer.
+            const { record } = context;
+            if (request.method === "post") {
+              const { driverId } = request.payload;
+              const Order = mongoose.models.Order;
+              const DeliveryPartner = mongoose.models.DeliveryPartner;
+              const dbOrder = await Order.findById(record.id);
+              const driver = await DeliveryPartner.findById(driverId);
+
+              if (!dbOrder || !driver) {
+                return { notice: { message: "Order or Driver not found", type: "error" } };
+              }
+
+              const populatedOrder = await assignDriverToOrder(dbOrder, driver);
+              if (app.io && populatedOrder) {
+                app.io.emit("admin:order-status-update", {
+                  orderId: String(populatedOrder._id),
+                  status: populatedOrder.status,
+                  orderNumber: populatedOrder.orderId,
+                });
+              }
+
+              return {
+                record: record.toJSON(context.currentAdmin),
+                notice: {
+                  message: `Successfully assigned ${driver.name} to order ${dbOrder.orderId}`,
+                  type: "success",
+                },
+              };
+            }
+            return { record: record.toJSON(context.currentAdmin) };
+          },
+        },
+      }
+    }
   });
 
   const admin = new AdminJS({

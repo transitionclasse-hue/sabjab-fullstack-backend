@@ -265,6 +265,17 @@ export const confirmOrder = async (req, reply) => {
             orderNumber: order.orderId,
             driverName: populatedOrder?.deliveryPartner?.name || "Delivery Partner",
         });
+        req.server.io.emit("admin:order-status-update", {
+            orderId: String(order._id),
+            status: ORDER_STATUS.CONFIRMED,
+            orderNumber: order.orderId,
+        });
+        req.server.io.to(String(userId)).emit("driver:order-status-update", {
+            orderId: String(order._id),
+            status: ORDER_STATUS.CONFIRMED,
+            order: populatedOrder,
+            orderNumber: order.orderId,
+        });
 
         return reply.send(order);
     } catch (error) {
@@ -421,6 +432,14 @@ export const updateOrderStatus = async (req, reply) => {
                     status: status,
                     orderNumber: populatedOrder.orderId
                 });
+                if (populatedOrder.deliveryPartner?._id) {
+                    req.server.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
+                        orderId: String(order._id),
+                        status,
+                        order: populatedOrder,
+                        orderNumber: populatedOrder.orderId,
+                    });
+                }
             } catch (socketError) {
                 console.error("[StatusUpdate] Socket error:", socketError.message);
             }
@@ -515,6 +534,14 @@ export const releaseOrderAssignment = async (req, reply) => {
                 status: ORDER_STATUS.AVAILABLE,
                 orderNumber: populatedOrder.orderId,
             });
+            if (assignedDriverId) {
+                req.server.io.to(String(assignedDriverId)).emit("driver:order-status-update", {
+                    orderId: String(order._id),
+                    status: ORDER_STATUS.AVAILABLE,
+                    order: populatedOrder,
+                    orderNumber: populatedOrder.orderId,
+                });
+            }
         }
 
         return reply.send(populatedOrder);
