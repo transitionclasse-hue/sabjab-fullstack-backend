@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Payout } from "../models/index.js";
+import { Order, DeliveryPartner, Payout, WalletTransaction } from "../models/index.js";
 
 const getDateRange = (filter) => {
   const now = new Date();
@@ -29,11 +29,15 @@ export const getWalletStats = async (req, reply) => {
       return reply.status(404).send({ message: "Driver not found" });
     }
 
-    const deliveredQuery = { deliveryPartner: userId, status: "delivered" };
-    const deliveredOrders = await Order.find(deliveredQuery);
+    // Fetch all earnings transactions for the driver
+    const earningsTxns = await WalletTransaction.find({
+      deliveryPartner: userId,
+      txnType: "delivery_fee",
+      status: "completed"
+    }).lean();
 
-    const totalEarnings = deliveredOrders.reduce((sum, o) => sum + (o.driverEarning || 0), 0);
-    const totalTrips = deliveredOrders.length;
+    const totalEarnings = earningsTxns.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+    const totalTrips = await Order.countDocuments({ deliveryPartner: userId, status: "delivered" });
 
     const now = new Date();
     const todayStart = new Date(now);
@@ -42,15 +46,15 @@ export const getWalletStats = async (req, reply) => {
     weekStart.setDate(todayStart.getDate() - (todayStart.getDay() === 0 ? 6 : todayStart.getDay() - 1));
     const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1);
 
-    const todayEarnings = deliveredOrders
-      .filter((o) => new Date(o.updatedAt || o.createdAt) >= todayStart)
-      .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
-    const weekEarnings = deliveredOrders
-      .filter((o) => new Date(o.updatedAt || o.createdAt) >= weekStart)
-      .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
-    const monthEarnings = deliveredOrders
-      .filter((o) => new Date(o.updatedAt || o.createdAt) >= monthStart)
-      .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
+    const todayEarnings = earningsTxns
+      .filter((tx) => new Date(tx.createdAt) >= todayStart)
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+    const weekEarnings = earningsTxns
+      .filter((tx) => new Date(tx.createdAt) >= weekStart)
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
+    const monthEarnings = earningsTxns
+      .filter((tx) => new Date(tx.createdAt) >= monthStart)
+      .reduce((sum, tx) => sum + (tx.amount || 0), 0);
 
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
@@ -59,12 +63,12 @@ export const getWalletStats = async (req, reply) => {
       d.setHours(0, 0, 0, 0);
       const next = new Date(d);
       next.setDate(next.getDate() + 1);
-      const dayEarnings = deliveredOrders
-        .filter((o) => {
-          const od = new Date(o.updatedAt || o.createdAt);
+      const dayEarnings = earningsTxns
+        .filter((tx) => {
+          const od = new Date(tx.createdAt);
           return od >= d && od < next;
         })
-        .reduce((sum, o) => sum + (o.driverEarning || 0), 0);
+        .reduce((sum, tx) => sum + (tx.amount || 0), 0);
       last7Days.push({ date: d.toISOString().slice(0, 10), amount: dayEarnings });
     }
 
@@ -196,13 +200,22 @@ export const getDriverStats = async (req, reply) => {
 export const getCodStatus = async (req, reply) => {
   try {
     const { userId } = req.user;
-    const COD_LIMIT = 1000;
-    const deliveredOrders = await Order.find({
+    const COD_LIMIT = 2000; // Increased limit or fetch from config
+
+    // Sum all cod_collection (liability increase) and subtract any cod_settlement (liability decrease)
+    const txns = await WalletTransaction.find({
       deliveryPartner: userId,
-      status: "delivered",
+      txnType: { $in: ["cod_collection", "cod_settlement"] },
+      status: "completed"
     }).lean();
-    const codCollected = deliveredOrders.reduce((sum, o) => sum + (o.codCollected || 0), 0);
-    return reply.send({ collected: codCollected, limit: COD_LIMIT });
+
+    const codCollected = txns.reduce((sum, tx) => {
+      if (tx.txnType === "cod_collection") return sum + (tx.amount || 0);
+      if (tx.txnType === "cod_settlement") return sum - (tx.amount || 0);
+      return sum;
+    }, 0);
+
+    return reply.send({ collected: Math.max(0, codCollected), limit: COD_LIMIT });
   } catch (error) {
     console.error("getCodStatus error:", error);
     return reply.status(500).send({ message: "Failed to fetch COD status", error: error.message });

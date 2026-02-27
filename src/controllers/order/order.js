@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral } from "../../models/index.js";
+import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction } from "../../models/index.js";
 import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
 
@@ -79,7 +79,16 @@ export const createOrder = async (req, reply) => {
         const { items, branchId, totalAmount, deliveryAddress, couponCode } = req.body;
 
         const customerData = await Customer.findById(userId);
-        const branchData = await Branch.findById(branchId);
+        let branchData = await Branch.findById(branchId);
+
+        // FALLBACK: If no branchId provided or branch not found, pick the first available branch
+        if (!branchData) {
+            console.log("No valid branchId provided, falling back to first available branch");
+            branchData = await Branch.findOne({});
+            if (!branchData) {
+                return reply.status(404).send({ message: "No branches registered in system" });
+            }
+        }
 
         console.log("=== CREATE ORDER DEBUG ===");
         console.log("Token userId:", userId);
@@ -368,14 +377,41 @@ export const updateOrderStatus = async (req, reply) => {
         // 1. Status-specific logic (DO NOT SAVE HERE, modify order object)
         if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
             console.log(`[StatusUpdate] BUSINESS LOGIC: Processing delivery for ${orderId}`);
+            order.deliveredAt = new Date();
+
             try {
+                // Handle Driver Earnings Transaction
+                if (order.deliveryPartner && order.driverEarning > 0) {
+                    await WalletTransaction.create({
+                        deliveryPartner: order.deliveryPartner,
+                        order: order._id,
+                        amount: order.driverEarning,
+                        type: "credit",
+                        txnType: "delivery_fee",
+                        description: `Delivery fee for order #${order.orderId}`,
+                        status: "completed"
+                    });
+                }
+
+                // Handle COD Collection Tracking
                 if (order.paymentMethod === "COD") {
-                    order.codCollected = order.totalPrice;
+                    order.codCollected = order.totalPrice; // Assuming totalAmount is totalPrice
+                    if (order.deliveryPartner) {
+                        await WalletTransaction.create({
+                            deliveryPartner: order.deliveryPartner,
+                            order: order._id,
+                            amount: order.totalPrice, // Assuming totalAmount is totalPrice
+                            type: "debit", // Cash liability
+                            txnType: "cod_collection",
+                            description: `COD collected for order #${order.orderId}`,
+                            status: "completed"
+                        });
+                    }
                 }
                 // Driver Earning Logic
                 order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
             } catch (calcError) {
-                console.error("[StatusUpdate] Earning calculation failed:", calcError.message);
+                console.error("[StatusUpdate] Order delivery logic failed:", calcError.message);
             }
         }
 
