@@ -16,6 +16,7 @@ const DEFAULT_PRICING_CONFIG = {
   lateNightStartTime: "23:00",
   lateNightEndTime: "05:00",
   lateNightFee: 0,
+  defaultDriverEarning: 30,
   customFees: [],
 };
 
@@ -241,6 +242,7 @@ export const updatePricingConfig = async (req, reply) => {
       lateNightStartTime: String(body.lateNightStartTime || "23:00"),
       lateNightEndTime: String(body.lateNightEndTime || "05:00"),
       lateNightFee: Math.max(0, toNumber(body.lateNightFee, 0)),
+      defaultDriverEarning: Math.max(0, toNumber(body.defaultDriverEarning, 30)),
       customFees: sanitizeCustomFees(body.customFees),
     };
 

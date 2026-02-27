@@ -60,7 +60,7 @@ export const getManagerDrivers = async (req, reply) => {
 export const assignDriverByManager = async (req, reply) => {
   try {
     const { orderId } = req.params;
-    const { driverId } = req.body || {};
+    const { driverId, deliveryFee } = req.body || {};
 
     const [order, driver] = await Promise.all([
       Order.findById(orderId),
@@ -73,6 +73,15 @@ export const assignDriverByManager = async (req, reply) => {
     order.deliveryPartner = driver._id;
     order.status = "assigned";
     order.assignedAt = new Date();
+
+    // Set custom driver earning if provided from manager
+    if (deliveryFee !== undefined && deliveryFee !== null) {
+      order.driverEarning = Number(deliveryFee);
+    } else {
+      const config = await PricingConfig.findOne({ key: "primary" });
+      order.driverEarning = config?.defaultDriverEarning || 30;
+    }
+
     order.deliveryPersonLocation = {
       latitude: driver.liveLocation?.latitude ?? order.pickupLocation?.latitude,
       longitude: driver.liveLocation?.longitude ?? order.pickupLocation?.longitude,

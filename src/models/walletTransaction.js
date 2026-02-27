@@ -42,6 +42,44 @@ const walletTransactionSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+// Automatic Balance Synchronization Hook
+walletTransactionSchema.post("save", async function (doc) {
+    if (doc.status !== "completed") return;
+
+    try {
+        const { Customer, DeliveryPartner } = await import("./user.js");
+
+        if (doc.deliveryPartner) {
+            const driver = await DeliveryPartner.findById(doc.deliveryPartner);
+            if (driver) {
+                if (doc.txnType === "delivery_fee" || doc.txnType === "payout" || doc.txnType === "referral_bonus") {
+                    // Wallet balance updates
+                    const change = doc.type === "credit" ? doc.amount : -doc.amount;
+                    driver.walletBalance = (driver.walletBalance || 0) + change;
+                } else if (doc.txnType === "cod_collection" || doc.txnType === "cod_settlement") {
+                    // Cash in hand updates
+                    const change = doc.txnType === "cod_collection" ? doc.amount : -doc.amount;
+                    driver.cashInHand = (driver.cashInHand || 0) + change;
+                }
+                await driver.save();
+                console.log(`[WalletSync] Updated Driver ${driver._id} balance. Wallet: ${driver.walletBalance}, Cash: ${driver.cashInHand}`);
+            }
+        }
+
+        if (doc.customer) {
+            const customer = await Customer.findById(doc.customer);
+            if (customer) {
+                const change = doc.type === "credit" ? doc.amount : -doc.amount;
+                customer.walletBalance = (customer.walletBalance || 0) + change;
+                await customer.save();
+                console.log(`[WalletSync] Updated Customer ${customer._id} wallet balance: ${customer.walletBalance}`);
+            }
+        }
+    } catch (error) {
+        console.error("[WalletSync] Error in post-save hook:", error.message);
+    }
+});
+
 walletTransactionSchema.index({ customer: 1, createdAt: -1 });
 walletTransactionSchema.index({ deliveryPartner: 1, createdAt: -1 });
 

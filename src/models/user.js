@@ -86,6 +86,8 @@ const deliveryPartnerSchema = new mongoose.Schema({
   isOnline: { type: Boolean, default: false },
   lastSeen: { type: Date, default: Date.now },
   batteryLevel: { type: Number, default: 100 },
+  walletBalance: { type: Number, default: 0 },
+  cashInHand: { type: Number, default: 0 },
 }, { timestamps: true });
 
 // ================= ADMIN =================

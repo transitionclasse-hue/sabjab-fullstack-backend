@@ -79,6 +79,8 @@ export const getWalletStats = async (req, reply) => {
       weekEarnings,
       monthEarnings,
       last7Days,
+      currentWalletBalance: driver.walletBalance || 0,
+      cashInHand: driver.cashInHand || 0,
     });
   } catch (error) {
     console.error("getWalletStats error:", error);

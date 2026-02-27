@@ -30,6 +30,7 @@ const pricingConfigSchema = new mongoose.Schema(
     lateNightStartTime: { type: String, default: "23:00" },
     lateNightEndTime: { type: String, default: "05:00" },
     lateNightFee: { type: Number, default: 0, min: 0 },
+    defaultDriverEarning: { type: Number, default: 30, min: 0 },
 
     customFees: { type: [customFeeSchema], default: [] },
   },
