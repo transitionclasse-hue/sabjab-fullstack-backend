@@ -1485,6 +1485,15 @@ export async function buildAdminRouter(app) {
                   status: populatedOrder.status,
                   orderNumber: populatedOrder.orderId,
                 });
+                // Notify the specific driver mobile app
+                if (populatedOrder.deliveryPartner?._id) {
+                  app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
+                    orderId: String(populatedOrder._id),
+                    status: populatedOrder.status,
+                    order: populatedOrder,
+                    orderNumber: populatedOrder.orderId,
+                  });
+                }
               }
 
               return originalResponse;
@@ -1552,6 +1561,12 @@ export async function buildAdminRouter(app) {
                   status: populatedOrder.status,
                   orderNumber: populatedOrder.orderId,
                 });
+                // Notify the specific driver mobile app via Socket
+                if (populatedOrder.deliveryPartner?._id) {
+                  app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-assigned", {
+                    order: populatedOrder
+                  });
+                }
               }
 
               return {
