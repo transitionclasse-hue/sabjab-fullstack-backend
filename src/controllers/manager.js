@@ -134,8 +134,56 @@ export const updateOrderStatusByManager = async (req, reply) => {
       return reply.code(404).send({ message: "Order not found" });
     }
 
+    const oldStatus = order.status;
     order.status = status;
     await order.save();
+
+    // TRIGGER EARNING LOGIC if manager marks as DELIVERED
+    if (status === "delivered" && oldStatus !== "delivered") {
+      console.log(`[ManagerUpdate] BUSINESS LOGIC: Processing delivery for ${orderId}`);
+      order.deliveredAt = new Date();
+
+      try {
+        // Earning logic (Same as driver-side but triggered by manager)
+        // Preserve custom earning if set
+        if (!order.driverEarning || order.driverEarning <= 0) {
+          const calculateDriverEarning = (await import("./order/order.js")).calculateDriverEarning;
+          order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
+        }
+
+        if (order.deliveryPartner && order.driverEarning > 0) {
+          const feeTxn = await WalletTransaction.create({
+            deliveryPartner: order.deliveryPartner,
+            order: order._id,
+            amount: order.driverEarning,
+            type: "credit",
+            txnType: "delivery_fee",
+            description: `Delivery fee for order #${order.orderId} (via Manager)`,
+            status: "completed"
+          });
+          console.log(`[ManagerUpdate] SUCCESS: Created delivery fee transaction ${feeTxn._id}`);
+        }
+
+        if (order.paymentMethod === "COD") {
+          order.codCollected = order.totalPrice;
+          if (order.deliveryPartner) {
+            const codTxn = await WalletTransaction.create({
+              deliveryPartner: order.deliveryPartner,
+              order: order._id,
+              amount: order.totalPrice,
+              type: "debit",
+              txnType: "cod_collection",
+              description: `COD collected for order #${order.orderId} (via Manager)`,
+              status: "completed"
+            });
+            console.log(`[ManagerUpdate] SUCCESS: Created COD collection transaction ${codTxn._id}`);
+          }
+        }
+        await order.save();
+      } catch (calcError) {
+        console.error("[ManagerUpdate] Order delivery logic failed:", calcError.message);
+      }
+    }
 
     const populatedOrder = await Order.findById(order._id).populate(
       "customer branch items.item deliveryPartner"
@@ -783,7 +831,7 @@ export const deleteManagerHomeComponent = async (req, reply) => {
 
 export const getManagerDriverFinance = async (req, reply) => {
   try {
-    const drivers = await DeliveryPartner.find({ isActive: true }).lean();
+    const drivers = await DeliveryPartner.find({ isActivated: true }).lean();
 
     const driversWithStats = await Promise.all(
       drivers.map(async (driver) => {
@@ -929,7 +977,7 @@ export const getDriverDetailedReport = async (req, reply) => {
 export const getManagerDispatchOrders = async (req, reply) => {
   try {
     const orders = await Order.find({
-      status: { $in: ["accepted", "out_for_delivery"] }
+      status: { $in: ["confirmed", "arriving", "at_location"] }
     }).populate("deliveryPartner branch customer").sort({ updatedAt: -1 });
     return reply.send(orders);
   } catch (error) {

@@ -7,6 +7,7 @@ import {
   getCodStatus,
   updatePushToken,
   updateNotificationSettings,
+  toggleOnlineStatus,
 } from "../controllers/driver.js";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -27,4 +28,5 @@ export const driverRoutes = async (fastify) => {
   fastify.get("/driver/cod", getCodStatus);
   fastify.put("/driver/update-push-token", updatePushToken);
   fastify.put("/driver/notification-settings", updateNotificationSettings);
+  fastify.put("/driver/toggle-online", toggleOnlineStatus);
 };

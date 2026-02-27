@@ -57,16 +57,18 @@ walletTransactionSchema.post("save", async function (doc) {
                     const change = doc.type === "credit" ? doc.amount : -doc.amount;
                     const oldBalance = driver.walletBalance || 0;
                     driver.walletBalance = oldBalance + change;
-                    console.log(`[WalletSync] DRIVER_WALLET: ${doc.txnType} | Old: ${oldBalance} | Change: ${change} | New: ${driver.walletBalance}`);
+                    console.log(`[WalletSync] DRIVER_WALLET_UPDATE: ${doc.txnType} | Amt: ${doc.amount} | Old: ${oldBalance} | New: ${driver.walletBalance}`);
+                    await driver.save();
+                    console.log(`[WalletSync] DRIVER_WALLET_SUCCESS: Committed balance for ${driver._id}`);
                 } else if (doc.txnType === "cod_collection" || doc.txnType === "cod_settlement") {
                     // Cash in hand updates
                     const change = doc.txnType === "cod_collection" ? doc.amount : -doc.amount;
                     const oldCash = driver.cashInHand || 0;
                     driver.cashInHand = oldCash + change;
-                    console.log(`[WalletSync] DRIVER_CASH: ${doc.txnType} | Old: ${oldCash} | Change: ${change} | New: ${driver.cashInHand}`);
+                    console.log(`[WalletSync] DRIVER_CASH_UPDATE: ${doc.txnType} | Amt: ${doc.amount} | Old: ${oldCash} | New: ${driver.cashInHand}`);
+                    await driver.save();
+                    console.log(`[WalletSync] DRIVER_CASH_SUCCESS: Committed cash liability for ${driver._id}`);
                 }
-                await driver.save();
-                console.log(`[WalletSync] SUCCESS: Driver ${driver._id} balances committed.`);
             }
         }
 

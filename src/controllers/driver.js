@@ -277,3 +277,32 @@ export const updateNotificationSettings = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to update settings", error: error.message });
   }
 };
+
+export const toggleOnlineStatus = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const { isOnline } = req.body;
+
+    if (typeof isOnline !== "boolean") {
+      return reply.status(400).send({ message: "isOnline (boolean) is required" });
+    }
+
+    const driver = await DeliveryPartner.findByIdAndUpdate(
+      userId,
+      { isOnline, lastSeen: new Date() },
+      { new: true }
+    );
+
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+
+    return reply.send({
+      message: `Driver is now ${isOnline ? "Online" : "Offline"}`,
+      isOnline: driver.isOnline
+    });
+  } catch (error) {
+    console.error("toggleOnlineStatus error:", error);
+    return reply.status(500).send({ message: "Failed to toggle status", error: error.message });
+  }
+};

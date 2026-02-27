@@ -21,7 +21,7 @@ const VALID_DRIVER_STATUSES = new Set([
     ORDER_STATUS.CANCELLED,
 ]);
 
-const calculateDriverEarning = async (orderTotal = 0) => {
+export const calculateDriverEarning = async (orderTotal = 0) => {
     const config = await PricingConfig.findOne({ key: "primary" });
     const driverFee = config?.defaultDriverEarning ?? 30; // UPDATED: Use defaultDriverEarning config
     return driverFee;
