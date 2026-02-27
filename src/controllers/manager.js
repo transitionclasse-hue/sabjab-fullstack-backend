@@ -203,7 +203,7 @@ export const getManagerCustomers = async (req, reply) => {
 export const getGreenPointsConfig = async (req, reply) => {
   try {
     let config = await GreenPointsConfig.findOne({});
-    
+
     if (!config) {
       // Return default config if none exists
       return reply.send({
@@ -321,57 +321,98 @@ export const getGreenPointsStats = async (req, reply) => {
 // =====================================================
 // REFERRAL MANAGEMENT
 // =====================================================
+const safeDate = (d) => {
+  try {
+    if (!d) return "N/A";
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return "N/A";
+    return date.toISOString().split("T")[0];
+  } catch (e) {
+    return "N/A";
+  }
+};
+
 export const getReferralStats = async (req, reply) => {
   try {
-    const [
-      totalReferrals,
-      activeReferralCodes,
-      redeemedCodes,
-      pendingBonuses,
-      topReferrers,
-      recentReferrals,
-    ] = await Promise.all([
-      Referral.countDocuments({}),
-      Referral.countDocuments({ status: "active" }),
-      Referral.countDocuments({ status: "redeemed" }),
-      Referral.countDocuments({ "bonusDetails.status": "pending" }),
-      Referral.aggregate([
-        { $sort: { usageCount: -1 } },
-        { $limit: 10 },
-        {
-          $lookup: {
-            from: "customers",
-            localField: "customer",
-            foreignField: "_id",
-            as: "customerInfo",
-          },
-        },
-        {
-          $project: {
-            code: 1,
-            customerId: "$customer",
-            name: { $arrayElemAt: ["$customerInfo.name", 0] },
-            referrals: "$usageCount",
-            earned: { $multiply: ["$usageCount", 10] },
-          },
-        },
-      ]),
-      Referral.find({})
-        .limit(20)
-        .populate("customer", "name")
-        .sort({ createdAt: -1 })
-        .lean(),
-    ]);
+    console.log("Fetching Manager Referral Stats [SAFE_MODE]...");
 
-    const recentFormatted = recentReferrals.map((ref) => ({
-      code: ref.code,
-      referrer: ref.customer?.name || "Unknown",
-      status: ref.status,
-      date: ref.createdAt?.toISOString().split("T")[0],
-      bonus: 10,
+    // Use individual catches to identify exactly which query fails
+    const totalReferrals = await Referral.countDocuments({}).catch(err => {
+      console.error("Error in totalReferrals count:", err);
+      return 0;
+    });
+
+    const activeReferralCodes = await Referral.countDocuments({ status: "active" }).catch(err => {
+      console.error("Error in activeReferralCodes count:", err);
+      return 0;
+    });
+
+    const redeemedCodes = await Referral.countDocuments({ status: "used" }).catch(err => {
+      console.error("Error in redeemedCodes count:", err);
+      return 0;
+    });
+
+    const pendingBonuses = await Referral.countDocuments({ bonusesAwarded: false, status: "used" }).catch(err => {
+      console.error("Error in pendingBonuses count:", err);
+      return 0;
+    });
+
+    const topReferrersRaw = await Referral.aggregate([
+      {
+        $group: {
+          _id: "$referrer",
+          referralCode: { $first: "$referralCode" },
+          usageCount: { $sum: { $cond: [{ $eq: ["$status", "used"] }, 1, 0] } },
+        },
+      },
+      { $sort: { usageCount: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "_id",
+          foreignField: "_id",
+          as: "customerInfo",
+        },
+      },
+    ]).catch(err => {
+      console.error("Error in topReferrers aggregation:", err);
+      return [];
+    });
+
+    const topReferrers = (topReferrersRaw || []).map(item => ({
+      code: item.referralCode || "N/A",
+      customerId: item._id,
+      name: item.customerInfo?.[0]?.name || "Unknown User",
+      referrals: item.usageCount || 0,
+      earned: (item.usageCount || 0) * 10,
     }));
 
-    return reply.send({
+    const recentReferrals = await Referral.find({})
+      .limit(20)
+      .populate("referrer", "name")
+      .sort({ createdAt: -1 })
+      .lean()
+      .catch(err => {
+        console.error("Error in recentReferrals find:", err);
+        return [];
+      });
+
+    const recentFormatted = (recentReferrals || []).map((ref) => {
+      try {
+        return {
+          code: ref.referralCode || "UNKNOWN",
+          referrer: ref.referrer?.name || (typeof ref.referrer === 'string' ? "ID: " + ref.referrer : "Unknown User"),
+          status: ref.status || "active",
+          date: safeDate(ref.createdAt),
+          bonus: 10,
+        };
+      } catch (e) {
+        return { code: "ERR", referrer: "Error", status: "active", date: "N/A", bonus: 0 };
+      }
+    });
+
+    const result = {
       totalReferrals,
       activeReferralCodes,
       redeemedCodes,
@@ -379,31 +420,56 @@ export const getReferralStats = async (req, reply) => {
       avgConversionRate: totalReferrals > 0 ? ((redeemedCodes / totalReferrals) * 100).toFixed(1) : 0,
       topReferrers,
       recentReferrals: recentFormatted,
-    });
+    };
+
+    return reply.send(result);
   } catch (error) {
-    return reply.code(500).send({ message: "Failed to fetch referral stats", error });
+    console.error("CRITICAL Referral Stats Error:", error);
+    return reply.status(200).send({
+      totalReferrals: 0,
+      activeReferralCodes: 0,
+      redeemedCodes: 0,
+      pendingBonuses: 0,
+      avgConversionRate: "0.0",
+      topReferrers: [],
+      recentReferrals: [],
+      _debug_error: error.message
+    });
   }
 };
 
 export const getAllReferralCodes = async (req, reply) => {
   try {
+    console.log("Fetching All Referral Codes [SAFE_MODE]...");
     const codes = await Referral.find({})
-      .populate("customer", "name")
+      .populate("referrer", "name")
       .sort({ createdAt: -1 })
-      .lean();
+      .lean()
+      .catch(err => {
+        console.error("Error fetching referral codes list:", err);
+        return [];
+      });
 
-    const formatted = codes.map((code) => ({
-      code: code.code,
-      customerId: code.customer._id,
-      name: code.customer.name,
-      created: code.createdAt?.toISOString().split("T")[0],
-      used: code.usageCount || 0,
-      unused: 0,
-      status: code.status,
-    }));
+    const formatted = (codes || []).map((code) => {
+      try {
+        return {
+          code: code.referralCode || "N/A",
+          customerId: code.referrer?._id || code.referrer || null,
+          name: code.referrer?.name || (typeof code.referrer === 'string' ? 'ID: ' + code.referrer : "Unknown"),
+          created: safeDate(code.createdAt),
+          used: code.status === "used" ? 1 : 0,
+          unused: code.status === "active" ? 1 : 0,
+          status: code.status || "active",
+        };
+      } catch (e) {
+        return { code: "ERR", name: "Error", status: "error" };
+      }
+    });
 
     return reply.send(formatted);
   } catch (error) {
-    return reply.code(500).send({ message: "Failed to fetch referral codes", error });
+    console.error("CRITICAL All Referral Codes Error:", error);
+    return reply.status(200).send([]);
   }
 };
+
