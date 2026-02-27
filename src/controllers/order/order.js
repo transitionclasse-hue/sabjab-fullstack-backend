@@ -623,6 +623,35 @@ export const releaseOrderAssignment = async (req, reply) => {
     }
 };
 
+export const rejectOrder = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { userId } = req.user;
+
+        const order = await Order.findById(orderId);
+        if (!order) return reply.status(404).send({ message: "Order not found" });
+
+        // Drivers can only reject if it's assigned to them or if it's a general proposal
+        // For simplicity, we just notify the admin that this driver declined
+        const driver = await DeliveryPartner.findById(userId);
+
+        console.log(`❌ [Rejection] Driver ${userId} rejected order ${orderId}`);
+
+        if (req.server.io) {
+            req.server.io.emit("admin:order-rejected", {
+                orderId: String(order._id),
+                orderNumber: order.orderId,
+                driverName: driver?.name || "A Driver",
+                driverId: userId
+            });
+        }
+
+        return reply.send({ message: "Rejection received" });
+    } catch (error) {
+        return reply.status(500).send({ message: "Failed to process rejection", error: error.message });
+    }
+};
+
 // Fetch a single order by ID
 export const getOrderById = async (req, reply) => {
     try {
