@@ -1528,8 +1528,12 @@ export async function buildAdminRouter(app) {
     admin.watch();
   }
 
-  // ✅ IMPORTANT: In your AdminJS version, fastify app must be passed here
-  await AdminJSFastify.buildRouter(admin, app);
+  // ✅ Use buildAuthenticatedRouter for security
+  await AdminJSFastify.buildAuthenticatedRouter(admin, {
+    authenticate,
+    cookiePassword: process.env.COOKIE_PASSWORD || "cookie-password",
+    cookieName: "adminjs-session",
+  }, app);
 
   console.log(`✅ AdminJS running at http://localhost:${process.env.PORT || 5001}/admin`);
 }
