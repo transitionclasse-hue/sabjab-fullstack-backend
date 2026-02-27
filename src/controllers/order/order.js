@@ -74,7 +74,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -113,19 +113,31 @@ export const createOrder = async (req, reply) => {
             }
 
             const requestedCount = item.qty || item.quantity || item.count || 1;
-            const variationId = item.variationId;
+            const variationId = item.variationId || item.variation?._id || item.variation?.id;
 
             let price = product.price;
             let variationData = null;
 
-            if (variationId) {
-                const variation = product.variations.id(variationId);
-                if (!variation) {
-                    return reply.status(400).send({ message: `Variation ${variationId} not found for ${product.name}` });
+            if (variationId || item.variation?.name) {
+                // Try to find variation by ID first, then fallback to Name matching
+                let variation = null;
+                if (variationId) {
+                    variation = product.variations.id(variationId);
                 }
+
+                if (!variation && item.variation?.name) {
+                    console.log(`[Order] ID match failed for ${product.name}, falling back to Name: ${item.variation.name}`);
+                    variation = product.variations.find(v => v.name === item.variation.name);
+                }
+
+                if (!variation) {
+                    return reply.status(400).send({ message: `Variation not found for ${product.name}` });
+                }
+
                 if (!variation.isAvailable) {
                     return reply.status(400).send({ message: `Variation ${variation.name} of ${product.name} is unavailable` });
                 }
+
                 if (variation.stock !== undefined && variation.stock < requestedCount) {
                     return reply.status(400).send({
                         message: `Insufficient stock for ${product.name} (${variation.name}). Available: ${variation.stock}`,
@@ -138,7 +150,7 @@ export const createOrder = async (req, reply) => {
                     price: variation.price,
                     discountPrice: variation.discountPrice
                 };
-                stockUpdates.push({ product, requestedCount, variationId, isVariation: true });
+                stockUpdates.push({ product, requestedCount, variationId: variation._id, isVariation: true });
             } else {
                 if (product.stock !== undefined && product.stock < requestedCount) {
                     return reply.status(400).send({
@@ -214,7 +226,8 @@ export const createOrder = async (req, reply) => {
                 variation: item.variationData // NEW: Save selected variation details
             })),
             branch: branchId,
-            totalPrice: totalAmount,
+            totalPrice: Number(totalAmount),
+            paymentMethod: paymentMethod || "COD",
             couponCode: validatedCouponCode,
             discountAmount: discountAmount,
             deliveryLocation: {
@@ -229,7 +242,7 @@ export const createOrder = async (req, reply) => {
             },
 
         });
-        newOrder.driverEarning = await calculateDriverEarning(totalAmount);
+        newOrder.driverEarning = await calculateDriverEarning(Number(totalAmount));
 
         const savedOrder = await newOrder.save();
         const populatedOrder = await Order.findById(savedOrder._id).populate(
