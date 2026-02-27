@@ -1413,6 +1413,7 @@ export async function buildAdminRouter(app) {
                   deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
                 });
                 if (populatedOrder.deliveryPartner?._id) {
+                  console.log(`📡 [Socket] Emitting driver:order-status-update to driver ${populatedOrder.deliveryPartner._id}`);
                   app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
                     orderId: String(populatedOrder._id),
                     status: populatedOrder.status,
@@ -1487,6 +1488,7 @@ export async function buildAdminRouter(app) {
                 });
                 // Notify the specific driver mobile app
                 if (populatedOrder.deliveryPartner?._id) {
+                  console.log(`📡 [Socket] Emitting driver:order-status-update (edit) to driver ${populatedOrder.deliveryPartner._id}`);
                   app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
                     orderId: String(populatedOrder._id),
                     status: populatedOrder.status,
@@ -1511,6 +1513,10 @@ export async function buildAdminRouter(app) {
     options: {
       id: "OrderAssignment",
       navigation: { name: "Delivery Management", icon: "Truck" },
+      sort: {
+        sortBy: 'createdAt',
+        direction: 'desc'
+      },
       listProperties: ["orderId", "status", "deliveryPartner", "driverEarning", "createdAt"],
       editProperties: ["deliveryPartner", "driverEarning"],
       filterProperties: ["orderId", "status", "deliveryPartner"],
@@ -1563,6 +1569,7 @@ export async function buildAdminRouter(app) {
                 });
                 // Notify the specific driver mobile app via Socket
                 if (populatedOrder.deliveryPartner?._id) {
+                  console.log(`📡 [Socket] Emitting driver:order-assigned to driver ${populatedOrder.deliveryPartner._id}`);
                   app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-assigned", {
                     order: populatedOrder
                   });

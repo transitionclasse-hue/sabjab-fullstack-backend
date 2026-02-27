@@ -206,6 +206,7 @@ export const createOrder = async (req, reply) => {
         });
 
         // Notify all online drivers about the new available order
+        console.log(`📡 [Socket] Emitting driver:new-order for order ${populatedOrder.orderId}`);
         req.server.io.emit("driver:new-order", {
             order: populatedOrder
         });
