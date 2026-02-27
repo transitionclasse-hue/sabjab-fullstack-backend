@@ -916,3 +916,44 @@ export const getDriverDetailedReport = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to fetch driver report", error: error.message });
   }
 };
+
+export const getManagerDispatchOrders = async (req, reply) => {
+  try {
+    const orders = await Order.find({
+      status: { $in: ["accepted", "out_for_delivery"] }
+    }).populate("deliveryPartner branch customer").sort({ updatedAt: -1 });
+    return reply.send(orders);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch dispatch orders", error: error.message });
+  }
+};
+
+export const getManagerDriverRankings = async (req, reply) => {
+  try {
+    const drivers = await DeliveryPartner.find({}).lean();
+    return reply.send(drivers);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch rankings", error: error.message });
+  }
+};
+
+export const getManagerFinanceHistory = async (req, reply) => {
+  try {
+    const history = await WalletTransaction.find({
+      txnType: { $in: ["payout", "cod_settlement"] }
+    }).populate("deliveryPartner").sort({ createdAt: -1 }).limit(50);
+    return reply.send(history);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch finance history", error: error.message });
+  }
+};
+
+export const getManagerDriverActivity = async (req, reply) => {
+  try {
+    const drivers = await DeliveryPartner.find({}, "name email phone isOnline lastSeen batteryLevel").lean();
+    return reply.send(drivers);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch driver activity", error: error.message });
+  }
+};
+

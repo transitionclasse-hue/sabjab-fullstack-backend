@@ -24,6 +24,10 @@ import {
   settleDriverCod,
   bulkProcessPayout,
   getDriverDetailedReport,
+  getManagerDispatchOrders,
+  getManagerDriverRankings,
+  getManagerFinanceHistory,
+  getManagerDriverActivity,
 } from "../controllers/manager.js";
 import {
   getAllProducts,
@@ -78,4 +82,9 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/driver-finance/:id/report", getDriverDetailedReport);
   fastify.post("/manager/payouts/bulk", bulkProcessPayout);
   fastify.post("/manager/drivers/:id/settle-cod", settleDriverCod);
+
+  fastify.get("/manager/dispatch", getManagerDispatchOrders);
+  fastify.get("/manager/driver-rankings", getManagerDriverRankings);
+  fastify.get("/manager/finance-history", getManagerFinanceHistory);
+  fastify.get("/manager/driver-activity", getManagerDriverActivity);
 };
