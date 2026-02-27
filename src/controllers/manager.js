@@ -642,3 +642,119 @@ export const getAllReferralCodes = async (req, reply) => {
   }
 };
 
+
+// =====================================================
+// HOME LAYOUT & COMPONENT MANAGEMENT
+// =====================================================
+
+export const getManagerOccasions = async (req, reply) => {
+  try {
+    const occasions = await Occasion.find({}).sort({ order: 1 }).populate("components");
+    return reply.send(occasions);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch occasions", error: error.message });
+  }
+};
+
+export const createManagerOccasion = async (req, reply) => {
+  try {
+    const { name, icon, banner, themeColor, themeMode, nameAlignment, isDefault } = req.body;
+
+    // If setting as default, unset others
+    if (isDefault) {
+      await Occasion.updateMany({}, { isDefault: false });
+    }
+
+    const occasion = new Occasion({
+      name,
+      icon,
+      banner,
+      themeColor,
+      themeMode,
+      nameAlignment,
+      isDefault,
+      order: (await Occasion.countDocuments({})) + 1
+    });
+
+    await occasion.save();
+    return reply.status(201).send(occasion);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to create occasion", error: error.message });
+  }
+};
+
+export const updateManagerOccasion = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    if (updateData.isDefault) {
+      await Occasion.updateMany({ _id: { $ne: id } }, { isDefault: false });
+    }
+
+    const occasion = await Occasion.findByIdAndUpdate(id, updateData, { new: true }).populate("components");
+    if (!occasion) return reply.status(404).send({ message: "Occasion not found" });
+
+    return reply.send(occasion);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update occasion", error: error.message });
+  }
+};
+
+export const deleteManagerOccasion = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const occasion = await Occasion.findByIdAndDelete(id);
+    if (!occasion) return reply.status(404).send({ message: "Occasion not found" });
+
+    return reply.send({ message: "Occasion deleted successfully" });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to delete occasion", error: error.message });
+  }
+};
+
+export const createManagerHomeComponent = async (req, reply) => {
+  try {
+    const { occasionId, ...componentData } = req.body;
+
+    const component = new HomeComponent(componentData);
+    await component.save();
+
+    if (occasionId) {
+      await Occasion.findByIdAndUpdate(occasionId, {
+        $push: { components: component._id }
+      });
+    }
+
+    return reply.status(201).send(component);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to create component", error: error.message });
+  }
+};
+
+export const updateManagerHomeComponent = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const component = await HomeComponent.findByIdAndUpdate(id, req.body, { new: true });
+    if (!component) return reply.status(404).send({ message: "Component not found" });
+
+    return reply.send(component);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update component", error: error.message });
+  }
+};
+
+export const deleteManagerHomeComponent = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const component = await HomeComponent.findByIdAndDelete(id);
+    if (!component) return reply.status(404).send({ message: "Component not found" });
+
+    // Also remove from all occasions
+    await Occasion.updateMany({}, { $pull: { components: id } });
+
+    return reply.send({ message: "Component deleted successfully" });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to delete component", error: error.message });
+  }
+};

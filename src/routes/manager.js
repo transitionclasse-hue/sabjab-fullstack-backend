@@ -12,6 +12,13 @@ import {
   getReferralStats,
   getAllReferralCodes,
   getManagerAnalytics,
+  getManagerOccasions,
+  createManagerOccasion,
+  updateManagerOccasion,
+  deleteManagerOccasion,
+  createManagerHomeComponent,
+  updateManagerHomeComponent,
+  deleteManagerHomeComponent,
 } from "../controllers/manager.js";
 import {
   getAllProducts,
@@ -49,4 +56,14 @@ export const managerRoutes = async (fastify) => {
   // Referral Management
   fastify.get("/manager/referral/stats", getReferralStats);
   fastify.get("/manager/referral/codes", getAllReferralCodes);
+
+  // Home Layout Management
+  fastify.get("/manager/occasions", getManagerOccasions);
+  fastify.post("/manager/occasions", createManagerOccasion);
+  fastify.patch("/manager/occasions/:id", updateManagerOccasion);
+  fastify.delete("/manager/occasions/:id", deleteManagerOccasion);
+
+  fastify.post("/manager/home-components", createManagerHomeComponent);
+  fastify.patch("/manager/home-components/:id", updateManagerHomeComponent);
+  fastify.delete("/manager/home-components/:id", deleteManagerHomeComponent);
 };
