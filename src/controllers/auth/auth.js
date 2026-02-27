@@ -252,11 +252,16 @@ export const loginAdmin = async (req, reply) => {
     const email = String(rawEmail || "").trim().toLowerCase();
     const password = String(rawPassword || "").trim();
 
-    console.log(`[AUTH DEBUG] Attempting Admin Login: ${email}`);
-
+    console.log(`[AUTH DEBUG] Attempting Admin Login: "${email}"`);
     const user = await Admin.findOne({ email });
 
-    if (!user || user.password !== password) {
+    if (!user) {
+      console.log(`[AUTH DEBUG] User not found for: "${email}"`);
+      return reply.code(401).send({ message: "Invalid admin credentials" });
+    }
+
+    if (user.password !== password) {
+      console.log(`[AUTH DEBUG] Password mismatch for: "${email}" (Expected: "${user.password}", Got: "${password}")`);
       return reply.code(401).send({ message: "Invalid admin credentials" });
     }
 
