@@ -1199,71 +1199,79 @@ export async function buildAdminRouter(app) {
             icon: "UserCheck",
             component: Components.AssignDriver,
             handler: async (request, response, context) => {
-              const { record } = context;
+              const { record, currentAdmin } = context;
               if (request.method === "post") {
-                const { driverId } = request.payload;
-                const Order = mongoose.models.Order;
-                const DeliveryPartner = mongoose.models.DeliveryPartner;
+                try {
+                  const { driverId } = request.payload;
+                  const Order = mongoose.models.Order;
+                  const DeliveryPartner = mongoose.models.DeliveryPartner;
 
-                const dbOrder = await Order.findById(record.id);
-                const driver = await DeliveryPartner.findById(driverId);
+                  const dbOrder = await Order.findById(record.id);
+                  const driver = await DeliveryPartner.findById(driverId);
 
-                if (!dbOrder || !driver) {
+                  if (!dbOrder || !driver) {
+                    return {
+                      notice: { message: "Order or Driver not found", type: "error" },
+                    };
+                  }
+
+                  const populatedOrder = await assignDriverToOrder(dbOrder, driver);
+
+                  if (app.io && populatedOrder) {
+                    // Notify the customer tracking room
+                    app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
+                      ...populatedOrder.toObject(),
+                      deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                    });
+                    // Notify the specific driver via Socket
+                    console.log(`📡 [Socket] Emitting driver:order-assigned to driver ${driverId}`);
+                    app.io.to(String(driverId)).emit("driver:order-assigned", {
+                      order: populatedOrder
+                    });
+                    // Notify via Push Notification
+                    await sendPushNotification(
+                      String(driverId),
+                      "New Order Assigned! 📦",
+                      `You have a new order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || 'SabJab'}.`,
+                      { orderId: String(populatedOrder._id), type: 'ORDER_ASSIGNED' },
+                      'DeliveryPartner'
+                    );
+                    // Broad notification for admin UI
+                    app.io.emit("admin:order-assigned", {
+                      orderId: String(populatedOrder._id),
+                      orderNumber: populatedOrder.orderId,
+                      driverName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                    });
+                    app.io.emit("admin:order-status-update", {
+                      orderId: String(populatedOrder._id),
+                      status: populatedOrder.status,
+                      orderNumber: populatedOrder.orderId,
+                    });
+                    app.io.to(String(driverId)).emit("driver:order-status-update", {
+                      orderId: String(populatedOrder._id),
+                      status: populatedOrder.status,
+                      order: populatedOrder,
+                      orderNumber: populatedOrder.orderId,
+                    });
+                  }
+
                   return {
-                    notice: { message: "Order or Driver not found", type: "error" },
+                    record: record.toJSON(currentAdmin),
+                    notice: {
+                      message: `Successfully assigned ${driver.name} to order ${dbOrder.orderId}`,
+                      type: "success",
+                    },
+                  };
+                } catch (error) {
+                  console.error("Assign Driver Error:", error);
+                  return {
+                    notice: { message: "Failed to assign driver. Check server logs.", type: "error" },
                   };
                 }
-
-                const populatedOrder = await assignDriverToOrder(dbOrder, driver);
-
-                if (app.io && populatedOrder) {
-                  // Notify the customer tracking room
-                  app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
-                    ...populatedOrder.toObject(),
-                    deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
-                  });
-                  // Notify the specific driver via Socket
-                  app.io.to(String(driverId)).emit("driver:order-assigned", {
-                    order: populatedOrder
-                  });
-                  // Notify via Push Notification
-                  await sendPushNotification(
-                    String(driverId),
-                    "New Order Assigned! 📦",
-                    `You have a new order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || 'SabJab'}.`,
-                    { orderId: String(populatedOrder._id), type: 'ORDER_ASSIGNED' },
-                    'DeliveryPartner'
-                  );
-                  // Broad notification for admin UI
-                  app.io.emit("admin:order-assigned", {
-                    orderId: String(populatedOrder._id),
-                    orderNumber: populatedOrder.orderId,
-                    driverName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
-                  });
-                  app.io.emit("admin:order-status-update", {
-                    orderId: String(populatedOrder._id),
-                    status: populatedOrder.status,
-                    orderNumber: populatedOrder.orderId,
-                  });
-                  app.io.to(String(driverId)).emit("driver:order-status-update", {
-                    orderId: String(populatedOrder._id),
-                    status: populatedOrder.status,
-                    order: populatedOrder,
-                    orderNumber: populatedOrder.orderId,
-                  });
-                }
-
-                return {
-                  record: record.toJSON(context.currentAdmin),
-                  notice: {
-                    message: `Successfully assigned ${driver.name} to order ${dbOrder.orderId}`,
-                    type: "success",
-                  },
-                };
               }
 
               return {
-                record: record.toJSON(context.currentAdmin),
+                record: record.toJSON(currentAdmin),
               };
             },
           },
@@ -1316,6 +1324,9 @@ export async function buildAdminRouter(app) {
                   { orderId: String(populatedOrder._id), type: 'ORDER_ASSIGNED' },
                   'DeliveryPartner'
                 );
+                app.io.to(String(driver._id)).emit("driver:order-assigned", {
+                  order: populatedOrder
+                });
                 app.io.emit("admin:order-assigned", {
                   orderId: String(populatedOrder._id),
                   orderNumber: populatedOrder.orderId,
@@ -1545,46 +1556,79 @@ export async function buildAdminRouter(app) {
           icon: "UserCheck",
           component: Components.AssignDriver,
           handler: async (request, response, context) => {
-            // Reuse logic or redirect? Let's keep it simple and reuse the handler logic if needed, 
-            // but usually AdminJS handles multiple resources of same model fine.
-            // For now, mirroring the main assignDriver action is safer.
-            const { record } = context;
+            const { record, currentAdmin } = context;
             if (request.method === "post") {
-              const { driverId } = request.payload;
-              const Order = mongoose.models.Order;
-              const DeliveryPartner = mongoose.models.DeliveryPartner;
-              const dbOrder = await Order.findById(record.id);
-              const driver = await DeliveryPartner.findById(driverId);
+              try {
+                const { driverId } = request.payload;
+                const Order = mongoose.models.Order;
+                const DeliveryPartner = mongoose.models.DeliveryPartner;
+                const dbOrder = await Order.findById(record.id);
+                const driver = await DeliveryPartner.findById(driverId);
 
-              if (!dbOrder || !driver) {
-                return { notice: { message: "Order or Driver not found", type: "error" } };
-              }
+                if (!dbOrder || !driver) {
+                  return { notice: { message: "Order or Driver not found", type: "error" } };
+                }
 
-              const populatedOrder = await assignDriverToOrder(dbOrder, driver);
-              if (app.io && populatedOrder) {
-                app.io.emit("admin:order-status-update", {
-                  orderId: String(populatedOrder._id),
-                  status: populatedOrder.status,
-                  orderNumber: populatedOrder.orderId,
-                });
-                // Notify the specific driver mobile app via Socket
-                if (populatedOrder.deliveryPartner?._id) {
-                  console.log(`📡 [Socket] Emitting driver:order-assigned to driver ${populatedOrder.deliveryPartner._id}`);
-                  app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-assigned", {
+                const populatedOrder = await assignDriverToOrder(dbOrder, driver);
+                if (app.io && populatedOrder) {
+                  // Notify the customer tracking room
+                  app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
+                    ...populatedOrder.toObject(),
+                    deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                  });
+
+                  // Notify the specific driver via Socket
+                  console.log(`📡 [Socket] Emitting driver:order-assigned to driver ${driverId}`);
+                  app.io.to(String(driverId)).emit("driver:order-assigned", {
                     order: populatedOrder
                   });
-                }
-              }
 
-              return {
-                record: record.toJSON(context.currentAdmin),
-                notice: {
-                  message: `Successfully assigned ${driver.name} to order ${dbOrder.orderId}`,
-                  type: "success",
-                },
-              };
+                  // Notify via Push Notification
+                  await sendPushNotification(
+                    String(driverId),
+                    "New Order Assigned! 📦",
+                    `You have a new order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || 'SabJab'}.`,
+                    { orderId: String(populatedOrder._id), type: 'ORDER_ASSIGNED' },
+                    'DeliveryPartner'
+                  ).catch(e => console.error("Push Error:", e.message));
+
+                  // Broad notification for admin UI
+                  app.io.emit("admin:order-assigned", {
+                    orderId: String(populatedOrder._id),
+                    orderNumber: populatedOrder.orderId,
+                    driverName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+                  });
+
+                  app.io.emit("admin:order-status-update", {
+                    orderId: String(populatedOrder._id),
+                    status: populatedOrder.status,
+                    orderNumber: populatedOrder.orderId,
+                  });
+
+                  // Background sync for driver app
+                  app.io.to(String(driverId)).emit("driver:order-status-update", {
+                    orderId: String(populatedOrder._id),
+                    status: populatedOrder.status,
+                    order: populatedOrder,
+                    orderNumber: populatedOrder.orderId,
+                  });
+                }
+
+                return {
+                  record: record.toJSON(currentAdmin),
+                  notice: {
+                    message: `Successfully assigned ${driver.name} to order ${dbOrder.orderId}`,
+                    type: "success",
+                  },
+                };
+              } catch (error) {
+                console.error("Assign Driver Action Error:", error);
+                return {
+                  notice: { message: "Error assigning driver. Check logs.", type: "error" },
+                };
+              }
             }
-            return { record: record.toJSON(context.currentAdmin) };
+            return { record: record.toJSON(currentAdmin) };
           },
         },
       }

@@ -56,12 +56,17 @@ const AssignDriver = (props) => {
 
             if (response.data.notice) {
                 alert(response.data.notice.message);
-                // Redirect back to the order details page
-                window.location.href = `/admin/resources/Order/records/${record.id}/show`;
+                // Intelligent redirect based on current resource
+                if (resource.id === 'OrderAssignment') {
+                    window.location.href = `/admin/resources/OrderAssignment`;
+                } else {
+                    window.location.href = `/admin/resources/Order/records/${record.id}/show`;
+                }
             }
         } catch (error) {
             console.error('Failed to assign driver:', error);
-            alert('Error assigning driver. Check console.');
+            const errMsg = error.response?.data?.notice?.message || error.message || 'Unknown error';
+            alert(`Error assigning driver: ${errMsg}`);
         } finally {
             setLoading(false);
         }

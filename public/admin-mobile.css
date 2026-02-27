@@ -170,3 +170,27 @@ thead th {
   color: var(--deep-navy) !important;
   font-weight: 800 !important;
 }
+
+/* React Select / AdminJS Select Visibility Fixes */
+div[class*="-singleValue"],
+div[class*="-Input"],
+div[class*="-placeholder"],
+div[class*="-option"] {
+  color: var(--text-main) !important;
+}
+
+/* Ensure selected value is visible */
+.css-1uccc91-singleValue {
+  color: var(--text-main) !important;
+}
+
+/* Ensure options in dropdown are visible */
+div[class*="-menu"] div[class*="-option"] {
+  color: var(--text-main) !important;
+  background-color: var(--white) !important;
+}
+
+div[class*="-menu"] div[class*="-option"]:hover {
+  background-color: #f0fdf4 !important;
+  color: var(--primary-green) !important;
+}
