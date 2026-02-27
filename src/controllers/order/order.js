@@ -23,10 +23,8 @@ const VALID_DRIVER_STATUSES = new Set([
 
 const calculateDriverEarning = async (orderTotal = 0) => {
     const config = await PricingConfig.findOne({ key: "primary" });
-    const baseFee = config?.baseDeliveryFee ?? 20;
-    const freeThreshold = config?.freeDeliveryThreshold ?? 199;
-    const freeEnabled = config?.freeDeliveryEnabled ?? true;
-    return freeEnabled && Number(orderTotal) >= freeThreshold ? 0 : baseFee;
+    const baseFee = config?.baseDeliveryFee ?? 30; // UPDATED: Default 30
+    return baseFee; // UPDATED: Driver always gets paid even if free for customer
 };
 
 const isAssignmentExpired = (assignedAt) =>
@@ -380,6 +378,9 @@ export const updateOrderStatus = async (req, reply) => {
             order.deliveredAt = new Date();
 
             try {
+                // Driver Earning Logic - Update BEFORE creating transaction
+                order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
+
                 // Handle Driver Earnings Transaction
                 if (order.deliveryPartner && order.driverEarning > 0) {
                     await WalletTransaction.create({
@@ -408,8 +409,6 @@ export const updateOrderStatus = async (req, reply) => {
                         });
                     }
                 }
-                // Driver Earning Logic
-                order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
             } catch (calcError) {
                 console.error("[StatusUpdate] Order delivery logic failed:", calcError.message);
             }

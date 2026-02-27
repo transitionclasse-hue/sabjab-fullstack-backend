@@ -83,6 +83,9 @@ const deliveryPartnerSchema = new mongoose.Schema({
   pushToken: { type: String, default: null },
   notificationsEnabled: { type: Boolean, default: true },
   notificationSound: { type: String, default: "default" }, // NEW: Custom sound selection
+  isOnline: { type: Boolean, default: false },
+  lastSeen: { type: Date, default: Date.now },
+  batteryLevel: { type: Number, default: 100 },
 }, { timestamps: true });
 
 // ================= ADMIN =================
