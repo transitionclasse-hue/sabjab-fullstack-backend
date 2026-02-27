@@ -11,6 +11,7 @@ import {
   getGreenPointsStats,
   getReferralStats,
   getAllReferralCodes,
+  getManagerAnalytics,
 } from "../controllers/manager.js";
 import {
   getAllProducts,
@@ -26,6 +27,7 @@ import {
 
 export const managerRoutes = async (fastify) => {
   fastify.get("/manager/overview", getManagerOverview);
+  fastify.get("/manager/analytics", getManagerAnalytics);
   fastify.get("/manager/orders", getManagerOrders);
   fastify.get("/manager/drivers", getManagerDrivers);
   fastify.get("/manager/branches", getManagerBranches);

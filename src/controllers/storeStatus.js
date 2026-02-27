@@ -31,20 +31,21 @@ const toMinutes = (timeStr, fallback) => {
 };
 
 export const getStoreStatus = async (req, reply) => {
-  try {
-    const config = await StoreStatus.findOneAndUpdate(
-      { key: "primary" },
-      { $setOnInsert: DEFAULT_STORE_STATUS },
-      { upsert: true, new: true }
-    );
+  console.log("🏪 Fetching Store Status [primary]");
+  const config = await StoreStatus.findOneAndUpdate(
+    { key: "primary" },
+    { $setOnInsert: DEFAULT_STORE_STATUS },
+    { upsert: true, new: true }
+  );
+  console.log("✅ Store Status fetched:", config.mode);
 
-    return reply.send(buildStoreStatusResponse(config));
-  } catch (error) {
-    return reply.status(500).send({
-      message: "Failed to fetch store status",
-      error: error.message,
-    });
-  }
+  return reply.send(buildStoreStatusResponse(config));
+} catch (error) {
+  return reply.status(500).send({
+    message: "Failed to fetch store status",
+    error: error.message,
+  });
+}
 };
 
 const buildStoreStatusResponse = (config) => {

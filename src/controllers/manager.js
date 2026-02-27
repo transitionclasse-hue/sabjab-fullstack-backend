@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Branch, Customer } from "../models/index.js";
+import { Order, DeliveryPartner, Branch, Customer, Product, Category } from "../models/index.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import Referral from "../models/referral.js";
@@ -329,6 +329,175 @@ const safeDate = (d) => {
     return date.toISOString().split("T")[0];
   } catch (e) {
     return "N/A";
+  }
+};
+
+
+export const getManagerAnalytics = async (req, reply) => {
+  try {
+    const { range } = req.query || { range: '7d' };
+    const days = range === '90d' ? 90 : range === '30d' ? 30 : 7;
+
+    const now = new Date();
+    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const prevStartDate = new Date(startDate.getTime() - days * 24 * 60 * 60 * 1000);
+
+    // Basic Metrics (Current Period)
+    const currentStats = await Order.aggregate([
+      { $match: { createdAt: { $gte: startDate }, status: "delivered" } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalPrice" },
+          totalOrders: { $sum: 1 },
+          customerIds: { $addToSet: "$customer" }
+        }
+      }
+    ]);
+
+    // Basic Metrics (Previous Period)
+    const prevStats = await Order.aggregate([
+      { $match: { createdAt: { $gte: prevStartDate, $lt: startDate }, status: "delivered" } },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalPrice" },
+          totalOrders: { $sum: 1 },
+          customerIds: { $addToSet: "$customer" }
+        }
+      }
+    ]);
+
+    const curr = currentStats[0] || { totalRevenue: 0, totalOrders: 0, customerIds: [] };
+    const prev = prevStats[0] || { totalRevenue: 0, totalOrders: 0, customerIds: [] };
+
+    const calcChange = (c, p) => p === 0 ? (c > 0 ? 100 : 0) : Math.round(((c - p) / p) * 100);
+
+    // Chart Data (Daily breakdown)
+    const dateMap = {};
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const key = d.toISOString().split('T')[0];
+      dateMap[key] = {
+        label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        revenue: 0,
+        orders: 0
+      };
+    }
+
+    const dailyStats = await Order.aggregate([
+      { $match: { createdAt: { $gte: startDate }, status: "delivered" } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$totalPrice" },
+          orders: { $sum: 1 }
+        }
+      }
+    ]);
+
+    dailyStats.forEach(stat => {
+      if (dateMap[stat._id]) {
+        dateMap[stat._id].revenue = stat.revenue;
+        dateMap[stat._id].orders = stat.orders;
+      }
+    });
+
+    const chartKeys = Object.keys(dateMap).sort();
+
+    // Category Breakdown
+    const categoryStats = await Order.aggregate([
+      { $match: { createdAt: { $gte: startDate }, status: "delivered" } },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.item",
+          foreignField: "_id",
+          as: "productInfo"
+        }
+      },
+      { $unwind: "$productInfo" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "productInfo.category",
+          foreignField: "_id",
+          as: "categoryInfo"
+        }
+      },
+      { $unwind: "$categoryInfo" },
+      {
+        $group: {
+          _id: "$categoryInfo.name",
+          count: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Top Products
+    const topProducts = await Order.aggregate([
+      { $match: { createdAt: { $gte: startDate }, status: "delivered" } },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.item",
+          sales: { $sum: "$items.quantity" }
+        }
+      },
+      { $sort: { sales: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productInfo"
+        }
+      },
+      { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          name: { $ifNull: ["$productInfo.name", "Unknown Item"] },
+          sales: 1
+        }
+      }
+    ]);
+
+    const activeCustomers = curr.customerIds.length;
+    const prevActiveCustomers = prev.customerIds.length;
+    const avgOrderValue = curr.totalOrders > 0 ? Math.round(curr.totalRevenue / curr.totalOrders) : 0;
+    const prevAvgOrderValue = prev.totalOrders > 0 ? Math.round(prev.totalRevenue / prev.totalOrders) : 0;
+
+    return reply.send({
+      totalRevenue: curr.totalRevenue,
+      revenueChange: calcChange(curr.totalRevenue, prev.totalRevenue),
+      totalOrders: curr.totalOrders,
+      ordersChange: calcChange(curr.totalOrders, prev.totalOrders),
+      avgOrderValue,
+      aovChange: calcChange(avgOrderValue, prevAvgOrderValue),
+      activeCustomers,
+      customersChange: calcChange(activeCustomers, prevActiveCustomers),
+      ordersChart: {
+        labels: chartKeys.map(k => dateMap[k].label),
+        data: chartKeys.map(k => dateMap[k].orders)
+      },
+      revenueChart: {
+        labels: chartKeys.map(k => dateMap[k].label),
+        data: chartKeys.map(k => dateMap[k].revenue)
+      },
+      categoryChart: {
+        labels: categoryStats.map(c => c._id),
+        data: categoryStats.map(c => c.count)
+      },
+      topProducts
+    });
+
+  } catch (error) {
+    console.error("Analytics Error:", error);
+    return reply.status(500).send({ message: "Failed to fetch analytics", error: error.message });
   }
 };
 
