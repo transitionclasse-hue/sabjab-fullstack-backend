@@ -106,22 +106,57 @@ export const createOrder = async (req, reply) => {
             }
 
             const requestedCount = item.qty || item.quantity || item.count || 1;
-            if (product.stock !== undefined && product.stock < requestedCount) {
-                return reply.status(400).send({
-                    message: `Insufficient stock for ${product.name}. Available: ${product.stock}`,
-                    shortage: true
-                });
+            const variationId = item.variationId;
+
+            let price = product.price;
+            let variationData = null;
+
+            if (variationId) {
+                const variation = product.variations.id(variationId);
+                if (!variation) {
+                    return reply.status(400).send({ message: `Variation ${variationId} not found for ${product.name}` });
+                }
+                if (!variation.isAvailable) {
+                    return reply.status(400).send({ message: `Variation ${variation.name} of ${product.name} is unavailable` });
+                }
+                if (variation.stock !== undefined && variation.stock < requestedCount) {
+                    return reply.status(400).send({
+                        message: `Insufficient stock for ${product.name} (${variation.name}). Available: ${variation.stock}`,
+                        shortage: true
+                    });
+                }
+                price = variation.price;
+                variationData = {
+                    name: variation.name,
+                    price: variation.price,
+                    discountPrice: variation.discountPrice
+                };
+                stockUpdates.push({ product, requestedCount, variationId, isVariation: true });
+            } else {
+                if (product.stock !== undefined && product.stock < requestedCount) {
+                    return reply.status(400).send({
+                        message: `Insufficient stock for ${product.name}. Available: ${product.stock}`,
+                        shortage: true
+                    });
+                }
+                stockUpdates.push({ product, requestedCount, isVariation: false });
             }
 
-            stockUpdates.push({ product, requestedCount });
+            item.itemPrice = price; // Store for total calculation
+            item.variationData = variationData;
         }
 
         // Calculate actual itemsTotal from DB prices for coupon validation
-        const itemsTotal = stockUpdates.reduce((sum, u) => sum + (u.product.price || 0) * u.requestedCount, 0);
+        const itemsTotal = stockUpdates.reduce((sum, u, idx) => sum + (items[idx].itemPrice || 0) * u.requestedCount, 0);
 
         // Atomic stock decrementing
         for (const update of stockUpdates) {
-            update.product.stock -= update.requestedCount;
+            if (update.isVariation) {
+                const variation = update.product.variations.id(update.variationId);
+                variation.stock -= update.requestedCount;
+            } else {
+                update.product.stock -= update.requestedCount;
+            }
             await update.product.save();
         }
         // ----------------------------------------
@@ -166,18 +201,19 @@ export const createOrder = async (req, reply) => {
         const newOrder = new Order({
             customer: userId,
             items: items.map((item) => ({
-                id: item._id || item.id, // Handles both formats
+                id: item._id || item.id,
                 item: item._id || item.id,
                 count: item.qty || item.quantity || item.count || 1,
+                variation: item.variationData // NEW: Save selected variation details
             })),
             branch: branchId,
             totalPrice: totalAmount,
             couponCode: validatedCouponCode,
             discountAmount: discountAmount,
             deliveryLocation: {
-                latitude: deliveryAddress?.coords?.lat || 0,
-                longitude: deliveryAddress?.coords?.lng || 0,
-                address: deliveryAddress ? `${deliveryAddress.houseNo}, ${deliveryAddress.area}` : "No address available",
+                latitude: deliveryAddress?.coords?.lat || deliveryAddress?.latitude || 0,
+                longitude: deliveryAddress?.coords?.lng || deliveryAddress?.longitude || 0,
+                address: deliveryAddress ? (deliveryAddress.address || `${deliveryAddress.houseNo}, ${deliveryAddress.area}`) : "No address available",
             },
             pickupLocation: {
                 latitude: branchData?.location?.latitude ?? null,
