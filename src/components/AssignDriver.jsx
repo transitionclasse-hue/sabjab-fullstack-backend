@@ -6,6 +6,7 @@ const AssignDriver = (props) => {
     const { record, resource, action } = props;
     const [drivers, setDrivers] = useState([]);
     const [selectedDriverId, setSelectedDriverId] = useState('');
+    const [deliveryFee, setDeliveryFee] = useState(record.params.driverEarning || '');
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const api = new ApiClient();
@@ -50,7 +51,10 @@ const AssignDriver = (props) => {
                 resourceId: resource.id,
                 actionName: action.name,
                 method: 'post',
-                data: { driverId: selectedDriverId },
+                data: {
+                    driverId: selectedDriverId,
+                    driverEarning: deliveryFee
+                },
                 recordId: record.id,
             });
 
@@ -86,6 +90,23 @@ const AssignDriver = (props) => {
                     value={drivers.find(d => d.value === selectedDriverId)}
                     options={drivers}
                     onChange={(selected) => setSelectedDriverId(selected.value)}
+                />
+            </FormGroup>
+
+            <FormGroup mt="lg">
+                <Label>Delivery Fee (₹)</Label>
+                <input
+                    type="number"
+                    value={deliveryFee}
+                    onChange={(e) => setDeliveryFee(e.target.value)}
+                    style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '4px',
+                        border: '1px solid #C0C0C0',
+                        fontSize: '14px'
+                    }}
+                    placeholder="Enter delivery fee"
                 />
             </FormGroup>
 

@@ -42,7 +42,7 @@ const hydrateOrderForTracking = async (orderId) => {
   return Order.findById(orderId).populate("deliveryPartner customer branch items.item");
 };
 
-const assignDriverToOrder = async (order, driver) => {
+const assignDriverToOrder = async (order, driver, driverEarning = null) => {
   if (!order || !driver) return null;
 
   order.deliveryPartner = driver._id;
@@ -51,16 +51,10 @@ const assignDriverToOrder = async (order, driver) => {
     order.assignedAt = new Date();
   }
 
-  const lat = driver.liveLocation?.latitude ?? order.pickupLocation?.latitude;
-  const lng = driver.liveLocation?.longitude ?? order.pickupLocation?.longitude;
-  order.deliveryPersonLocation = {
-    latitude: lat,
-    longitude: lng,
-    address: "Assigned from admin panel",
-  };
-
-  // Pre-calculate driver earning if not set
-  if (!order.driverEarning) {
+  // Set explicit earning if provided, otherwise calculate
+  if (driverEarning !== null && driverEarning !== undefined && driverEarning !== "") {
+    order.driverEarning = Number(driverEarning);
+  } else if (!order.driverEarning) {
     try {
       const PricingConfig = mongoose.models.PricingConfig;
       const config = await PricingConfig.findOne({ key: "primary" });
@@ -74,8 +68,82 @@ const assignDriverToOrder = async (order, driver) => {
     }
   }
 
+  const lat = driver.liveLocation?.latitude ?? order.pickupLocation?.latitude;
+  const lng = driver.liveLocation?.longitude ?? order.pickupLocation?.longitude;
+  order.deliveryPersonLocation = {
+    latitude: lat,
+    longitude: lng,
+    address: "Assigned from admin panel",
+  };
+
   await order.save();
   return hydrateOrderForTracking(order._id);
+};
+
+const afterEditOrderHook = async (originalResponse, request, context, app) => {
+  if (request.method !== "post") return originalResponse;
+
+  const orderId = originalResponse?.record?.params?._id;
+  if (!orderId) return originalResponse;
+
+  const Order = mongoose.models.Order;
+  const DeliveryPartner = mongoose.models.DeliveryPartner;
+  const dbOrder = await Order.findById(orderId);
+  if (!dbOrder) return originalResponse;
+
+  let changed = false;
+  if (dbOrder.deliveryPartner) {
+    const driver = await DeliveryPartner.findById(dbOrder.deliveryPartner);
+    if (driver) {
+      const hasLiveCoords =
+        Number.isFinite(dbOrder.deliveryPersonLocation?.latitude) &&
+        Number.isFinite(dbOrder.deliveryPersonLocation?.longitude);
+
+      if (!hasLiveCoords) {
+        dbOrder.deliveryPersonLocation = {
+          latitude: driver.liveLocation?.latitude ?? dbOrder.pickupLocation?.latitude,
+          longitude: driver.liveLocation?.longitude ?? dbOrder.pickupLocation?.longitude,
+          address: "Assigned from admin edit",
+        };
+        changed = true;
+      }
+
+      if (dbOrder.status === "available") {
+        dbOrder.status = "assigned";
+        dbOrder.assignedAt = new Date();
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    await dbOrder.save();
+  }
+
+  const populatedOrder = await hydrateOrderForTracking(orderId);
+  if (app.io && populatedOrder) {
+    app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
+      ...populatedOrder.toObject(),
+      deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
+    });
+    app.io.emit("admin:order-status-update", {
+      orderId: String(populatedOrder._id),
+      status: populatedOrder.status,
+      orderNumber: populatedOrder.orderId,
+    });
+    // Notify the specific driver mobile app
+    if (populatedOrder.deliveryPartner?._id) {
+      console.log(`📡 [Socket] Emitting driver:order-status-update (edit) to driver ${populatedOrder.deliveryPartner._id}`);
+      app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
+        orderId: String(populatedOrder._id),
+        status: populatedOrder.status,
+        order: populatedOrder,
+        orderNumber: populatedOrder.orderId,
+      });
+    }
+  }
+
+  return originalResponse;
 };
 
 export async function buildAdminRouter(app) {
@@ -1277,71 +1345,7 @@ export async function buildAdminRouter(app) {
           },
 
           edit: {
-            after: async (originalResponse, request, context) => {
-              if (request.method !== "post") return originalResponse;
-
-              const orderId = originalResponse?.record?.params?._id;
-              if (!orderId) return originalResponse;
-
-              const Order = mongoose.models.Order;
-              const DeliveryPartner = mongoose.models.DeliveryPartner;
-              const dbOrder = await Order.findById(orderId);
-              if (!dbOrder) return originalResponse;
-
-              let changed = false;
-              if (dbOrder.deliveryPartner) {
-                const driver = await DeliveryPartner.findById(dbOrder.deliveryPartner);
-                if (driver) {
-                  const hasLiveCoords =
-                    Number.isFinite(dbOrder.deliveryPersonLocation?.latitude) &&
-                    Number.isFinite(dbOrder.deliveryPersonLocation?.longitude);
-
-                  if (!hasLiveCoords) {
-                    dbOrder.deliveryPersonLocation = {
-                      latitude: driver.liveLocation?.latitude ?? dbOrder.pickupLocation?.latitude,
-                      longitude: driver.liveLocation?.longitude ?? dbOrder.pickupLocation?.longitude,
-                      address: "Assigned from admin edit",
-                    };
-                    changed = true;
-                  }
-
-                  if (dbOrder.status === "available") {
-                    dbOrder.status = "assigned";
-                    dbOrder.assignedAt = new Date();
-                    changed = true;
-                  }
-                }
-              }
-
-              if (changed) {
-                await dbOrder.save();
-              }
-
-              const populatedOrder = await hydrateOrderForTracking(orderId);
-              if (app.io && populatedOrder) {
-                app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
-                  ...populatedOrder.toObject(),
-                  deliveryPartnerName: populatedOrder.deliveryPartner?.name || "Delivery Partner",
-                });
-                app.io.emit("admin:order-status-update", {
-                  orderId: String(populatedOrder._id),
-                  status: populatedOrder.status,
-                  orderNumber: populatedOrder.orderId,
-                });
-                // Notify the specific driver mobile app
-                if (populatedOrder.deliveryPartner?._id) {
-                  console.log(`📡 [Socket] Emitting driver:order-status-update (edit) to driver ${populatedOrder.deliveryPartner._id}`);
-                  app.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
-                    orderId: String(populatedOrder._id),
-                    status: populatedOrder.status,
-                    order: populatedOrder,
-                    orderNumber: populatedOrder.orderId,
-                  });
-                }
-              }
-
-              return originalResponse;
-            },
+            after: async (response, request, context) => afterEditOrderHook(response, request, context, app),
           },
         },
       },
@@ -1387,20 +1391,23 @@ export async function buildAdminRouter(app) {
           icon: "UserCheck",
           component: Components.AssignDriver,
           handler: async (request, response, context) => {
-            const { record, currentAdmin } = context;
+            const { currentAdmin } = context;
+            // Safer way to get record ID as custom components might not always pass record context fully
+            const recordId = context.record?.id || request.params.recordId;
+
             if (request.method === "post") {
               try {
-                const { driverId } = request.payload;
+                const { driverId, driverEarning } = request.payload;
                 const Order = mongoose.models.Order;
                 const DeliveryPartner = mongoose.models.DeliveryPartner;
-                const dbOrder = await Order.findById(record.id);
+                const dbOrder = await Order.findById(recordId);
                 const driver = await DeliveryPartner.findById(driverId);
 
                 if (!dbOrder || !driver) {
                   return { notice: { message: "Order or Driver not found", type: "error" } };
                 }
 
-                const populatedOrder = await assignDriverToOrder(dbOrder, driver);
+                const populatedOrder = await assignDriverToOrder(dbOrder, driver, driverEarning);
                 if (app.io && populatedOrder) {
                   // Notify the customer tracking room
                   app.io.to(String(populatedOrder._id)).emit("liveTrackingUpdates", {
@@ -1461,6 +1468,11 @@ export async function buildAdminRouter(app) {
             }
             return { record: record.toJSON(currentAdmin) };
           },
+          edit: {
+            isVisible: false, // Hide redundant edit button as requested
+          },
+          show: { isVisible: true },
+          delete: { isVisible: true },
         },
       }
     }
