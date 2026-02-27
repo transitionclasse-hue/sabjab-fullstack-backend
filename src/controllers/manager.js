@@ -164,7 +164,7 @@ export const updateOrderStatusByManager = async (req, reply) => {
           console.log(`[ManagerUpdate] SUCCESS: Created delivery fee transaction ${feeTxn._id}`);
         }
 
-        if (order.paymentMethod === "COD") {
+        if (order.paymentMethod === "COD" && order.totalPrice > 0) {
           order.codCollected = order.totalPrice;
           if (order.deliveryPartner) {
             const codTxn = await WalletTransaction.create({

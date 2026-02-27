@@ -50,35 +50,42 @@ walletTransactionSchema.post("save", async function (doc) {
         const { Customer, DeliveryPartner } = await import("./user.js");
 
         if (doc.deliveryPartner) {
-            const driver = await DeliveryPartner.findById(doc.deliveryPartner);
-            if (driver) {
-                if (doc.txnType === "delivery_fee" || doc.txnType === "payout" || doc.txnType === "referral_bonus") {
-                    // Wallet balance updates
-                    const change = doc.type === "credit" ? doc.amount : -doc.amount;
-                    const oldBalance = driver.walletBalance || 0;
-                    driver.walletBalance = oldBalance + change;
-                    console.log(`[WalletSync] DRIVER_WALLET_UPDATE: ${doc.txnType} | Amt: ${doc.amount} | Old: ${oldBalance} | New: ${driver.walletBalance}`);
-                    await driver.save();
-                    console.log(`[WalletSync] DRIVER_WALLET_SUCCESS: Committed balance for ${driver._id}`);
-                } else if (doc.txnType === "cod_collection" || doc.txnType === "cod_settlement") {
-                    // Cash in hand updates
-                    const change = doc.txnType === "cod_collection" ? doc.amount : -doc.amount;
-                    const oldCash = driver.cashInHand || 0;
-                    driver.cashInHand = oldCash + change;
-                    console.log(`[WalletSync] DRIVER_CASH_UPDATE: ${doc.txnType} | Amt: ${doc.amount} | Old: ${oldCash} | New: ${driver.cashInHand}`);
-                    await driver.save();
-                    console.log(`[WalletSync] DRIVER_CASH_SUCCESS: Committed cash liability for ${driver._id}`);
+            const update = {};
+            if (doc.txnType === "delivery_fee" || doc.txnType === "payout" || doc.txnType === "referral_bonus") {
+                // Wallet balance updates (Atomic $inc)
+                const change = doc.type === "credit" ? doc.amount : -doc.amount;
+                update.$inc = { walletBalance: change };
+                console.log(`[WalletSync] ATOMIC_WALLET_START: ${doc.txnType} | Amt: ${change} | Driver: ${doc.deliveryPartner}`);
+            } else if (doc.txnType === "cod_collection" || doc.txnType === "cod_settlement") {
+                // Cash in hand updates (Atomic $inc)
+                const change = doc.txnType === "cod_collection" ? doc.amount : -doc.amount;
+                update.$inc = { cashInHand: change };
+                console.log(`[WalletSync] ATOMIC_CASH_START: ${doc.txnType} | Amt: ${change} | Driver: ${doc.deliveryPartner}`);
+            }
+
+            if (Object.keys(update).length > 0) {
+                const updatedDriver = await DeliveryPartner.findByIdAndUpdate(
+                    doc.deliveryPartner,
+                    update,
+                    { new: true }
+                );
+                if (updatedDriver) {
+                    console.log(`[WalletSync] ATOMIC_SUCCESS: Driver ${doc.deliveryPartner} | Wallet: ${updatedDriver.walletBalance} | Cash: ${updatedDriver.cashInHand}`);
+                } else {
+                    console.warn(`[WalletSync] ATOMIC_FAIL: Driver ${doc.deliveryPartner} not found`);
                 }
             }
         }
 
         if (doc.customer) {
-            const customer = await Customer.findById(doc.customer);
-            if (customer) {
-                const change = doc.type === "credit" ? doc.amount : -doc.amount;
-                customer.walletBalance = (customer.walletBalance || 0) + change;
-                await customer.save();
-                console.log(`[WalletSync] Updated Customer ${customer._id} wallet balance: ${customer.walletBalance}`);
+            const change = doc.type === "credit" ? doc.amount : -doc.amount;
+            const updatedCustomer = await Customer.findByIdAndUpdate(
+                doc.customer,
+                { $inc: { walletBalance: change } },
+                { new: true }
+            );
+            if (updatedCustomer) {
+                console.log(`[WalletSync] ATOMIC_CUSTOMER_SUCCESS: Customer ${doc.customer} | New Balance: ${updatedCustomer.walletBalance}`);
             }
         }
     } catch (error) {

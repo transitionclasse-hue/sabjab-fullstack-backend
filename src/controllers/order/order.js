@@ -412,7 +412,7 @@ export const updateOrderStatus = async (req, reply) => {
                 }
 
                 // Handle COD Collection Tracking
-                if (order.paymentMethod === "COD") {
+                if (order.paymentMethod === "COD" && order.totalPrice > 0) {
                     order.codCollected = order.totalPrice; // Assuming totalAmount is totalPrice
                     if (order.deliveryPartner) {
                         const codTxn = await WalletTransaction.create({
