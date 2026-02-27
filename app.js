@@ -49,7 +49,6 @@ const start = async () => {
     });
 
     // ---------------- COOKIE + SESSION ----------------
-    await app.register(fastifyCookie);
 
     await app.register(fastifyCors, {
       origin: true, // For production, you might want to specify allowed origins
@@ -57,14 +56,6 @@ const start = async () => {
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     });
 
-    await app.register(fastifySession, {
-      secret: process.env.COOKIE_PASSWORD,
-      cookie: {
-        secure: false,
-        httpOnly: true
-      },
-      saveUninitialized: false
-    });
 
     // ---------------- SOCKET.IO ----------------
     await app.register(fastifySocketIO, {
