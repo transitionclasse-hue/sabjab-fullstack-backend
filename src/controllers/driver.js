@@ -233,3 +233,32 @@ export const updatePushToken = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to update push token", error: error.message });
   }
 };
+export const updateNotificationSettings = async (req, reply) => {
+  try {
+    const { userId } = req.user;
+    const { notificationsEnabled, notificationSound } = req.body || {};
+
+    const updateData = {};
+    if (typeof notificationsEnabled === "boolean") updateData.notificationsEnabled = notificationsEnabled;
+    if (notificationSound) updateData.notificationSound = notificationSound;
+
+    const driver = await DeliveryPartner.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true }
+    );
+
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+
+    return reply.send({
+      message: "Settings updated successfully",
+      notificationsEnabled: driver.notificationsEnabled,
+      notificationSound: driver.notificationSound
+    });
+  } catch (error) {
+    console.error("updateNotificationSettings error:", error);
+    return reply.status(500).send({ message: "Failed to update settings", error: error.message });
+  }
+};

@@ -23,7 +23,7 @@ export const sendPushNotification = async (userId, title, body, data = {}, userT
 
         const messages = [{
             to: user.pushToken,
-            sound: "default",
+            sound: user.notificationSound || "default",
             title,
             body,
             data,
