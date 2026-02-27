@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Branch, Customer, Product, Category } from "../models/index.js";
+import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction } from "../models/index.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import Referral from "../models/referral.js";
@@ -656,6 +656,15 @@ export const getManagerOccasions = async (req, reply) => {
   }
 };
 
+export const getManagerHomeComponents = async (req, reply) => {
+  try {
+    const components = await HomeComponent.find({}).lean();
+    return reply.send(components);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch components", error: error.message });
+  }
+};
+
 export const createManagerOccasion = async (req, reply) => {
   try {
     const { name, icon, banner, themeColor, themeMode, nameAlignment, isDefault } = req.body;
@@ -756,5 +765,154 @@ export const deleteManagerHomeComponent = async (req, reply) => {
     return reply.send({ message: "Component deleted successfully" });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to delete component", error: error.message });
+  }
+};
+
+// =====================================================
+// DRIVER FINANCIAL MANAGEMENT & REPORTING
+// =====================================================
+
+export const getManagerDriverFinance = async (req, reply) => {
+  try {
+    const drivers = await DeliveryPartner.find({ isActive: true }).lean();
+
+    const driversWithStats = await Promise.all(
+      drivers.map(async (driver) => {
+        // 1. Pending Payout (Completed delivery fees not yet paid out)
+        // We look for 'delivery_fee' transactions that haven't been 'payout'ed
+        // For simplicity in this implementation, we calculate current wallet balance for earnings
+        const earningsTxns = await WalletTransaction.find({
+          deliveryPartner: driver._id,
+          txnType: "delivery_fee",
+          status: "completed"
+        }).lean();
+
+        const payoutTxns = await WalletTransaction.find({
+          deliveryPartner: driver._id,
+          txnType: "payout",
+          status: "completed"
+        }).lean();
+
+        const totalEarned = earningsTxns.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+        const totalPaid = payoutTxns.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+        const pendingPayout = Math.max(0, totalEarned - totalPaid);
+
+        // 2. Cash in Hand (Net COD collection)
+        const codTxns = await WalletTransaction.find({
+          deliveryPartner: driver._id,
+          txnType: { $in: ["cod_collection", "cod_settlement"] },
+          status: "completed"
+        }).lean();
+
+        const cashInHand = codTxns.reduce((sum, tx) => {
+          if (tx.txnType === "cod_collection") return sum + (tx.amount || 0);
+          if (tx.txnType === "cod_settlement") return sum - (tx.amount || 0);
+          return sum;
+        }, 0);
+
+        return {
+          ...driver,
+          pendingPayout,
+          cashInHand: Math.max(0, cashInHand),
+          totalLifetimeEarnings: totalEarned
+        };
+      })
+    );
+
+    return reply.send(driversWithStats);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch driver finance", error: error.message });
+  }
+};
+
+export const settleDriverCod = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const { amount, description } = req.body;
+
+    if (!amount || amount <= 0) {
+      return reply.status(400).send({ message: "Invalid settlement amount" });
+    }
+
+    const transaction = new WalletTransaction({
+      deliveryPartner: id,
+      amount: amount,
+      type: "debit",
+      txnType: "cod_settlement",
+      status: "completed",
+      description: description || "Manual COD settlement by manager"
+    });
+
+    await transaction.save();
+    return reply.send({ message: "COD settled successfully", transaction });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to settle COD", error: error.message });
+  }
+};
+
+export const bulkProcessPayout = async (req, reply) => {
+  try {
+    const { payouts } = req.body; // Array of { driverId, amount }
+
+    if (!Array.isArray(payouts) || payouts.length === 0) {
+      return reply.status(400).send({ message: "Invalid payouts data" });
+    }
+
+    const results = await Promise.all(
+      payouts.map(async (p) => {
+        try {
+          const payout = new Payout({
+            deliveryPartner: p.driverId,
+            amount: p.amount,
+            status: "completed",
+            completedAt: new Date(),
+            meta: { processedBy: "manager_bulk" }
+          });
+          await payout.save();
+
+          const transaction = new WalletTransaction({
+            deliveryPartner: p.driverId,
+            amount: p.amount,
+            type: "debit",
+            txnType: "payout",
+            status: "completed",
+            description: "Bulk payout processed by manager"
+          });
+          await transaction.save();
+
+          return { driverId: p.driverId, status: "success" };
+        } catch (err) {
+          return { driverId: p.driverId, status: "failed", error: err.message };
+        }
+      })
+    );
+
+    return reply.send({ message: "Bulk payout processing completed", results });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to process bulk payouts", error: error.message });
+  }
+};
+
+export const getDriverDetailedReport = async (req, reply) => {
+  try {
+    const { id } = req.params;
+
+    const [driver, transactions, payouts, orders] = await Promise.all([
+      DeliveryPartner.findById(id).lean(),
+      WalletTransaction.find({ deliveryPartner: id }).sort({ createdAt: -1 }).limit(50).lean(),
+      Payout.find({ deliveryPartner: id }).sort({ createdAt: -1 }).limit(20).lean(),
+      Order.find({ deliveryPartner: id }).sort({ createdAt: -1 }).limit(20).lean()
+    ]);
+
+    if (!driver) return reply.status(404).send({ message: "Driver not found" });
+
+    return reply.send({
+      driver,
+      transactions,
+      payouts,
+      recentOrders: orders
+    });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch driver report", error: error.message });
   }
 };

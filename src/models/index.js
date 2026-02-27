@@ -15,6 +15,7 @@ import GreenPoints from "./greenPoints.js";
 import GreenPointsConfig from "./greenPointsConfig.js";
 import Referral from "./referral.js";
 import WalletTransaction from "./walletTransaction.js";
+import Occasion from "./occasion.js";
 
 export {
   Order,
@@ -36,4 +37,5 @@ export {
   GreenPointsConfig,
   Referral,
   WalletTransaction,
+  Occasion,
 };

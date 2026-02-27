@@ -19,6 +19,11 @@ import {
   createManagerHomeComponent,
   updateManagerHomeComponent,
   deleteManagerHomeComponent,
+  getManagerHomeComponents,
+  getManagerDriverFinance,
+  settleDriverCod,
+  bulkProcessPayout,
+  getDriverDetailedReport,
 } from "../controllers/manager.js";
 import {
   getAllProducts,
@@ -63,7 +68,14 @@ export const managerRoutes = async (fastify) => {
   fastify.patch("/manager/occasions/:id", updateManagerOccasion);
   fastify.delete("/manager/occasions/:id", deleteManagerOccasion);
 
+  fastify.get("/manager/home-components", getManagerHomeComponents);
   fastify.post("/manager/home-components", createManagerHomeComponent);
   fastify.patch("/manager/home-components/:id", updateManagerHomeComponent);
   fastify.delete("/manager/home-components/:id", deleteManagerHomeComponent);
+
+  // Driver Financial Management
+  fastify.get("/manager/driver-finance", getManagerDriverFinance);
+  fastify.get("/manager/driver-finance/:id/report", getDriverDetailedReport);
+  fastify.post("/manager/payouts/bulk", bulkProcessPayout);
+  fastify.post("/manager/drivers/:id/settle-cod", settleDriverCod);
 };
