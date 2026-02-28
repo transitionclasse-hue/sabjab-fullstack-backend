@@ -40,11 +40,13 @@ import {
 import {
   getAllCategories,
 } from "../controllers/product/category.js";
+import { getOrderById } from "../controllers/order/order.js";
 
 export const managerRoutes = async (fastify) => {
   fastify.get("/manager/overview", getManagerOverview);
   fastify.get("/manager/analytics", getManagerAnalytics);
   fastify.get("/manager/orders", getManagerOrders);
+  fastify.get("/manager/orders/:orderId", getOrderById);
   fastify.get("/manager/drivers", getManagerDrivers);
   fastify.get("/manager/branches", getManagerBranches);
   fastify.get("/manager/customers", getManagerCustomers);
