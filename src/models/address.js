@@ -11,6 +11,8 @@ const addressSchema = new mongoose.Schema({
     area: { type: String },
     landmark: { type: String },
     pincode: { type: String },
+    recipientName: { type: String },
+    recipientPhone: { type: String },
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
     createdAt: { type: Date, default: Date.now },

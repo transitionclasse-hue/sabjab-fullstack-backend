@@ -51,6 +51,11 @@ const orderSchema = new mongoose.Schema({
     address: { type: String },
   },
 
+  customerInfo: {
+    name: { type: String },
+    phone: { type: String },
+  },
+
   pickupLocation: {
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },

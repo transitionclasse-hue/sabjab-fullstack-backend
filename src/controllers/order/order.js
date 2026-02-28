@@ -230,6 +230,10 @@ export const createOrder = async (req, reply) => {
             paymentMethod: paymentMethod || "COD",
             couponCode: validatedCouponCode,
             discountAmount: discountAmount,
+            customerInfo: {
+                name: deliveryAddress?.recipientName || customerData.name || "Customer",
+                phone: deliveryAddress?.recipientPhone || customerData.phone || "No Phone",
+            },
             deliveryLocation: {
                 latitude: deliveryAddress?.coords?.lat || deliveryAddress?.latitude || 0,
                 longitude: deliveryAddress?.coords?.lng || deliveryAddress?.longitude || 0,
