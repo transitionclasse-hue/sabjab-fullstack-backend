@@ -40,94 +40,95 @@ export const buildRouter = async (admin, fastifyApp) => {
         throw new WrongArgumentError(INVALID_ADMIN_JS_INSTANCE);
     }
 
-    // PATCHED: Use onFile handler to buffer file data BEFORE the route handler runs
-    await fastifyApp.register(fastifyMultipart, {
-        attachFieldsToBody: true,
-        onFile: async (part) => {
-            const chunks = [];
-            for await (const chunk of part.file) {
-                chunks.push(chunk);
+    // PATCHED: Encapsulate the admin router in its own Fastify context
+    // to prevent fastifyMultipart from leaking globally and crashing the app.
+    await fastifyApp.register(async (adminInstance) => {
+        // PATCHED: Use onFile handler to buffer file data BEFORE the route handler runs
+        await adminInstance.register(fastifyMultipart, {
+            attachFieldsToBody: true,
+            onFile: async (part) => {
+                const chunks = [];
+                for await (const chunk of part.file) {
+                    chunks.push(chunk);
+                }
+                part._buf = Buffer.concat(chunks);
+                part.toBuffer = async () => part._buf;
             }
-            part._buf = Buffer.concat(chunks);
-            part.toBuffer = async () => part._buf;
-        }
-    });
+        });
 
-    admin.initialize().then(() => {
-        log.debug('AdminJS: bundle ready');
-    });
-    const { routes } = AdminRouter;
-    routes.forEach(route => {
-        const path = route.path.replace(/{/g, ':').replace(/}/g, '');
-        const handler = async (request, reply) => {
-            const controller = new route.Controller({ admin }, request.session?.adminUser);
-            const { params, query } = request;
-            const method = request.method.toLowerCase();
-            const body = request.body;
+        admin.initialize().then(() => {
+            log.debug('AdminJS: bundle ready');
+        });
 
-            // PATCHED: Convert file fields to File-like objects.
-            // Browser sends "uploadFile.0" (indexed), curl sends "uploadFile" (direct).
-            const entries = await Promise.all(
-                Object.keys((body ?? {})).map(async (key) => {
-                    const field = body[key];
-                    if (field && field.file !== undefined && field.filename) {
-                        const buffer = field._buf || null;
-                        if (!buffer || buffer.length === 0) {
-                            return [key, null];
+        const { routes } = AdminRouter;
+        routes.forEach(route => {
+            const path = route.path.replace(/{/g, ':').replace(/}/g, '');
+            const handler = async (request, reply) => {
+                const controller = new route.Controller({ admin }, request.session?.adminUser);
+                const { params, query } = request;
+                const method = request.method.toLowerCase();
+                const body = request.body;
+
+                // PATCHED: Convert file fields to File-like objects.
+                const entries = await Promise.all(
+                    Object.keys((body ?? {})).map(async (key) => {
+                        const field = body[key];
+                        if (field && field.file !== undefined && field.filename) {
+                            const buffer = field._buf || null;
+                            if (!buffer || buffer.length === 0) {
+                                return [key, null];
+                            }
+                            const fileObj = {
+                                name: field.filename,
+                                buffer: buffer,
+                                size: buffer.length,
+                                type: field.mimetype,
+                                encoding: field.encoding,
+                            };
+                            if (/\\.\\d+$/.test(key)) {
+                                return [key, fileObj];
+                            } else {
+                                return [key, [fileObj]];
+                            }
                         }
-                        const fileObj = {
-                            name: field.filename,
-                            buffer: buffer,
-                            size: buffer.length,
-                            type: field.mimetype,
-                            encoding: field.encoding,
-                        };
-                        // Indexed key (e.g. "uploadFile.0") -> return object directly
-                        // flat.get reconstructs "uploadFile.0" => uploadFile[0]
-                        // Direct key (e.g. "uploadFile") -> wrap in array for files.length
-                        if (/\\.\\d+$/.test(key)) {
-                            return [key, fileObj];
-                        } else {
-                            return [key, [fileObj]];
-                        }
-                    }
-                    return [key, field?.value ?? field];
-                })
-            );
-            const fields = fromPairs(entries);
+                        return [key, field?.value ?? field];
+                    })
+                );
+                const fields = fromPairs(entries);
 
-            const html = await controller[route.action]({
-                ...request,
-                params,
-                query,
-                payload: fields ?? {},
-                method,
-            }, reply);
-            if (route.contentType) {
-                reply.type(route.contentType);
+                const html = await controller[route.action]({
+                    ...request,
+                    params,
+                    query,
+                    payload: fields ?? {},
+                    method,
+                }, reply);
+                if (route.contentType) {
+                    reply.type(route.contentType);
+                }
+                else if (typeof html === 'string') {
+                    reply.type('text/html');
+                }
+                if (html) {
+                    return reply.send(html);
+                }
+            };
+            if (route.method === 'GET') {
+                adminInstance.get(\`\${admin.options.rootPath}\${path}\`, handler);
             }
-            else if (typeof html === 'string') {
-                reply.type('text/html');
+            if (route.method === 'POST') {
+                adminInstance.post(\`\${admin.options.rootPath}\${path}\`, handler);
             }
-            if (html) {
-                return reply.send(html);
-            }
-        };
-        if (route.method === 'GET') {
-            fastifyApp.get(\`\${admin.options.rootPath}\${path}\`, handler);
-        }
-        if (route.method === 'POST') {
-            fastifyApp.post(\`\${admin.options.rootPath}\${path}\`, handler);
-        }
-    });
-    assets.forEach(asset => {
-        fastifyApp.get(\`\${admin.options.rootPath}\${asset.path}\`, async (_req, reply) => {
-            const mimeType = mime.lookup(asset.src);
-            const file = await readFile(path.resolve(asset.src));
-            if (mimeType) {
-                return reply.type(mimeType).send(file);
-            }
-            return reply.send(file);
+        });
+        assets.forEach(asset => {
+            adminInstance.get(\`\${admin.options.rootPath}\${asset.path}\`, async (_req, reply) => {
+                const mimeType = mime.lookup(asset.src);
+                const file = await readFile(path.resolve(asset.src));
+                if (mimeType) {
+                    return reply.type(mimeType).send(file);
+                }
+                return reply.send(file);
+            });
         });
     });
 };

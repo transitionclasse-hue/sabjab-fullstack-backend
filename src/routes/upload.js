@@ -1,7 +1,12 @@
 import { v2 as cloudinary } from 'cloudinary';
 import streamifier from 'streamifier';
+import fastifyMultipart from '@fastify/multipart';
 
 export const uploadRoutes = async (fastify, options) => {
+    await fastify.register(fastifyMultipart, {
+        limits: { fileSize: 20 * 1024 * 1024 } // 20MB limit
+    });
+
     fastify.post('/upload', async (request, reply) => {
         try {
             const data = await request.file();

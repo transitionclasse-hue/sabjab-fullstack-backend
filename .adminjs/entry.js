@@ -11,6 +11,12 @@ import SendNotification from '../src/components/SendNotification'
 AdminJS.UserComponents.SendNotification = SendNotification
 import Dashboard from '../src/components/Dashboard'
 AdminJS.UserComponents.Dashboard = Dashboard
+import AssignDriverComponent from '../src/components/AssignDriver'
+AdminJS.UserComponents.AssignDriverComponent = AssignDriverComponent
+import OrderStatusBadge from '../src/components/OrderStatusBadge'
+AdminJS.UserComponents.OrderStatusBadge = OrderStatusBadge
+import DriverStatusBadge from '../src/components/DriverStatusBadge'
+AdminJS.UserComponents.DriverStatusBadge = DriverStatusBadge
 import UploadEditComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadEditComponent'
 AdminJS.UserComponents.UploadEditComponent = UploadEditComponent
 import UploadListComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadListComponent'
