@@ -22,6 +22,7 @@ export const authRoutes = async (fastify) => {
     // Delivery Partner Endpoint
     fastify.post("/delivery/login", loginDeliveryPartner);
     fastify.post("/auth/login", loginAdmin); // For Manager App
+    fastify.put("/admin/push-token", { preHandler: [verifyToken] }, (await import("../controllers/auth/auth.js")).updateAdminPushToken); // Dynamic import to avoid circular if needed or just add to import list
 
     // System Endpoints
     fastify.post("/customer/refresh-token", refreshToken);

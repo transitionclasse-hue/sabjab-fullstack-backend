@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction } from "../../models/index.js";
+import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction, Admin } from "../../models/index.js";
 import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
 
@@ -267,6 +267,37 @@ export const createOrder = async (req, reply) => {
             order: populatedOrder
         });
 
+        // 🆕 NEW: Push Notifications
+        (async () => {
+            try {
+                // 1. Notify Online Drivers
+                const onlineDrivers = await DeliveryPartner.find({ isOnline: true, pushToken: { $ne: null } });
+                for (const driver of onlineDrivers) {
+                    await sendPushNotification(
+                        driver._id,
+                        "New Order Available! 🚀",
+                        `New order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || "SabJab"}`,
+                        { orderId: String(savedOrder._id), type: "new_order" },
+                        "DeliveryPartner"
+                    );
+                }
+
+                // 2. Notify Admins/Managers
+                const admins = await Admin.find({ pushToken: { $ne: null } });
+                for (const admin of admins) {
+                    await sendPushNotification(
+                        admin._id,
+                        "New Order Received! 📋",
+                        `Order #${populatedOrder.orderId} placed by ${populatedOrder.customer?.name || "Customer"}`,
+                        { orderId: String(savedOrder._id), type: "admin_new_order" },
+                        "Admin"
+                    );
+                }
+            } catch (err) {
+                console.error("New order push failed:", err);
+            }
+        })();
+
         return reply.status(201).send({ order: savedOrder, message: "Order created successfully" });
     } catch (error) {
         console.error("Order Creation Error:", error);
@@ -470,6 +501,18 @@ export const updateOrderStatus = async (req, reply) => {
 
                     // Green Points & Referral (Only on Delivered)
                     if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
+                        // 🆕 NEW: Notify Admins of Delivery
+                        const admins = await Admin.find({ pushToken: { $ne: null } });
+                        for (const admin of admins) {
+                            await sendPushNotification(
+                                admin._id,
+                                "Order Delivered! ✅",
+                                `Order #${order.orderId} has been successfully delivered.`,
+                                { orderId: String(order._id), type: "admin_order_delivered" },
+                                "Admin"
+                            );
+                        }
+
                         const gpConfig = await GreenPointsConfig.getConfig();
                         if (gpConfig?.earnRules?.sustainablePurchase?.enabled && order.customer) {
                             const points = Math.floor((order.totalPrice / 100) * (gpConfig.earnRules.sustainablePurchase.pointsPerHundred || 1));

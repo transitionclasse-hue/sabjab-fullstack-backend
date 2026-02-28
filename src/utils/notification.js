@@ -1,5 +1,5 @@
 import { Expo } from "expo-server-sdk";
-import { Customer, DeliveryPartner } from "../models/user.js";
+import { Customer, DeliveryPartner, Admin } from "../models/user.js";
 import { Notification } from "../models/notification.js";
 
 const expo = new Expo();
@@ -9,7 +9,11 @@ const expo = new Expo();
  */
 export const sendPushNotification = async (userId, title, body, data = {}, userType = 'Customer') => {
     try {
-        const Model = userType === 'Customer' ? Customer : DeliveryPartner;
+        let Model;
+        if (userType === 'Customer') Model = Customer;
+        else if (userType === 'DeliveryPartner') Model = DeliveryPartner;
+        else if (userType === 'Admin') Model = Admin;
+
         const user = await Model.findById(userId);
         if (!user || !user.pushToken || !user.notificationsEnabled) {
             console.log(`Skipping notification for ${userId} (${userType}): No token or disabled.`);

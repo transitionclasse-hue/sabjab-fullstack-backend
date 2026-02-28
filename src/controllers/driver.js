@@ -306,6 +306,14 @@ export const toggleOnlineStatus = async (req, reply) => {
       { new: true }
     );
 
+    if (driver) {
+      req.server.io.emit("admin:driver-status-update", {
+        driverId: String(driver._id),
+        isOnline: driver.isOnline,
+        lastSeen: driver.lastSeen
+      });
+    }
+
     if (!driver) {
       return reply.status(404).send({ message: "Driver not found" });
     }

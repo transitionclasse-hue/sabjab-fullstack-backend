@@ -388,3 +388,21 @@ export const refreshToken = async (req, reply) => {
     return reply.status(403).send({ message: "Refresh token invalid or expired" });
   }
 };
+export const updateAdminPushToken = async (req, reply) => {
+  try {
+    const { pushToken } = req.body;
+    const userId = req.user.userId;
+
+    const user = await Admin.findById(userId);
+    if (!user) {
+      return reply.status(404).send({ message: "Admin not found" });
+    }
+
+    user.pushToken = pushToken;
+    await user.save();
+
+    return reply.send({ message: "Admin push token updated successfully" });
+  } catch (error) {
+    return reply.status(500).send({ message: "Error updating admin push token", error: error.message });
+  }
+};

@@ -97,6 +97,8 @@ const adminSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ["Admin"], default: "Admin" },
+  pushToken: { type: String, default: null },
+  notificationsEnabled: { type: Boolean, default: true },
 }, { timestamps: true });
 
 // ================= MODELS =================
