@@ -44,7 +44,7 @@ import {
   getAllCategories,
 } from "../controllers/product/category.js";
 import { getAllSubCategories } from "../controllers/product/subCategory.js";
-import { getAllSuperCategories } from "../controllers/product/supercategory.js";
+import { getAllSuperCategories } from "../controllers/product/superCategory.js";
 import { getOrderById } from "../controllers/order/order.js";
 
 export const managerRoutes = async (fastify) => {
