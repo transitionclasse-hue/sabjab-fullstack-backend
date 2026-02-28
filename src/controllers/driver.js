@@ -205,7 +205,10 @@ export const getDriverStats = async (req, reply) => {
 export const getCodStatus = async (req, reply) => {
   try {
     const { userId } = req.user;
-    const COD_LIMIT = 2000; // Increased limit or fetch from config
+
+    // Fetch driver to get custom codLimit
+    const driver = await DeliveryPartner.findById(userId).select('codLimit');
+    const COD_LIMIT = driver?.codLimit ?? 2000;
 
     // Sum all cod_collection (liability increase) and subtract any cod_settlement (liability decrease)
     const txns = await WalletTransaction.find({

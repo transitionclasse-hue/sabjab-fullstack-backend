@@ -57,6 +57,31 @@ export const getManagerDrivers = async (req, reply) => {
   }
 };
 
+export const updateDriverCodLimit = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const { codLimit } = req.body;
+
+    if (codLimit === undefined || codLimit < 0) {
+      return reply.status(400).send({ message: "Invalid COD Limit amount" });
+    }
+
+    const driver = await DeliveryPartner.findByIdAndUpdate(
+      id,
+      { codLimit: Number(codLimit) },
+      { new: true }
+    );
+
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+
+    return reply.send({ message: "Limit updated successfully", driver });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update driver limit", error: error.message });
+  }
+};
+
 export const assignDriverByManager = async (req, reply) => {
   try {
     const { orderId } = req.params;

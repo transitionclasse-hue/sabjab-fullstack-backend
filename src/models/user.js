@@ -88,6 +88,7 @@ const deliveryPartnerSchema = new mongoose.Schema({
   batteryLevel: { type: Number, default: 100 },
   walletBalance: { type: Number, default: 0 },
   cashInHand: { type: Number, default: 0 },
+  codLimit: { type: Number, default: 2000 },
 }, { timestamps: true });
 
 // ================= ADMIN =================
