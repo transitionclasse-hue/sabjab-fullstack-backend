@@ -334,7 +334,7 @@ export const confirmOrder = async (req, reply) => {
             orderNumber: order.orderId,
         });
 
-        return reply.send(order);
+        return reply.send(populatedOrder);
     } catch (error) {
         return reply.status(500).send({ message: "Failed to confirm order", error });
     }
