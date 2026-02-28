@@ -43,6 +43,8 @@ import {
 import {
   getAllCategories,
 } from "../controllers/product/category.js";
+import { getAllSubCategories } from "../controllers/product/subCategory.js";
+import { getAllSuperCategories } from "../controllers/product/supercategory.js";
 import { getOrderById } from "../controllers/order/order.js";
 
 export const managerRoutes = async (fastify) => {
@@ -55,6 +57,8 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/customers", getManagerCustomers);
   fastify.get("/manager/products", getAllProducts);
   fastify.get("/manager/categories", getAllCategories);
+  fastify.get("/manager/subcategories", getAllSubCategories);
+  fastify.get("/manager/supercategories", getAllSuperCategories);
   fastify.post("/manager/products", createProduct);
   fastify.put("/manager/products/:id", updateProduct);
   fastify.delete("/manager/products/:id", deleteProduct);
