@@ -29,6 +29,8 @@ import {
   getManagerFinanceHistory,
   getManagerDriverActivity,
   updateDriverCodLimit,
+  getGlobalCodLimit,
+  updateGlobalCodLimit,
 } from "../controllers/manager.js";
 import {
   getAllProducts,
@@ -86,6 +88,8 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/payouts/bulk", bulkProcessPayout);
   fastify.post("/manager/drivers/:id/settle-cod", settleDriverCod);
   fastify.patch("/manager/drivers/:id/cod-limit", updateDriverCodLimit);
+  fastify.get("/manager/config/cod-limit", getGlobalCodLimit);
+  fastify.patch("/manager/config/cod-limit", updateGlobalCodLimit);
 
   fastify.get("/manager/dispatch", getManagerDispatchOrders);
   fastify.get("/manager/driver-rankings", getManagerDriverRankings);

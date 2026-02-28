@@ -1,4 +1,5 @@
 import { Order, DeliveryPartner, Payout, WalletTransaction } from "../models/index.js";
+import PricingConfig from "../models/pricingConfig.js";
 
 const getDateRange = (filter) => {
   const now = new Date();
@@ -208,7 +209,13 @@ export const getCodStatus = async (req, reply) => {
 
     // Fetch driver to get custom codLimit
     const driver = await DeliveryPartner.findById(userId).select('codLimit');
-    const COD_LIMIT = driver?.codLimit ?? 2000;
+    let COD_LIMIT = driver?.codLimit;
+
+    if (COD_LIMIT === null || COD_LIMIT === undefined) {
+      let config = await PricingConfig.findOne({ key: "primary" });
+      if (!config) config = await PricingConfig.create({ key: "primary" });
+      COD_LIMIT = config.defaultDriverCodLimit;
+    }
 
     // Sum all cod_collection (liability increase) and subtract any cod_settlement (liability decrease)
     const txns = await WalletTransaction.find({

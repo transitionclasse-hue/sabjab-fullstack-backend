@@ -31,6 +31,7 @@ const pricingConfigSchema = new mongoose.Schema(
     lateNightEndTime: { type: String, default: "05:00" },
     lateNightFee: { type: Number, default: 0, min: 0 },
     defaultDriverEarning: { type: Number, default: 30, min: 0 },
+    defaultDriverCodLimit: { type: Number, default: 2000, min: 0 }, // NEW: Fallback COD limit
 
     customFees: { type: [customFeeSchema], default: [] },
   },

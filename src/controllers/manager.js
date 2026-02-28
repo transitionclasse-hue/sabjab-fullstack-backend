@@ -1,4 +1,5 @@
 import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction } from "../models/index.js";
+import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import Referral from "../models/referral.js";
@@ -79,6 +80,34 @@ export const updateDriverCodLimit = async (req, reply) => {
     return reply.send({ message: "Limit updated successfully", driver });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to update driver limit", error: error.message });
+  }
+};
+
+export const getGlobalCodLimit = async (req, reply) => {
+  try {
+    let config = await PricingConfig.findOne({ key: "primary" });
+    if (!config) {
+      config = await PricingConfig.create({ key: "primary" });
+    }
+    return reply.send({ defaultDriverCodLimit: config.defaultDriverCodLimit });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch global COD limit", error: error.message });
+  }
+};
+
+export const updateGlobalCodLimit = async (req, reply) => {
+  try {
+    const { defaultDriverCodLimit } = req.body;
+    let config = await PricingConfig.findOne({ key: "primary" });
+    if (!config) {
+      config = await PricingConfig.create({ key: "primary", defaultDriverCodLimit });
+    } else {
+      config.defaultDriverCodLimit = defaultDriverCodLimit;
+      await config.save();
+    }
+    return reply.send({ message: "Global COD Limit updated", defaultDriverCodLimit: config.defaultDriverCodLimit });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update global COD limit", error: error.message });
   }
 };
 
