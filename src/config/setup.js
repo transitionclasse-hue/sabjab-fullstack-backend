@@ -1191,6 +1191,30 @@ export async function buildAdminRouter(app) {
     }
 
     if (model.modelName === "Occasion") {
+      const occasionProvider = new CloudinaryProvider();
+
+      const replaceOccasionIconWithUrl = async (response, request, context) => {
+        if (occasionProvider.lastUploadedUrl && context.record && context.record.isValid()) {
+          console.log('🔗 Replacing occasion icon key with full URL:', occasionProvider.lastUploadedUrl);
+          await context.record.update({ icon: occasionProvider.lastUploadedUrl });
+          occasionProvider.lastUploadedUrl = null;
+          return { ...response, record: context.record.toJSON(context.currentAdmin) };
+        }
+        return response;
+      };
+
+      const occasionBannerProvider = new CloudinaryProvider();
+
+      const replaceOccasionBannerWithUrl = async (response, request, context) => {
+        if (occasionBannerProvider.lastUploadedUrl && context.record && context.record.isValid()) {
+          console.log('🔗 Replacing occasion banner key with full URL:', occasionBannerProvider.lastUploadedUrl);
+          await context.record.update({ banner: occasionBannerProvider.lastUploadedUrl });
+          occasionBannerProvider.lastUploadedUrl = null;
+          return { ...response, record: context.record.toJSON(context.currentAdmin) };
+        }
+        return response;
+      };
+
       return {
         resource: model,
         options: {
@@ -1199,7 +1223,11 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
-          editProperties: ["name", "nameAlignment", "icon", "banner", "themeColor", "showBanner", "isDefault", "isActive", "order", "components"],
+          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "showBanner", "isDefault", "isActive", "order", "components"],
+          actions: {
+            new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
+            edit: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
+          },
           properties: {
             name: { label: "Variation Name (e.g. Holi Special)" },
             nameAlignment: {
@@ -1215,9 +1243,49 @@ export async function buildAdminRouter(app) {
             components: {
               label: "Assigned Home Components",
               description: "Select and order components for this variation screen."
-            }
+            },
+            icon: {
+              isVisible: { list: true, filter: false, show: true, edit: false },
+              isRequired: false,
+            },
+            uploadIcon: {
+              label: "Upload Icon Image (1:1 Ratio ideally)",
+              type: "file",
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+            },
+            banner: {
+              isVisible: { list: true, filter: false, show: true, edit: false },
+              isRequired: false,
+            },
+            uploadBanner: {
+              label: "Upload Banner Image (16:9 Ratio ideally)",
+              type: "file",
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+            },
           }
-        }
+        },
+        features: [
+          uploadFeature({
+            componentLoader,
+            provider: occasionProvider,
+            properties: {
+              key: 'icon',
+              file: 'uploadIcon',
+              uploadPath: (record, filename) => `occasion_icon_${record.id() || Date.now()}/${filename}`,
+            },
+            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] },
+          }),
+          uploadFeature({
+            componentLoader,
+            provider: occasionBannerProvider,
+            properties: {
+              key: 'banner',
+              file: 'uploadBanner',
+              uploadPath: (record, filename) => `occasion_banner_${record.id() || Date.now()}/${filename}`,
+            },
+            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] },
+          })
+        ],
       };
     }
 
