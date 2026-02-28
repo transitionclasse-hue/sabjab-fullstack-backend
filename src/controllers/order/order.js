@@ -530,6 +530,15 @@ export const updateOrderStatus = async (req, reply) => {
                         orderNumber: populatedOrder.orderId,
                     });
                 }
+
+                // NEW: Global emission to the Customer's personal socket room
+                if (populatedOrder.customer?._id) {
+                    req.server.io.to(String(populatedOrder.customer._id)).emit("customer:order-status-update", {
+                        orderId: String(order._id),
+                        status,
+                        orderNumber: populatedOrder.orderId,
+                    });
+                }
             } catch (socketError) {
                 console.error("[StatusUpdate] Socket error:", socketError.message);
             }
