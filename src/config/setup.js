@@ -1153,7 +1153,8 @@ export async function buildAdminRouter(app) {
             images: {
               label: 'Additional Images URLs',
               type: 'mixed',
-              description: 'Array of additional image URLs'
+              description: 'Array of additional image URLs. Format as strings.',
+              isArray: true,
             },
             video: {
               label: 'Product Video URL',
