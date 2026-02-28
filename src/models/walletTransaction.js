@@ -36,6 +36,7 @@ const walletTransactionSchema = new mongoose.Schema(
             type: String,
             unique: true,
             sparse: true,
+            default: () => new mongoose.Types.ObjectId().toString(),
         },
         meta: { type: mongoose.Schema.Types.Mixed },
     },
