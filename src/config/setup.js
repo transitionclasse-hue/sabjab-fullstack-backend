@@ -1065,8 +1065,8 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory & Catalog", icon: "Archive" },
           listProperties: ["name", "price", "stock", "isAvailable", "quantity", "superCategory", "category", "subCategory", "image"],
-          editProperties: ["name", "description", "uploadFile", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "image", "variations"],
+          editProperties: ["name", "description", "uploadFile", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
           actions: {
             new: { after: [replaceKeyWithUrl] },
             edit: { after: [replaceKeyWithUrl] },
@@ -1144,6 +1144,20 @@ export async function buildAdminRouter(app) {
             'variations.isAvailable': {
               label: 'In Stock?',
               type: 'boolean'
+            },
+            'variations.image': {
+              label: 'Image URL (Variation)',
+              type: 'string',
+              description: 'URL of the variation specific image'
+            },
+            images: {
+              label: 'Additional Images URLs',
+              type: 'mixed',
+              description: 'Array of additional image URLs'
+            },
+            video: {
+              label: 'Product Video URL',
+              type: 'string'
             },
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },

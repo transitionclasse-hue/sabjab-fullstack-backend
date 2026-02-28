@@ -3,7 +3,9 @@ import mongoose from "mongoose";
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
-  image: { type: String },
+  image: { type: String }, // Primary Image
+  images: [{ type: String }], // Additional Images
+  video: { type: String }, // Product Video
   price: { type: Number, required: true },
   discountPrice: { type: Number },
   quantity: { type: String, required: true },
@@ -34,6 +36,7 @@ const productSchema = new mongoose.Schema({
       price: { type: Number, required: true },
       discountPrice: { type: Number },
       stock: { type: Number, default: 0 },
+      image: { type: String },
       isAvailable: { type: Boolean, default: true },
     },
   ],
