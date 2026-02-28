@@ -270,9 +270,59 @@ export const updateOrderStatusByManager = async (req, reply) => {
 export const getManagerBranches = async (req, reply) => {
   try {
     const branches = await Branch.find({}).sort({ name: 1 }).populate("deliveryPartners");
-    return reply.send(branches);
+    // Also include counts for stats
+    const branchesWithStats = await Promise.all(branches.map(async (b) => {
+      const driverCount = b.deliveryPartners?.length || 0;
+      const orderCount = await Order.countDocuments({ branch: b._id });
+      // Example revenue calculation (delivered only)
+      const revenueData = await Order.aggregate([
+        { $match: { branch: b._id, status: "delivered" } },
+        { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+      ]);
+
+      return {
+        ...b.toObject(),
+        driverCount,
+        orderCount,
+        revenue: revenueData[0]?.total || 0
+      };
+    }));
+
+    return reply.send(branchesWithStats);
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch branches", error: error.message });
+  }
+};
+
+export const createManagerBranch = async (req, reply) => {
+  try {
+    const branch = new Branch(req.body);
+    await branch.save();
+    return reply.status(201).send(branch);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to create branch", error: error.message });
+  }
+};
+
+export const updateManagerBranch = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const branch = await Branch.findByIdAndUpdate(id, req.body, { new: true });
+    if (!branch) return reply.status(404).send({ message: "Branch not found" });
+    return reply.send(branch);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update branch", error: error.message });
+  }
+};
+
+export const deleteManagerBranch = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const branch = await Branch.findByIdAndDelete(id);
+    if (!branch) return reply.status(404).send({ message: "Branch not found" });
+    return reply.send({ message: "Branch deleted successfully" });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to delete branch", error: error.message });
   }
 };
 

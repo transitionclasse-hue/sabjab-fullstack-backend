@@ -16,6 +16,9 @@ import {
   createManagerOccasion,
   updateManagerOccasion,
   deleteManagerOccasion,
+  createManagerBranch,
+  updateManagerBranch,
+  deleteManagerBranch,
   createManagerHomeComponent,
   updateManagerHomeComponent,
   deleteManagerHomeComponent,
@@ -67,6 +70,10 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/orders/:orderId", getOrderById);
   fastify.get("/manager/drivers", getManagerDrivers);
   fastify.get("/manager/branches", getManagerBranches);
+  fastify.post("/manager/branches", createManagerBranch);
+  fastify.put("/manager/branches/:id", updateManagerBranch);
+  fastify.patch("/manager/branches/:id/status", updateManagerBranch); // Re-use update for status
+  fastify.delete("/manager/branches/:id", deleteManagerBranch);
   fastify.get("/manager/customers", getManagerCustomers);
   fastify.get("/manager/products", getAllProducts);
   fastify.get("/manager/categories", getAllCategories);

@@ -8,7 +8,7 @@ export const addressRoutes = async (fastify) => {
     async (request, reply) => {
       try {
         const userId = request.user.userId;
-        const { house, street, city, address, latitude, longitude } = request.body;
+        const { house, street, city, pincode, address, latitude, longitude } = request.body;
 
         // basic validation
         if (!address || !latitude || !longitude) {
@@ -23,6 +23,7 @@ export const addressRoutes = async (fastify) => {
           houseNo: house,
           area: street,
           landmark: city,
+          pincode,
           latitude,
           longitude,
         });

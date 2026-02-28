@@ -20,4 +20,15 @@ export const branchRoutes = async (fastify) => {
     );
     return reply.send({ success: true, branch });
   });
+
+  // Update branch delivery radius
+  fastify.put("/branch/:id/radius", async (req, reply) => {
+    const { radius } = req.body;
+    const branch = await Branch.findByIdAndUpdate(
+      req.params.id,
+      { deliveryRadius: radius },
+      { new: true }
+    );
+    return reply.send({ success: true, branch });
+  });
 };

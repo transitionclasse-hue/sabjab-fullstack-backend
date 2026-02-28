@@ -13,6 +13,8 @@ const branchSchema = new mongoose.Schema({
       ref: "DeliveryPartner",
     },
   ],
+  deliveryRadius: { type: Number, default: 2.5 }, // in kilometers (reduced from 10)
+  servicedPincodes: [{ type: String }], // Optional: list of pin codes this branch services
 });
 
 const Branch = mongoose.model("Branch", branchSchema);
