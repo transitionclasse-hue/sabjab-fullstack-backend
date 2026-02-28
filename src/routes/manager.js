@@ -42,9 +42,22 @@ import {
 } from "../controllers/product/product.js";
 import {
   getAllCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 } from "../controllers/product/category.js";
-import { getAllSubCategories } from "../controllers/product/subCategory.js";
-import { getAllSuperCategories } from "../controllers/product/superCategory.js";
+import {
+  getAllSubCategories,
+  createSubCategory,
+  updateSubCategory,
+  deleteSubCategory,
+} from "../controllers/product/subCategory.js";
+import {
+  getAllSuperCategories,
+  createSuperCategory,
+  updateSuperCategory,
+  deleteSuperCategory,
+} from "../controllers/product/superCategory.js";
 import { getOrderById } from "../controllers/order/order.js";
 
 export const managerRoutes = async (fastify) => {
@@ -57,8 +70,19 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/customers", getManagerCustomers);
   fastify.get("/manager/products", getAllProducts);
   fastify.get("/manager/categories", getAllCategories);
+  fastify.post("/manager/categories", createCategory);
+  fastify.put("/manager/categories/:id", updateCategory);
+  fastify.delete("/manager/categories/:id", deleteCategory);
+
   fastify.get("/manager/subcategories", getAllSubCategories);
+  fastify.post("/manager/subcategories", createSubCategory);
+  fastify.put("/manager/subcategories/:id", updateSubCategory);
+  fastify.delete("/manager/subcategories/:id", deleteSubCategory);
+
   fastify.get("/manager/supercategories", getAllSuperCategories);
+  fastify.post("/manager/supercategories", createSuperCategory);
+  fastify.put("/manager/supercategories/:id", updateSuperCategory);
+  fastify.delete("/manager/supercategories/:id", deleteSuperCategory);
   fastify.post("/manager/products", createProduct);
   fastify.put("/manager/products/:id", updateProduct);
   fastify.delete("/manager/products/:id", deleteProduct);
