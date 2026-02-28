@@ -602,7 +602,9 @@ export const updateOrderStatus = async (req, reply) => {
 // Fetch all orders with optional filters
 export const getOrders = async (req, reply) => {
     try {
-        await expireStaleAssignedOrders(req.server.io);
+        // Run cleanup in background - do not await to avoid blocking current request
+        expireStaleAssignedOrders(req.server.io);
+
 
         const { status, customerId, deliveryPartnerId, branchId } = req.query;
         const { userId, role } = req.user || {};
@@ -748,5 +750,71 @@ export const getOrderById = async (req, reply) => {
         return reply.send(order);
     } catch (error) {
         return reply.status(500).send({ message: "Failed to retrieve order", error: error.message });
+    }
+};
+
+export const cancelOrder = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { userId } = req.user;
+
+        const order = await Order.findById(orderId);
+        if (!order) return reply.status(404).send({ message: "Order not found" });
+
+        // Ownership validation
+        if (String(order.customer) !== String(userId)) {
+            return reply.status(403).send({ message: "Unauthorized: You can only cancel your own orders" });
+        }
+
+        // Status validation: Can only cancel if not yet out for delivery
+        const cancelableStatuses = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ASSIGNED, ORDER_STATUS.CONFIRMED];
+        if (!cancelableStatuses.includes(order.status)) {
+            return reply.status(400).send({ message: `Order cannot be cancelled as it is already ${order.status.replace("_", " ")}` });
+        }
+
+        const oldStatus = order.status;
+        order.status = ORDER_STATUS.CANCELLED;
+        await order.save();
+
+        // Stock Return Logic (Reuse logic from updateOrderStatus if possible, or re-implement)
+        try {
+            for (const orderItem of order.items) {
+                const product = await Product.findById(orderItem.item);
+                if (product) {
+                    product.stock += (orderItem.count || 0);
+                    await product.save();
+                }
+            }
+        } catch (stockError) {
+            console.error("[CancelOrder] Stock return failed:", stockError.message);
+        }
+
+        const populatedOrder = await Order.findById(order._id).populate("customer branch items.item deliveryPartner");
+
+        // Realtime notifications
+        if (req.server.io && populatedOrder) {
+            req.server.io.to(orderId).emit("liveTrackingUpdates", {
+                ...populatedOrder.toObject(),
+                deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
+            });
+            req.server.io.emit("admin:order-status-update", {
+                orderId: String(order._id),
+                status: ORDER_STATUS.CANCELLED,
+                orderNumber: populatedOrder.orderId
+            });
+            if (populatedOrder.deliveryPartner?._id) {
+                req.server.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
+                    orderId: String(order._id),
+                    status: ORDER_STATUS.CANCELLED,
+                    order: populatedOrder,
+                    orderNumber: populatedOrder.orderId,
+                });
+            }
+        }
+
+        return reply.send({ message: "Order cancelled successfully", order: populatedOrder });
+    } catch (error) {
+        console.error("cancelOrder error:", error);
+        return reply.status(500).send({ message: "Failed to cancel order", error: error.message });
     }
 };

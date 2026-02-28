@@ -5,7 +5,8 @@ import {
     getOrders,
     releaseOrderAssignment,
     updateOrderStatus,
-    rejectOrder
+    rejectOrder,
+    cancelOrder
 } from "../controllers/order/order.js"; //
 import { verifyToken } from "../middleware/auth.js"; //
 
@@ -25,4 +26,6 @@ export const orderRoutes = async (fastify, options) => {
     fastify.post("/order/:orderId/confirm", confirmOrder); //
     fastify.post("/order/:orderId/reject", rejectOrder); //
     fastify.get("/order/:orderId", getOrderById); //
+    fastify.patch("/order/:orderId/cancel", cancelOrder); //
+
 };
