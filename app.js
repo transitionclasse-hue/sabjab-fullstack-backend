@@ -5,6 +5,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
 import fastifyStatic from '@fastify/static';
 import fastifyCors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v2 as cloudinary } from 'cloudinary';
@@ -54,6 +55,13 @@ const start = async () => {
       origin: true, // For production, you might want to specify allowed origins
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    });
+
+    // ---------------- MULTIPART UPLOADS ----------------
+    await app.register(fastifyMultipart, {
+      limits: {
+        fileSize: 20 * 1024 * 1024, // 20MB limit
+      }
     });
 
 

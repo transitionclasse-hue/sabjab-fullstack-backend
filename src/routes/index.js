@@ -20,6 +20,7 @@ import { greenPointsRoutes } from "./greenPoints.js";
 import { referralRoutes } from "./referral.js";
 import reviewRoutes from "./reviewRoutes.js";
 import recipeRoutes from "./recipeRoutes.js";
+import { uploadRoutes } from "./upload.js";
 
 const prefix = "/api";
 
@@ -80,4 +81,7 @@ export const registerRoutes = async (fastify) => {
 
   // Recipes & Bookmarking
   fastify.register(recipeRoutes, { prefix });
+
+  // Uploads
+  fastify.register(uploadRoutes, { prefix });
 };
