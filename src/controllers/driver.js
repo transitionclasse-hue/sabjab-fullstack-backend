@@ -97,7 +97,10 @@ export const getPayouts = async (req, reply) => {
 
     const pending = payouts.filter((p) => p.status === "pending" || p.status === "processing");
     const history = payouts.filter((p) => p.status === "completed" || p.status === "failed");
-    const pendingTotal = pending.reduce((sum, p) => sum + p.amount, 0);
+
+    // Fetch actual unsettled earnings (balance owed to driver)
+    const driver = await DeliveryPartner.findById(userId).select("walletBalance").lean();
+    const pendingTotal = driver?.walletBalance > 0 ? driver.walletBalance : 0;
 
     return reply.send({
       pending: pending.map((p) => ({
