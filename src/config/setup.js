@@ -917,7 +917,8 @@ export async function buildAdminRouter(app) {
                 { value: "BENTO_GRID", label: "Premium Bento Grid (1 Large + 2 Small)" },
                 { value: "STORY_STRIP", label: "Instagram-Style Story Strip" },
                 { value: "GRADIENT_HERO", label: "High-Impact Gradient Hero" },
-                { value: "RAMZAN_SPECIAL", label: "Festive Ramzan Special Layout" }
+                { value: "RAMZAN_SPECIAL", label: "Festive Ramzan Special Layout" },
+                { value: "RAMZAN_SPECIAL2", label: "Premium Ramzan Animated Layout" }
               ],
             },
             subTitle: {
@@ -925,7 +926,7 @@ export async function buildAdminRouter(app) {
               helpText: "Appears below the main title. Type 'Dove' to search anytime!",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -934,7 +935,7 @@ export async function buildAdminRouter(app) {
               helpText: "Text for the action button.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -964,7 +965,7 @@ export async function buildAdminRouter(app) {
               remote: true, // Enables full database search
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL"];
+                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2"];
                 return !!(type && visibleTypes.includes(type));
               }
             },

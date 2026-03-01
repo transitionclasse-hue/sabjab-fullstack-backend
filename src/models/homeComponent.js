@@ -18,7 +18,8 @@ const homeComponentSchema = new mongoose.Schema({
             "BENTO_GRID",    // ✅ NEW: 1 Large + 2 Small
             "STORY_STRIP",   // ✅ NEW: Circular entries
             "GRADIENT_HERO", // ✅ NEW: High-impact section
-            "RAMZAN_SPECIAL" // ✅ NEW: Festive special layout
+            "RAMZAN_SPECIAL", // ✅ NEW: Festive special layout
+            "RAMZAN_SPECIAL2" // ✅ NEW: Animated spiritual layout
         ],
         required: true,
     },
