@@ -22,7 +22,8 @@ const homeComponentSchema = new mongoose.Schema({
             "RAMZAN_SPECIAL2", // ✅ NEW: Animated spiritual layout
             "HAPPY_HOLI",      // ✅ NEW: Vibrant Holi layout
             "DIWALI_SPECIAL",   // ✅ NEW: Sparking Diwali layout
-            "CHRISTMAS_SPECIAL" // ✅ NEW: Snowy Christmas layout
+            "CHRISTMAS_SPECIAL", // ✅ NEW: Snowy Christmas layout
+            "TRIPLE_SECTION_GRID" // ✅ NEW: Side-by-side collections
         ],
         required: true,
     },
@@ -66,6 +67,23 @@ const homeComponentSchema = new mongoose.Schema({
         enum: ["light", "dark", "glass"],
         default: "glass",
     },
+    sections: [
+        {
+            title: String,
+            subtitle: String,
+            color: String,
+            products: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Product",
+                }
+            ],
+            categoryId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Category",
+            }
+        }
+    ],
     isActive: {
         type: Boolean,
         default: true,

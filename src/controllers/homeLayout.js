@@ -54,6 +54,16 @@ export const getHomeLayout = async (req, reply) => {
                     seenIds.add(id);
                     return true;
                 });
+            } else if (comp.type === "TRIPLE_SECTION_GRID") {
+                // Populate products within each section if they exists as IDs
+                if (comp.sections?.length > 0) {
+                    comp.sections = await Promise.all(comp.sections.map(async (sec) => {
+                        if (sec.products?.length > 0) {
+                            sec.products = await Product.find({ _id: { $in: sec.products } }).lean();
+                        }
+                        return sec;
+                    }));
+                }
             } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"].includes(comp.type)) {
                 comp.resolvedProducts = comp.products || [];
             }
