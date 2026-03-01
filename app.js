@@ -5,6 +5,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
 import fastifyStatic from '@fastify/static';
 import fastifyCors from '@fastify/cors';
+import fastifyMultipart from '@fastify/multipart';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { v2 as cloudinary } from 'cloudinary';
@@ -45,7 +46,8 @@ const start = async () => {
     await connectDB(MONGO_URI);
 
     const app = Fastify({
-      logger: true
+      logger: true,
+      bodyLimit: 50 * 1024 * 1024, // 50MB global limit
     });
 
     // ---------------- COOKIE + SESSION ----------------
@@ -69,6 +71,14 @@ const start = async () => {
     await app.register(fastifyStatic, {
       root: path.join(__dirname, 'public'),
       prefix: '/public/',
+    });
+
+    // ---------------- MULTIPART UPLOADS ----------------
+    await app.register(fastifyMultipart, {
+      limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB individual file limit
+        fieldSize: 10 * 1024 * 1024 // 10MB for text fields
+      }
     });
 
     // ---------------- ROUTES ----------------
