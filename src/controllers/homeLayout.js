@@ -112,3 +112,26 @@ export const getHomeLayout = async (req, reply) => {
         return reply.status(500).send({ message: "An error occurred fetching home layout", error });
     }
 };
+
+export const getActiveHomeVersion = async (req, reply) => {
+    try {
+        const { variationId } = req.query;
+
+        let variation;
+        if (variationId) {
+            variation = await Occasion.findById(variationId).select("homeScreenVersion").lean();
+        }
+
+        if (!variation) {
+            variation = await Occasion.findOne({ isDefault: true }).select("homeScreenVersion").lean() ||
+                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("homeScreenVersion").lean();
+        }
+
+        return reply.send({
+            homeScreenVersion: variation?.homeScreenVersion || "HomeScreen"
+        });
+    } catch (error) {
+        console.error("Home Version Fetch Error:", error);
+        return reply.status(500).send({ message: "An error occurred fetching home version", error });
+    }
+};

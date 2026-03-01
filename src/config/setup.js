@@ -1247,7 +1247,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
-          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "showBanner", "isDefault", "isActive", "order", "components"],
+          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "showBanner", "isDefault", "isActive", "order", "components"],
           actions: {
             new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
             edit: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
@@ -1270,6 +1270,18 @@ export async function buildAdminRouter(app) {
                 { value: "snow", label: "Snow Effect" },
                 { value: "rain", label: "Rain Effect" },
                 { value: "autumn", label: "Autumn Leaves Effect" }
+              ]
+            },
+            homeScreenVersion: {
+              label: "Home Screen Version",
+              availableValues: [
+                { value: "HomeScreen", label: "v1 - Standard Grid" },
+                { value: "HomeScreen2", label: "v2 - Modern Aesthetic" },
+                { value: "HomeScreen3", label: "v3 - Animated Search" },
+                { value: "HomeScreen4", label: "v4 - Crumbled Paper" },
+                { value: "HomeScreen5", label: "v5 - Festive Style" },
+                { value: "HomeScreen6", label: "v6 - Pooja/Night Style" },
+                { value: "HomeScreen7", label: "v7 - Weather Driven" },
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },

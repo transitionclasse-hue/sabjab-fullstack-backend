@@ -47,6 +47,11 @@ const occasionSchema = new mongoose.Schema({
         enum: ["dark", "light", "auto"],
         default: "auto"
     },
+    homeScreenVersion: { // ✅ NEW: Phase 7 Dynamic Routing Control
+        type: String,
+        enum: ["HomeScreen", "HomeScreen2", "HomeScreen3", "HomeScreen4", "HomeScreen5", "HomeScreen6", "HomeScreen7"],
+        default: "HomeScreen"
+    },
     components: [{ // ✅ MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
         ref: "HomeComponent"
