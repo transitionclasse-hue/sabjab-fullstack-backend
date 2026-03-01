@@ -1292,6 +1292,7 @@ export async function buildAdminRouter(app) {
                 { value: "rain", label: "🌧️ Rain" },
                 { value: "snow", label: "❄️ Snow" },
                 { value: "autumn", label: "🍂 Autumn Leaves" },
+                { value: "rainspecialeffect", label: "🌩️⚡ Cinematic Storm (Special)" },
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },

@@ -54,7 +54,7 @@ const occasionSchema = new mongoose.Schema({
     },
     weatherEffect: { // ✅ Controls weather effect on HomeScreen7 topbar
         type: String,
-        enum: ["none", "rain", "snow", "autumn"],
+        enum: ["none", "rain", "snow", "autumn", "rainspecialeffect"],
         default: "none"
     },
     components: [{ // ✅ MODULAR: Ordered list of reusable components
