@@ -927,7 +927,8 @@ export async function buildAdminRouter(app) {
                 { value: "GRADIENT_HERO", label: "High-Impact Gradient Hero" },
                 { value: "RAMZAN_SPECIAL", label: "Festive Ramzan Special Layout" },
                 { value: "RAMZAN_SPECIAL2", label: "Premium Ramzan Animated Layout" },
-                { value: "HAPPY_HOLI", label: "Vibrant Happy Holi Layout" }
+                { value: "HAPPY_HOLI", label: "Vibrant Happy Holi Layout" },
+                { value: "DIWALI_SPECIAL", label: "Sparking Diwali Grid (2x2)" }
               ],
             },
             subTitle: {
@@ -935,7 +936,7 @@ export async function buildAdminRouter(app) {
               helpText: "Appears below the main title. Type 'Dove' to search anytime!",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -944,7 +945,7 @@ export async function buildAdminRouter(app) {
               helpText: "Text for the action button.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -974,7 +975,7 @@ export async function buildAdminRouter(app) {
               remote: true, // Enables full database search
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI"];
+                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL"];
                 return !!(type && visibleTypes.includes(type));
               }
             },

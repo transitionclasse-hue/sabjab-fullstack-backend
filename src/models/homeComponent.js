@@ -20,7 +20,8 @@ const homeComponentSchema = new mongoose.Schema({
             "GRADIENT_HERO", // ✅ NEW: High-impact section
             "RAMZAN_SPECIAL", // ✅ NEW: Festive special layout
             "RAMZAN_SPECIAL2", // ✅ NEW: Animated spiritual layout
-            "HAPPY_HOLI"      // ✅ NEW: Vibrant Holi layout
+            "HAPPY_HOLI",      // ✅ NEW: Vibrant Holi layout
+            "DIWALI_SPECIAL"   // ✅ NEW: Sparking Diwali layout
         ],
         required: true,
     },
