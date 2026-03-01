@@ -21,7 +21,8 @@ const homeComponentSchema = new mongoose.Schema({
             "RAMZAN_SPECIAL", // ✅ NEW: Festive special layout
             "RAMZAN_SPECIAL2", // ✅ NEW: Animated spiritual layout
             "HAPPY_HOLI",      // ✅ NEW: Vibrant Holi layout
-            "DIWALI_SPECIAL"   // ✅ NEW: Sparking Diwali layout
+            "DIWALI_SPECIAL",   // ✅ NEW: Sparking Diwali layout
+            "CHRISTMAS_SPECIAL" // ✅ NEW: Snowy Christmas layout
         ],
         required: true,
     },
