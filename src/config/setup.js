@@ -1285,6 +1285,11 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'icon',
               file: 'uploadIcon',
+              filePath: 'iconFilePath',
+              filesToDelete: 'iconFilesToDelete',
+              mimeType: 'iconMimeType',
+              size: 'iconSize',
+              bucket: 'iconBucket',
               uploadPath: (record, filename) => `occasion_icon_${record.id() || Date.now()}/${filename}`,
             },
             validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] },
@@ -1295,6 +1300,11 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'banner',
               file: 'uploadBanner',
+              filePath: 'bannerFilePath',
+              filesToDelete: 'bannerFilesToDelete',
+              mimeType: 'bannerMimeType',
+              size: 'bannerSize',
+              bucket: 'bannerBucket',
               uploadPath: (record, filename) => `occasion_banner_${record.id() || Date.now()}/${filename}`,
             },
             validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] },
