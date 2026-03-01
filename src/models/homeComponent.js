@@ -17,7 +17,8 @@ const homeComponentSchema = new mongoose.Schema({
             "IMAGE_CAROUSEL",
             "BENTO_GRID",    // ✅ NEW: 1 Large + 2 Small
             "STORY_STRIP",   // ✅ NEW: Circular entries
-            "GRADIENT_HERO"  // ✅ NEW: High-impact section
+            "GRADIENT_HERO", // ✅ NEW: High-impact section
+            "RAMZAN_SPECIAL" // ✅ NEW: Festive special layout
         ],
         required: true,
     },

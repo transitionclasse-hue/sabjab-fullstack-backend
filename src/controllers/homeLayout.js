@@ -54,7 +54,7 @@ export const getHomeLayout = async (req, reply) => {
                     seenIds.add(id);
                     return true;
                 });
-            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO"].includes(comp.type)) {
+            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL"].includes(comp.type)) {
                 comp.resolvedProducts = comp.products || [];
             }
             return comp;
