@@ -1282,6 +1282,7 @@ export async function buildAdminRouter(app) {
                 { value: "HomeScreen5", label: "v5 - Festive Style" },
                 { value: "HomeScreen6", label: "v6 - Pooja/Night Style" },
                 { value: "HomeScreen7", label: "v7 - Weather Driven" },
+                { value: "HomeScreen8", label: "v8 - Decreasing Gradient" },
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },

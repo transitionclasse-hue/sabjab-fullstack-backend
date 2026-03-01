@@ -49,7 +49,7 @@ const occasionSchema = new mongoose.Schema({
     },
     homeScreenVersion: { // ✅ NEW: Phase 7 Dynamic Routing Control
         type: String,
-        enum: ["HomeScreen", "HomeScreen2", "HomeScreen3", "HomeScreen4", "HomeScreen5", "HomeScreen6", "HomeScreen7"],
+        enum: ["HomeScreen", "HomeScreen2", "HomeScreen3", "HomeScreen4", "HomeScreen5", "HomeScreen6", "HomeScreen7", "HomeScreen8"],
         default: "HomeScreen"
     },
     components: [{ // ✅ MODULAR: Ordered list of reusable components
