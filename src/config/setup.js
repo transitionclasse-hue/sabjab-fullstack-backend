@@ -43,6 +43,7 @@ const Components = {
   AssignDriver: componentLoader.add('AssignDriverComponent', path.join(__dirname, '../components/AssignDriver.jsx')),
   OrderStatus: componentLoader.add('OrderStatusBadge', path.join(__dirname, '../components/OrderStatusBadge.jsx')),
   DriverStatus: componentLoader.add('DriverStatusBadge', path.join(__dirname, '../components/DriverStatusBadge.jsx')),
+  ComponentGuide: componentLoader.add('ComponentGuide', path.join(__dirname, '../components/ComponentGuide.jsx')),
 };
 
 const hydrateOrderForTracking = async (orderId) => {
@@ -907,7 +908,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["title", "type", "isActive"],
-          editProperties: ["title", "subTitle", "type", "isActive", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode"],
+          editProperties: ["title", "subTitle", "type", "isActive", "sections", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -929,8 +930,14 @@ export async function buildAdminRouter(app) {
                 { value: "RAMZAN_SPECIAL2", label: "Premium Ramzan Animated Layout" },
                 { value: "HAPPY_HOLI", label: "Vibrant Happy Holi Layout" },
                 { value: "DIWALI_SPECIAL", label: "Sparking Diwali Grid (2x2)" },
-                { value: "CHRISTMAS_SPECIAL", label: "Snowy Christmas Layout" }
+                { value: "CHRISTMAS_SPECIAL", label: "Snowy Christmas Layout" },
+                { value: "TRIPLE_SECTION_GRID", label: "Premium Triple Section Pager (Side-by-Side)" }
               ],
+            },
+            sections: {
+              isVisible: (context) => context.record?.params?.type === "TRIPLE_SECTION_GRID",
+              label: "Grid Sections (Exactly 3 screens)",
+              description: "Manage the title, color, and products for each of the 3 side-by-side screens. Each section is a separate screen in the pager."
             },
             subTitle: {
               label: "Secondary Text (e.g. 'Upto 50% Off')",
@@ -1607,6 +1614,10 @@ export async function buildAdminRouter(app) {
       'Live Support': {
         component: Components.SupportDashboard,
         icon: 'Chat',
+      },
+      'Component Guide': {
+        component: Components.ComponentGuide,
+        icon: 'Book',
       }
     },
     branding: {
