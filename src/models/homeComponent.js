@@ -19,7 +19,8 @@ const homeComponentSchema = new mongoose.Schema({
             "STORY_STRIP",   // ✅ NEW: Circular entries
             "GRADIENT_HERO", // ✅ NEW: High-impact section
             "RAMZAN_SPECIAL", // ✅ NEW: Festive special layout
-            "RAMZAN_SPECIAL2" // ✅ NEW: Animated spiritual layout
+            "RAMZAN_SPECIAL2", // ✅ NEW: Animated spiritual layout
+            "HAPPY_HOLI"      // ✅ NEW: Vibrant Holi layout
         ],
         required: true,
     },
