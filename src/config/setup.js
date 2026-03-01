@@ -17,6 +17,14 @@ function logToFile(message) {
   } catch (e) { }
 }
 
+const sanitizeFilename = (filename) => {
+  if (!filename) return `file_${Date.now()}`;
+  return filename
+    .replace(/[^a-z0-9.]/gi, '_') // Replace non-alphanumeric with underscore
+    .replace(/_{2,}/g, '_')      // Replace multiple underscores
+    .toLowerCase();
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -661,7 +669,7 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'image',
               file: 'uploadImage',
-              uploadPath: (record, filename) => `${record.id() || 'new'}/${filename}`,
+              uploadPath: (record, filename) => `${record.id() || 'new'}/${sanitizeFilename(filename)}`,
             },
             validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'] },
           }),
@@ -782,7 +790,7 @@ export async function buildAdminRouter(app) {
               file: 'uploadImage',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
-                return `${id}/${filename}`;
+                return `${id}/${sanitizeFilename(filename)}`;
               },
             },
             validation: {
@@ -868,7 +876,7 @@ export async function buildAdminRouter(app) {
               file: 'uploadImage',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
-                return `${id}/${filename}`;
+                return `${id}/${sanitizeFilename(filename)}`;
               },
             },
             validation: {
@@ -1021,7 +1029,7 @@ export async function buildAdminRouter(app) {
               file: 'uploadBanner',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
-                return `${id}/${filename}`;
+                return `${id}/${sanitizeFilename(filename)}`;
               },
             },
             validation: {
@@ -1182,7 +1190,7 @@ export async function buildAdminRouter(app) {
               file: 'uploadFile',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
-                return `${id}/${filename}`;
+                return `${id}/${sanitizeFilename(filename)}`;
               },
             },
             validation: {
@@ -1291,7 +1299,7 @@ export async function buildAdminRouter(app) {
               mimeType: 'iconMimeType',
               size: 'iconSize',
               bucket: 'iconBucket',
-              uploadPath: (record, filename) => `occasion_icon_${record.id() || Date.now()}/${filename}`,
+              uploadPath: (record, filename) => `occasion_icon_${record.id() || Date.now()}/${sanitizeFilename(filename)}`,
             },
             validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'] },
           }),
@@ -1306,7 +1314,7 @@ export async function buildAdminRouter(app) {
               mimeType: 'bannerMimeType',
               size: 'bannerSize',
               bucket: 'bannerBucket',
-              uploadPath: (record, filename) => `occasion_banner_${record.id() || Date.now()}/${filename}`,
+              uploadPath: (record, filename) => `occasion_banner_${record.id() || Date.now()}/${sanitizeFilename(filename)}`,
             },
             validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'] },
           })
