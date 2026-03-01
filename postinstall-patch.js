@@ -24,8 +24,7 @@ const __dirname = path.dirname(__filename);
 
 const targetFile = path.join(__dirname, 'node_modules', '@adminjs', 'fastify', 'lib', 'buildRouter.js');
 
-const patchedContent = `import fastifyMultipart from '@fastify/multipart';
-import { Router as AdminRouter } from 'adminjs';
+const patchedContent = `import { Router as AdminRouter } from 'adminjs';
 import { readFile } from 'fs/promises';
 import fromPairs from 'lodash/fromPairs.js';
 import * as mime from 'mime-types';
@@ -41,20 +40,8 @@ export const buildRouter = async (admin, fastifyApp) => {
     }
 
     // PATCHED: Encapsulate the admin router in its own Fastify context
-    // to prevent fastifyMultipart from leaking globally and crashing the app.
     await fastifyApp.register(async (adminInstance) => {
-        // PATCHED: Use onFile handler to buffer file data BEFORE the route handler runs
-        await adminInstance.register(fastifyMultipart, {
-            attachFieldsToBody: true,
-            onFile: async (part) => {
-                const chunks = [];
-                for await (const chunk of part.file) {
-                    chunks.push(chunk);
-                }
-                part._buf = Buffer.concat(chunks);
-                part.toBuffer = async () => part._buf;
-            }
-        });
+        // PATCHED: multipart is now registered globally in app.js with correct limits and onFile hook
 
         admin.initialize().then(() => {
             log.debug('AdminJS: bundle ready');
