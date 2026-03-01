@@ -52,6 +52,11 @@ const occasionSchema = new mongoose.Schema({
         enum: ["HomeScreen", "HomeScreen2", "HomeScreen3", "HomeScreen4", "HomeScreen5", "HomeScreen6", "HomeScreen7", "HomeScreen8"],
         default: "HomeScreen"
     },
+    weatherEffect: { // ✅ Controls weather effect on HomeScreen7 topbar
+        type: String,
+        enum: ["none", "rain", "snow", "autumn"],
+        default: "none"
+    },
     components: [{ // ✅ MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
         ref: "HomeComponent"

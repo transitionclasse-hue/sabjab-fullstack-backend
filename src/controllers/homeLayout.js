@@ -98,7 +98,8 @@ export const getHomeLayout = async (req, reply) => {
                 nameAlignment: variation.nameAlignment || 'left',
                 showBanner: variation.showBanner,
                 banner: variation.banner,
-                icon: variation.icon
+                icon: variation.icon,
+                weatherEffect: variation.weatherEffect || 'none'
             } : null,
             layout: hydratedComponents || [],
             categories: filteredOccasions || [],
@@ -119,16 +120,17 @@ export const getActiveHomeVersion = async (req, reply) => {
 
         let variation;
         if (variationId) {
-            variation = await Occasion.findById(variationId).select("homeScreenVersion").lean();
+            variation = await Occasion.findById(variationId).select("homeScreenVersion weatherEffect").lean();
         }
 
         if (!variation) {
-            variation = await Occasion.findOne({ isDefault: true }).select("homeScreenVersion").lean() ||
-                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("homeScreenVersion").lean();
+            variation = await Occasion.findOne({ isDefault: true }).select("homeScreenVersion weatherEffect").lean() ||
+                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("homeScreenVersion weatherEffect").lean();
         }
 
         return reply.send({
-            homeScreenVersion: variation?.homeScreenVersion || "HomeScreen"
+            homeScreenVersion: variation?.homeScreenVersion || "HomeScreen",
+            weatherEffect: variation?.weatherEffect || "none"
         });
     } catch (error) {
         console.error("Home Version Fetch Error:", error);

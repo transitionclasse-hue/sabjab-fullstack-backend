@@ -1247,7 +1247,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
-          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "showBanner", "isDefault", "isActive", "order", "components"],
+          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect", "showBanner", "isDefault", "isActive", "order", "components"],
           actions: {
             new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
             edit: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
@@ -1283,6 +1283,15 @@ export async function buildAdminRouter(app) {
                 { value: "HomeScreen6", label: "v6 - Pooja/Night Style" },
                 { value: "HomeScreen7", label: "v7 - Weather Driven" },
                 { value: "HomeScreen8", label: "v8 - Decreasing Gradient" },
+              ]
+            },
+            weatherEffect: {
+              label: "🌦️ Weather Effect (HomeScreen7 TopBar Only)",
+              availableValues: [
+                { value: "none", label: "None — Clear Sky" },
+                { value: "rain", label: "🌧️ Rain" },
+                { value: "snow", label: "❄️ Snow" },
+                { value: "autumn", label: "🍂 Autumn Leaves" },
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },

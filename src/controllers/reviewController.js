@@ -8,7 +8,7 @@ import Product from "../models/products.js";
 export const addReview = async (req, reply) => {
     try {
         const { productId, orderId, rating, comment } = req.body;
-        const userId = req.user._id;
+        const userId = req.user.userId;
 
         // 1. Verify if order exists and belongs to user
         const order = await Order.findOne({ _id: orderId, customer: userId });
