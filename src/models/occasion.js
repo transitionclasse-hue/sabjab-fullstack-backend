@@ -7,12 +7,10 @@ const occasionSchema = new mongoose.Schema({
     },
     icon: {
         type: String,
-        required: true,
         default: "https://via.placeholder.com/60"
     },
     banner: {
         type: String,
-        required: true,
         default: "https://via.placeholder.com/400x140"
     },
     products: [{

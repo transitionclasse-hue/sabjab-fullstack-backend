@@ -1225,7 +1225,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
-          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "showBanner", "isDefault", "isActive", "order", "components"],
+          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "showBanner", "isDefault", "isActive", "order", "components"],
           actions: {
             new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
             edit: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
@@ -1239,12 +1239,24 @@ export async function buildAdminRouter(app) {
                 { value: "right", label: "Right Aligned" }
               ]
             },
+            themeMode: {
+              label: "Force Visual Theme",
+              availableValues: [
+                { value: "auto", label: "Inherit Device Theme" },
+                { value: "light", label: "Force Light Mode" },
+                { value: "dark", label: "Force Midnight Dark" }
+              ]
+            },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default." },
             components: {
               label: "Assigned Home Components",
-              description: "Select and order components for this variation screen."
+              description: "Select and order components for this variation screen.",
+              type: 'reference',
+              reference: 'HomeComponent',
+              isArray: true,
+              remote: true // Full search for components
             },
             icon: {
               isVisible: { list: true, filter: false, show: true, edit: false },
