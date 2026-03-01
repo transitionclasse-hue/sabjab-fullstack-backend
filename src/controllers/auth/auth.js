@@ -284,7 +284,7 @@ export const loginAdmin = async (req, reply) => {
 
 export const updateCustomerProfile = async (req, reply) => {
   try {
-    const { name, dateOfBirth, email, notificationsEnabled, pushToken, password } = req.body;
+    const { name, dateOfBirth, email, notificationsEnabled, pushToken, password, sensitiveMode } = req.body;
     const userId = req.user.userId;
 
     const customer = await Customer.findById(userId);
@@ -298,6 +298,10 @@ export const updateCustomerProfile = async (req, reply) => {
     if (pushToken) customer.pushToken = pushToken;
     if (typeof notificationsEnabled === 'boolean') {
       customer.notificationsEnabled = notificationsEnabled;
+    }
+    // ✅ Sensitive Mode preference
+    if (typeof sensitiveMode === 'boolean') {
+      customer.sensitiveMode = sensitiveMode;
     }
 
     if (dateOfBirth) {

@@ -276,7 +276,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "User Management", icon: "Users" },
-          listProperties: ["name", "phone", "isActivated", "notificationsEnabled"],
+          listProperties: ["name", "phone", "isActivated", "notificationsEnabled", "sensitiveMode"],
           actions: {
             sendNotification: {
               actionType: 'record',
@@ -753,9 +753,9 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          listProperties: ["name", "superCategory", "image"],
-          editProperties: ["name", "superCategory", "uploadImage"],
-          showProperties: ["name", "superCategory", "image"],
+          listProperties: ["name", "superCategory", "image", "isSensitive"],
+          editProperties: ["name", "superCategory", "uploadImage", "isSensitive"],
+          showProperties: ["name", "superCategory", "image", "isSensitive"],
           actions: {
             new: { after: [replaceCategoryKeyWithUrl] },
             edit: { after: [replaceCategoryKeyWithUrl] },
@@ -1087,9 +1087,9 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Inventory & Catalog", icon: "Archive" },
-          listProperties: ["name", "price", "stock", "isAvailable", "quantity", "superCategory", "category", "subCategory", "image"],
-          editProperties: ["name", "description", "uploadFile", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
+          listProperties: ["name", "price", "stock", "isAvailable", "isSensitive", "quantity", "superCategory", "category", "subCategory", "image"],
+          editProperties: ["name", "description", "uploadFile", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isSensitive", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
           actions: {
             new: { after: [replaceKeyWithUrl] },
             edit: { after: [replaceKeyWithUrl] },

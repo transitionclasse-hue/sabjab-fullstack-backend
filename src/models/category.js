@@ -8,6 +8,7 @@ const categorySchema = new mongoose.Schema({
     ref: "SuperCategory",
     required: true
   },
+  isSensitive: { type: Boolean, default: false },
 });
 
 const Category = mongoose.model("Category", categorySchema);

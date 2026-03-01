@@ -53,6 +53,7 @@ const customerSchema = new mongoose.Schema({
       ref: "Recipe",
     }
   ],
+  sensitiveMode: { type: Boolean, default: true },
 }, { timestamps: true });
 
 // ================= DELIVERY PARTNER =================

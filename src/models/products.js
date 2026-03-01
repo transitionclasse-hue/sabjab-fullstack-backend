@@ -40,6 +40,7 @@ const productSchema = new mongoose.Schema({
       isAvailable: { type: Boolean, default: true },
     },
   ],
+  isSensitive: { type: Boolean, default: false },
 });
 
 // Pre-save hook to convert category string to ObjectId

@@ -1,19 +1,20 @@
 import Product from "../../models/products.js";
 import SubCategory from "../../models/subCategory.js";
+import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
 export const getProductsByCategoryId = async (req, reply) => {
     const { categoryId } = req.params;
     try {
+        const hideSensitive = await getSafeSensitiveMode(req);
+
         // Find SubCategories that belong to this categoryId
         const subCategories = await SubCategory.find({ category: categoryId });
         const subCategoryIds = subCategories.map(sub => sub._id);
 
-        // Build query: find products where:
-        // 1. category matches the categoryId directly, OR
-        // 2. subCategory matches the categoryId directly, OR
-        // 3. category matches one of the subcategory IDs (legacy data), OR
-        // 4. subCategory matches one of the subcategory IDs (new structure)
+        const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
+
         const query = {
+            ...sensitiveFilter,
             $or: [
                 { category: categoryId },
                 { subCategory: categoryId },
@@ -24,9 +25,7 @@ export const getProductsByCategoryId = async (req, reply) => {
             ]
         };
 
-        const products = await Product.find(query)
-            .exec();
-
+        const products = await Product.find(query).exec();
         return reply.send(products);
     } catch (error) {
         return reply.status(500).send({ message: "An error occurred", error });
@@ -40,7 +39,11 @@ export const searchProducts = async (req, reply) => {
             return reply.send([]);
         }
 
+        const hideSensitive = await getSafeSensitiveMode(req);
+        const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
+
         const products = await Product.find({
+            ...sensitiveFilter,
             $or: [
                 { name: { $regex: query, $options: "i" } },
                 { description: { $regex: query, $options: "i" } }
@@ -53,6 +56,7 @@ export const searchProducts = async (req, reply) => {
     }
 };
 
+// Manager-facing — returns ALL products (no sensitive filter)
 export const getAllProducts = async (req, reply) => {
     try {
         const products = await Product.find().exec();

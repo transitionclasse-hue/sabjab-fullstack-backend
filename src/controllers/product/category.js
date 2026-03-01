@@ -1,18 +1,18 @@
 import Category from "../../models/category.js";
+import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
-export const getAllCategories = async (req, reply) => {
-    try {
-        const categories = await Category.find().populate("superCategory");
-        return reply.send(categories);
-    } catch (error) {
-        return reply.status(500).send({ message: "An error occurred", error });
-    }
-};
-
+// PUBLIC — used by the frontend; respects sensitive mode
 export const getCategoriesBySuperCategoryId = async (req, reply) => {
     try {
         const { superCategoryId } = req.params;
-        const categories = await Category.find({ superCategory: superCategoryId }).exec();
+        const hideSensitive = await getSafeSensitiveMode(req);
+        const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
+
+        const categories = await Category.find({
+            superCategory: superCategoryId,
+            ...sensitiveFilter
+        }).exec();
+
         return reply.send({
             message: "Categories fetched successfully",
             data: categories
@@ -22,10 +22,20 @@ export const getCategoriesBySuperCategoryId = async (req, reply) => {
     }
 };
 
+// MANAGER — returns all categories (no sensitive filter)
+export const getAllCategories = async (req, reply) => {
+    try {
+        const categories = await Category.find().populate("superCategory");
+        return reply.send(categories);
+    } catch (error) {
+        return reply.status(500).send({ message: "An error occurred", error });
+    }
+};
+
 export const createCategory = async (req, reply) => {
     try {
-        const { name, image, superCategory } = req.body;
-        const newCategory = new Category({ name, image, superCategory });
+        const { name, image, superCategory, isSensitive } = req.body;
+        const newCategory = new Category({ name, image, superCategory, isSensitive });
         await newCategory.save();
         return reply.status(201).send(newCategory);
     } catch (error) {
@@ -36,10 +46,10 @@ export const createCategory = async (req, reply) => {
 export const updateCategory = async (req, reply) => {
     try {
         const { id } = req.params;
-        const { name, image, superCategory } = req.body;
+        const { name, image, superCategory, isSensitive } = req.body;
         const updatedCategory = await Category.findByIdAndUpdate(
             id,
-            { name, image, superCategory },
+            { name, image, superCategory, isSensitive },
             { new: true, runValidators: true }
         );
         if (!updatedCategory) {
