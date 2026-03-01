@@ -1019,7 +1019,10 @@ export async function buildAdminRouter(app) {
               availableValues: [
                 { value: "glass", label: "Glassmorphism (Premium / Translucent)" },
                 { value: "light", label: "Minimalist Light" },
-                { value: "dark", label: "Midnight Dark" }
+                { value: "dark", label: "Midnight Dark" },
+                { value: "snow", label: "Snow Effect" },
+                { value: "rain", label: "Rain Effect" },
+                { value: "autumn", label: "Autumn Leaves Effect" }
               ],
               helpText: "Choose the visual vibe for this specific block.",
               isVisible: (context) => {
@@ -1263,7 +1266,10 @@ export async function buildAdminRouter(app) {
               availableValues: [
                 { value: "auto", label: "Inherit Device Theme" },
                 { value: "light", label: "Force Light Mode" },
-                { value: "dark", label: "Force Midnight Dark" }
+                { value: "dark", label: "Force Midnight Dark" },
+                { value: "snow", label: "Snow Effect" },
+                { value: "rain", label: "Rain Effect" },
+                { value: "autumn", label: "Autumn Leaves Effect" }
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
