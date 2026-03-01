@@ -663,7 +663,7 @@ export async function buildAdminRouter(app) {
               file: 'uploadImage',
               uploadPath: (record, filename) => `${record.id() || 'new'}/${filename}`,
             },
-            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] },
+            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'] },
           }),
         ],
       };
@@ -769,7 +769,7 @@ export async function buildAdminRouter(app) {
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
               type: "file",
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           },
         },
@@ -786,7 +786,7 @@ export async function buildAdminRouter(app) {
               },
             },
             validation: {
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           }),
         ],
@@ -855,7 +855,7 @@ export async function buildAdminRouter(app) {
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
               type: "file",
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           },
         },
@@ -872,7 +872,7 @@ export async function buildAdminRouter(app) {
               },
             },
             validation: {
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           }),
         ],
@@ -1025,7 +1025,7 @@ export async function buildAdminRouter(app) {
               },
             },
             validation: {
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           }),
         ],
@@ -1169,7 +1169,7 @@ export async function buildAdminRouter(app) {
             uploadFile: {
               label: "Click to Upload Image to Cloudinary",
               type: "file",
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           },
         },
@@ -1186,7 +1186,7 @@ export async function buildAdminRouter(app) {
               },
             },
             validation: {
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           }),
         ],
@@ -1266,7 +1266,7 @@ export async function buildAdminRouter(app) {
             uploadIcon: {
               label: "Upload Icon Image (1:1 Ratio ideally)",
               type: "file",
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
             banner: {
               isVisible: { list: true, filter: false, show: true, edit: false },
@@ -1275,7 +1275,7 @@ export async function buildAdminRouter(app) {
             uploadBanner: {
               label: "Upload Banner Image (16:9 Ratio ideally)",
               type: "file",
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'],
             },
           }
         },
@@ -1293,7 +1293,7 @@ export async function buildAdminRouter(app) {
               bucket: 'iconBucket',
               uploadPath: (record, filename) => `occasion_icon_${record.id() || Date.now()}/${filename}`,
             },
-            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] },
+            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'] },
           }),
           uploadFeature({
             componentLoader,
@@ -1308,7 +1308,7 @@ export async function buildAdminRouter(app) {
               bucket: 'bannerBucket',
               uploadPath: (record, filename) => `occasion_banner_${record.id() || Date.now()}/${filename}`,
             },
-            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'] },
+            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif'] },
           })
         ],
       };
