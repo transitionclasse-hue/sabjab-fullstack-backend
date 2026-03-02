@@ -77,6 +77,18 @@ const buildStoreStatusResponse = (config) => {
   } else if (config.mode === "manual_closed") {
     status = "closed";
     statusLabel = "Closed";
+  } else if (config.mode === "high_demand") {
+    status = "open";
+    statusLabel = "High Demand";
+  } else if (config.mode === "rain_surge") {
+    status = "open";
+    statusLabel = "Rain Surge Applicable";
+  } else if (config.mode === "high_traffic") {
+    status = "open";
+    statusLabel = "High Traffic";
+  } else if (config.mode === "unavailable") {
+    status = "closed";
+    statusLabel = "Unavailable";
   } else {
     // schedule mode
     const overnight = closingMinutes <= openingMinutes;
@@ -124,7 +136,7 @@ const buildStoreStatusResponse = (config) => {
 export const updateStoreStatus = async (req, reply) => {
   try {
     const payload = req.body || {};
-    const allowedModes = new Set(["manual_open", "manual_closed", "schedule"]);
+    const allowedModes = new Set(["manual_open", "manual_closed", "schedule", "high_demand", "rain_surge", "unavailable", "high_traffic"]);
     const update = {};
 
     if (typeof payload.mode === "string" && allowedModes.has(payload.mode)) {

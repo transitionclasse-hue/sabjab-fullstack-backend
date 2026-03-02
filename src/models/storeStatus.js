@@ -10,7 +10,7 @@ const storeStatusSchema = new mongoose.Schema(
     },
     mode: {
       type: String,
-      enum: ["manual_open", "manual_closed", "schedule"],
+      enum: ["manual_open", "manual_closed", "schedule", "high_demand", "rain_surge", "unavailable", "high_traffic"],
       default: "schedule",
       required: true,
     },
