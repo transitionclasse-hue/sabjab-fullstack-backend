@@ -31,15 +31,13 @@ const generateTokens = (user) => {
 export const requestEmailOtp = async (req, reply) => {
   try {
 
-    // ⭐ FIXED (normalize types)
-    const phone = Number(req.body.phone);
+    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "").slice(-10);
+    const phone = Number(phoneStr);
     const email = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
     const username = req.body.username ? String(req.body.username).trim() : null;
 
-    if (!phone || (!email && !username)) {
-      return reply.status(400).send({
-        message: "Phone and (Email or Username) required"
-      });
+    if (!phoneStr || phoneStr.length !== 10) {
+      return reply.status(400).send({ message: "Please enter valid number." });
     }
 
     /* ---------- CHECK DUPLICATE EMAIL ---------- */
@@ -129,8 +127,8 @@ export const requestEmailOtp = async (req, reply) => {
 export const verifyOtp = async (req, reply) => {
   try {
 
-    // ⭐ ensure same type
-    const phone = Number(req.body.phone);
+    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "").slice(-10);
+    const phone = Number(phoneStr);
     const { otp, password } = req.body;
 
     const customer = await Customer.findOne({ phone });
@@ -169,9 +167,9 @@ export const verifyOtp = async (req, reply) => {
 
 export const checkPhone = async (req, reply) => {
   try {
-    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "");
+    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "").slice(-10);
     if (!phoneStr || phoneStr.length !== 10 || !/^[6-9]/.test(phoneStr)) {
-      return reply.status(400).send({ message: "Invalid number, please enter correct number." });
+      return reply.status(400).send({ message: "Please enter valid number." });
     }
 
     const phone = Number(phoneStr);
@@ -196,7 +194,9 @@ export const checkPhone = async (req, reply) => {
 
 export const loginPassword = async (req, reply) => {
   try {
-    const { phone, password } = req.body;
+    const { phone: rawPhone, password } = req.body;
+    const phoneStr = String(rawPhone).replace(/[^0-9]/g, "").slice(-10);
+    const phone = Number(phoneStr);
     let customer = await Customer.findOne({ phone });
 
     // Ensure password matches if they have one set
