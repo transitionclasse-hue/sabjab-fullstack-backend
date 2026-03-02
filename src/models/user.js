@@ -17,6 +17,7 @@ const customerSchema = new mongoose.Schema({
   phone: { type: Number, required: true, unique: true },
   // Added email with sparse:true to allow multiple nulls but unique values
   email: { type: String, unique: true, sparse: true },
+  username: { type: String, unique: true, sparse: true }, // NEW: Added for flexible identity
   // Temporary storage for Email OTP fallback
   otp: { type: String },
   otpExpires: { type: Date },

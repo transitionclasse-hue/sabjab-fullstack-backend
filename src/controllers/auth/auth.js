@@ -33,11 +33,12 @@ export const requestEmailOtp = async (req, reply) => {
 
     // ⭐ FIXED (normalize types)
     const phone = Number(req.body.phone);
-    const email = String(req.body.email).trim().toLowerCase();
+    const email = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
+    const username = req.body.username ? String(req.body.username).trim() : null;
 
-    if (!phone || !email) {
+    if (!phone || (!email && !username)) {
       return reply.status(400).send({
-        message: "Phone and email required"
+        message: "Phone and (Email or Username) required"
       });
     }
 
@@ -62,6 +63,7 @@ export const requestEmailOtp = async (req, reply) => {
       { phone },
       {
         email,
+        username,
         otp,
         otpExpires: Date.now() + 300000,
         role: "Customer",
@@ -167,14 +169,21 @@ export const verifyOtp = async (req, reply) => {
 
 export const checkPhone = async (req, reply) => {
   try {
-    const phone = Number(req.body.phone);
-    if (!phone) return reply.status(400).send({ message: "Phone required" });
+    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "");
+    if (!phoneStr || phoneStr.length !== 10 || !/^[6-9]/.test(phoneStr)) {
+      return reply.status(400).send({ message: "Invalid number, please enter correct number." });
+    }
+
+    const phone = Number(phoneStr);
 
     const customer = await Customer.findOne({ phone });
 
     return reply.send({
       exists: !!customer && !!customer.password,
-      hasEmail: !!customer && !!customer.email
+      hasEmail: !!customer && !!customer.email,
+      hasUsername: !!customer && !!customer.username,
+      username: customer ? customer.username : null,
+      email: customer ? customer.email : null
     });
   } catch (error) {
     return reply.status(500).send({ message: "Error checking phone" });
