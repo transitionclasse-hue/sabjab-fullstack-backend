@@ -33,24 +33,32 @@ export const requestEmailOtp = async (req, reply) => {
 
     const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "").slice(-10);
     const phone = Number(phoneStr);
-    const email = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
+    const emailStr = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
     const username = req.body.username ? String(req.body.username).trim() : null;
 
     if (!phoneStr || phoneStr.length !== 10) {
       return reply.status(400).send({ message: "Please enter valid number." });
     }
 
-    /* ---------- CHECK DUPLICATE EMAIL ---------- */
-    const existingUser = await Customer.findOne({ email });
+    let finalEmail = emailStr;
 
-    // ⭐ FIXED COMPARISON
-    if (
-      existingUser &&
-      Number(existingUser.phone) !== Number(phone)
-    ) {
-      return reply.status(400).send({
-        message: "Email already linked to another number."
-      });
+    // If email not provided (likely login), look it up by phone
+    if (!finalEmail) {
+      const user = await Customer.findOne({ phone });
+      if (user && user.email) {
+        finalEmail = user.email;
+      }
+    }
+
+    if (!finalEmail) {
+      return reply.status(400).send({ message: "Email ID is required for OTP." });
+    }
+
+    /* ---------- CHECK DUPLICATE EMAIL ---------- */
+    // Only block if email is taken by DIFFERENT phone
+    const existingUser = await Customer.findOne({ email: finalEmail });
+    if (existingUser && Number(existingUser.phone) !== Number(phone)) {
+      return reply.status(400).send({ message: "Email already linked to another number." });
     }
 
     /* ---------- GENERATE OTP ---------- */
@@ -60,7 +68,7 @@ export const requestEmailOtp = async (req, reply) => {
     await Customer.findOneAndUpdate(
       { phone },
       {
-        email,
+        email: finalEmail,
         username,
         otp,
         otpExpires: Date.now() + 300000,
@@ -68,56 +76,57 @@ export const requestEmailOtp = async (req, reply) => {
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+    );
 
-    console.log("✅ OTP saved in DB");
+console.log("✅ OTP saved in DB for:", finalEmail);
 
-    /* =====================================================
-       SEND OTP VIA HOSTINGER MAIL API
-    ===================================================== */
+console.log("✅ OTP saved in DB for:", finalEmail);
 
-    try {
-      const response = await fetch("https://sabjab.com/send-otp.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, otp }),
-      });
+/* =====================================================
+   SEND OTP VIA HOSTINGER MAIL API
+===================================================== */
 
-      const raw = await response.text();
-      console.log("📩 Mail API response:", raw);
+try {
+  const response = await fetch("https://sabjab.com/send-otp.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: finalEmail, otp }),
+  });
 
-      let result;
-      try {
-        result = JSON.parse(raw);
-      } catch (err) {
-        console.error("❌ Invalid JSON from mail API");
-        result = { success: false };
-      }
+  const raw = await response.text();
+  console.log("📩 Mail API response:", raw);
 
-      if (!result.success) {
-        console.error("⚠️ Email send failed");
-      } else {
-        console.log("✅ OTP email sent");
-      }
+  let result;
+  try {
+    result = JSON.parse(raw);
+  } catch (err) {
+    console.error("❌ Invalid JSON from mail API");
+    result = { success: false };
+  }
 
-    } catch (mailError) {
-      console.error("⚠️ Mail API error:", mailError.message);
-      // do not fail OTP flow
-    }
+  if (!result.success) {
+    console.error("⚠️ Email send failed");
+  } else {
+    console.log("✅ OTP email sent");
+  }
 
-    return reply.send({
-      message: "OTP sent successfully",
-      otp: otp // Returning OTP for the frontend to receive directly
-    });
+} catch (mailError) {
+  console.error("⚠️ Mail API error:", mailError.message);
+  // do not fail OTP flow
+}
+
+return reply.send({
+  message: "OTP sent successfully",
+  otp: otp // Returning OTP for the frontend to receive directly
+});
 
   } catch (error) {
-    console.error("❌ OTP ERROR:", error);
-    return reply.status(500).send({
-      message: "Error",
-      error: error.message
-    });
-  }
+  console.error("❌ OTP ERROR:", error);
+  return reply.status(500).send({
+    message: "Error",
+    error: error.message
+  });
+}
 };
 
 /* =====================================================
