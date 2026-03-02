@@ -34,6 +34,7 @@ const pricingConfigSchema = new mongoose.Schema(
     defaultDriverCodLimit: { type: Number, default: 2000, min: 0 }, // NEW: Fallback COD limit
 
     customFees: { type: [customFeeSchema], default: [] },
+    cartBarColor: { type: String, default: "#1A1A1A" },
   },
   { timestamps: true }
 );
