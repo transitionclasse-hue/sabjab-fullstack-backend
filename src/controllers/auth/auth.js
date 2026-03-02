@@ -63,15 +63,17 @@ export const requestEmailOtp = async (req, reply) => {
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     /* ---------- SAVE OTP IN DATABASE ---------- */
+    const updateFields = {
+      email: finalEmail,
+      otp,
+      otpExpires: Date.now() + 300000,
+      role: "Customer",
+    };
+    if (username) updateFields.username = username;
+
     await Customer.findOneAndUpdate(
       { phone },
-      {
-        email: finalEmail,
-        username,
-        otp,
-        otpExpires: Date.now() + 300000,
-        role: "Customer",
-      },
+      updateFields,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
