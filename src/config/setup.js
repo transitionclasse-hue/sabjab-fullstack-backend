@@ -682,14 +682,18 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          listProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes", "updatedAt"],
-          editProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes"],
-          showProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes", "updatedAt"],
+          listProperties: ["mode", "openingTime", "closingTime", "etaBoxColor", "updatedAt"],
+          editProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes", "etaBoxColor"],
+          showProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes", "etaBoxColor", "updatedAt"],
           navigation: {
             name: "App Settings",
             icon: "Settings",
           },
           properties: {
+            etaBoxColor: {
+              label: "ETA Box Color (Hex Code)",
+              description: "E.g., #6366F1 or any valid hex color. This controls the 'time in box' background color in the header.",
+            },
             _id: { isVisible: false },
             __v: { isVisible: false },
             key: {

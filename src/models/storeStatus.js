@@ -27,6 +27,10 @@ const storeStatusSchema = new mongoose.Schema(
       default: 30,
       min: 1,
     },
+    etaBoxColor: {
+      type: String,
+      default: "#6366F1",
+    },
     note: {
       type: String,
       default: "",

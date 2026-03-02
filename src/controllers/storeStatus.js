@@ -128,6 +128,7 @@ export const buildStoreStatusResponse = (config) => {
     closingTime: config.closingTime,
     alertBeforeMinutes: config.alertBeforeMinutes,
     minutesToBoundary,
+    etaBoxColor: config.etaBoxColor || "#6366F1",
     note: config.note || "",
     updatedAt: config.updatedAt,
   };
