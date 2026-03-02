@@ -50,7 +50,7 @@ export const getStoreStatus = async (req, reply) => {
   }
 };
 
-const buildStoreStatusResponse = (config) => {
+export const buildStoreStatusResponse = (config) => {
   // ✅ Force IST (Asia/Kolkata) regardless of server location (e.g. Render/UTC)
   const now = new Date();
   const istString = new Intl.DateTimeFormat("en-US", {

@@ -3,6 +3,7 @@ import Product from "../models/products.js";
 import Occasion from "../models/occasion.js";
 import StoreStatus from "../models/storeStatus.js";
 import GlobalConfig from "../models/globalConfig.js";
+import { buildStoreStatusResponse } from "./storeStatus.js";
 
 export const getHomeLayout = async (req, reply) => {
     try {
@@ -77,7 +78,8 @@ export const getHomeLayout = async (req, reply) => {
         const occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
 
         // 5. Fetch Store Status
-        const storeStatus = await StoreStatus.findOne({ key: "primary" }).lean();
+        const storeStatusDoc = await StoreStatus.findOne({ key: "primary" }).lean();
+        const storeStatus = storeStatusDoc ? buildStoreStatusResponse(storeStatusDoc) : { status: "open", statusLabel: "Open", mode: "schedule" };
 
         // 6. Fetch Global Special Occasion
         const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
