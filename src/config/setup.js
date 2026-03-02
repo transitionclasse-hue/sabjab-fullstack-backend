@@ -1293,6 +1293,7 @@ export async function buildAdminRouter(app) {
                 { value: "HomeScreen6", label: "v6 - Pooja/Night Style" },
                 { value: "HomeScreen7", label: "v7 - Weather Driven" },
                 { value: "HomeScreen8", label: "v8 - Decreasing Gradient" },
+                { value: "HomeScreen9", label: "v9 - Nostalgic Style" },
               ]
             },
             weatherEffect: {
