@@ -703,6 +703,10 @@ export async function buildAdminRouter(app) {
                 { value: "manual_open", label: "Always Open" },
                 { value: "manual_closed", label: "Always Closed" },
                 { value: "schedule", label: "Auto by Time" },
+                { value: "high_demand", label: "High Demand" },
+                { value: "rain_surge", label: "Rain Surge" },
+                { value: "high_traffic", label: "High Traffic" },
+                { value: "unavailable", label: "Unavailable" },
               ],
             },
             openingTime: {
