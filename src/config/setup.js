@@ -908,7 +908,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           listProperties: ["title", "type", "isActive"],
-          editProperties: ["title", "subTitle", "type", "isActive", "sections", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode"],
+          editProperties: ["title", "subTitle", "type", "isActive", "sections", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -977,13 +977,19 @@ export async function buildAdminRouter(app) {
                 return !!(type && visibleTypes.includes(type));
               }
             },
+            categories: {
+              label: "Select Sub-Categories",
+              helpText: "Pick the sub-categories or categories to display in this strip.",
+              remote: true, // Enables full database search
+              isVisible: (context) => Boolean(context.record?.params?.type === "CATEGORY_STRIP"),
+            },
             products: {
               label: "Main Product Collection",
               helpText: "SEARCH TIP: Start typing 'Dove' and wait a second to see all versions.",
               remote: true, // Enables full database search
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"];
                 return !!(type && visibleTypes.includes(type));
               }
             },

@@ -29,6 +29,7 @@ export const getHomeLayout = async (req, reply) => {
                 .populate("bigDeal")
                 .populate("miniDeals")
                 .populate("products")
+                .populate("categories")
                 .lean();
 
             // Restore Order from variation.components array
@@ -64,6 +65,8 @@ export const getHomeLayout = async (req, reply) => {
                         return sec;
                     }));
                 }
+            } else if (comp.type === "CATEGORY_STRIP") {
+                comp.resolvedCategories = comp.categories || [];
             } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"].includes(comp.type)) {
                 comp.resolvedProducts = comp.products || [];
             }

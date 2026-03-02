@@ -50,6 +50,12 @@ const homeComponentSchema = new mongoose.Schema({
             ref: "Product",
         }
     ],
+    categories: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "SubCategory",
+        }
+    ],
     bannerImage: {
         type: String,
     },
