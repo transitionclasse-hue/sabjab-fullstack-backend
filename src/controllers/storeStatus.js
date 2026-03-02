@@ -78,16 +78,16 @@ export const buildStoreStatusResponse = (config) => {
     status = "closed";
     statusLabel = "Closed";
   } else if (config.mode === "high_demand") {
-    status = "open";
+    status = "high_demand";
     statusLabel = "High Demand";
   } else if (config.mode === "rain_surge") {
-    status = "open";
+    status = "rain_surge";
     statusLabel = "Rain Surge Applicable";
   } else if (config.mode === "high_traffic") {
-    status = "open";
+    status = "high_traffic";
     statusLabel = "High Traffic";
   } else if (config.mode === "unavailable") {
-    status = "closed";
+    status = "unavailable";
     statusLabel = "Unavailable";
   } else {
     // schedule mode
