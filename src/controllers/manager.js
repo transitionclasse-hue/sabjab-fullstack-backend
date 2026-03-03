@@ -1147,7 +1147,7 @@ export const adjustCustomerWallet = async (req, reply) => {
 
     return reply.send({
       success: true,
-      message: `Wallet ${type === 'credit' ? 'credited' : 'debitied'} successfully`,
+      message: `Wallet ${type === 'credit' ? 'credited' : 'debited'} successfully`,
       transaction
     });
   } catch (error) {

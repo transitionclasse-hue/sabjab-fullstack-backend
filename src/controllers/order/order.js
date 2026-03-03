@@ -159,6 +159,11 @@ export const createOrder = async (req, reply) => {
                     });
                 }
                 stockUpdates.push({ product, requestedCount, isVariation: false });
+                variationData = {
+                    name: "Standard",
+                    price: product.price,
+                    discountPrice: product.discountPrice || product.price
+                };
             }
 
             item.itemPrice = price; // Store for total calculation
@@ -591,6 +596,21 @@ export const updateOrderStatus = async (req, reply) => {
                                 }
                             }
                         }
+                        // --- CREDIT SABJAB COINS ON DELIVERY ---
+                        if (order.rewardCoinsEarned > 0) {
+                            const WalletTransaction = (await import("../../models/walletTransaction.js")).default;
+                            const txn = new WalletTransaction({
+                                customer: order.customer,
+                                amount: order.rewardCoinsEarned,
+                                type: "credit",
+                                txnType: "reward_coins",
+                                description: `Reward for order #${order.orderId}`,
+                                status: "completed",
+                            });
+                            await txn.save();
+                            console.log(`[OrderRewards] Created Reward Transaction for ${order.rewardCoinsEarned} SabJab Coins for Customer ${order.customer}`);
+                        }
+                        // ----------------------------------------
                     }
                 } catch (innerError) {
                     console.error("[StatusUpdate] Async side-effects error:", innerError.message);

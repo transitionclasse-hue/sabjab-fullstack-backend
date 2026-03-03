@@ -68,4 +68,38 @@ export const addressRoutes = async (fastify) => {
       }
     }
   );
+
+  // ✅ DELETE a saved address
+  fastify.delete(
+    "/address/:id",
+    { preHandler: [verifyToken] },
+    async (request, reply) => {
+      try {
+        const userId = request.user.userId;
+        const { id } = request.params;
+
+        // Find the address and verify ownership
+        const address = await Address.findOne({ _id: id, customer: userId });
+
+        if (!address) {
+          return reply.status(404).send({
+            success: false,
+            message: "Address not found or you don't have permission to delete it.",
+          });
+        }
+
+        await Address.findByIdAndDelete(id);
+
+        return {
+          success: true,
+          message: "Address deleted successfully",
+        };
+      } catch (err) {
+        console.error("Delete Address Error:", err);
+        return reply.status(500).send({
+          message: "Server error while deleting address",
+        });
+      }
+    }
+  );
 };

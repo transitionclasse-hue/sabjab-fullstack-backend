@@ -21,6 +21,7 @@ import { referralRoutes } from "./referral.js";
 import reviewRoutes from "./reviewRoutes.js";
 import recipeRoutes from "./recipeRoutes.js";
 import { uploadRoutes } from "./upload.js";
+import { suggestionRoutes } from "./suggestion.js";
 
 const prefix = "/api";
 
@@ -84,4 +85,6 @@ export const registerRoutes = async (fastify) => {
 
   // Uploads
   fastify.register(uploadRoutes, { prefix });
+  // Suggestions & Feedback
+  fastify.register(suggestionRoutes, { prefix });
 };

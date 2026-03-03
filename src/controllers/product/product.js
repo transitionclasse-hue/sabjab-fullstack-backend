@@ -56,13 +56,26 @@ export const searchProducts = async (req, reply) => {
     }
 };
 
-// Manager-facing — returns ALL products (no sensitive filter)
+// User-facing (usually) or Manager-facing — handles filtering
 export const getAllProducts = async (req, reply) => {
     try {
-        const products = await Product.find().exec();
-        return reply.send(products);
+        const { filter } = req.query || {};
+        const hideSensitive = await getSafeSensitiveMode(req);
+
+        const query = hideSensitive ? { isSensitive: { $ne: true } } : {};
+
+        if (filter === "coins") {
+            // Products that have a coinPrice > 0 are redeemable via coins
+            query.coinPrice = { $gt: 0 };
+        }
+
+        const products = await Product.find(query)
+            .populate("category subCategory")
+            .exec();
+        return reply.send({ success: true, products });
     } catch (error) {
-        return reply.status(500).send({ message: "An error occurred fetching all products", error });
+        console.error("Error fetching products:", error);
+        return reply.status(500).send({ message: "An error occurred fetching products", error: error.message });
     }
 };
 
