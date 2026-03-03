@@ -12,6 +12,10 @@ export const getSafeSensitiveMode = async (req) => {
             return true; // Default to hiding sensitive items for public/unauthenticated users
         }
 
+        if (req.user.role === 'Admin' || req.user.role === 'DeliveryPartner') {
+            return false; // Show everything for Staff
+        }
+
         const user = await Customer.findById(req.user.userId).select("sensitiveMode");
         if (!user) return true;
 

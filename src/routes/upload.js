@@ -5,7 +5,8 @@ export const uploadRoutes = async (fastify, options) => {
 
     fastify.post('/upload', async (request, reply) => {
         try {
-            const data = await request.file();
+            // When attachFieldsToBody is true, request.file() may be null as it's already in request.body
+            const data = request.body.file;
             if (!data) {
                 return reply.code(400).send({ message: 'No file uploaded' });
             }
