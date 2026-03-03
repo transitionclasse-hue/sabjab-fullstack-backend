@@ -415,6 +415,7 @@ export async function buildAdminRouter(app) {
             "lateNightEndTime",
             "lateNightFee",
             "customFees",
+            "cartBarColor",
           ],
           showProperties: [
             "freeDeliveryEnabled",
@@ -432,6 +433,7 @@ export async function buildAdminRouter(app) {
             "lateNightEndTime",
             "lateNightFee",
             "customFees",
+            "cartBarColor",
             "updatedAt",
           ],
           navigation: {
@@ -489,6 +491,10 @@ export async function buildAdminRouter(app) {
             customFees: {
               label: "Custom Fees",
               description: "Add/remove any additional fees. Each fee can be enabled/disabled.",
+            },
+            cartBarColor: {
+              label: "CartBar Background Color (Hex)",
+              description: "Example: #1A1A1A or #10b981. This controls the background color of the floating cart bar in the customer app.",
             },
             updatedAt: {
               label: "Last Updated",
