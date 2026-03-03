@@ -63,7 +63,7 @@ export const deleteSubCategory = async (req, reply) => {
 
 export const getAllSubCategories = async (req, reply) => {
     try {
-        const subCategories = await SubCategory.find().exec();
+        const subCategories = await SubCategory.find().sort({ createdAt: -1 }).exec();
         return reply.send({
             message: "All subcategories fetched successfully",
             data: subCategories

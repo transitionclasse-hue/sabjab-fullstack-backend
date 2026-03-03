@@ -70,6 +70,7 @@ export const getAllProducts = async (req, reply) => {
         }
 
         const products = await Product.find(query)
+            .sort({ createdAt: -1 })
             .populate("category subCategory")
             .exec();
         return reply.send({ success: true, products });

@@ -25,7 +25,7 @@ export const getCategoriesBySuperCategoryId = async (req, reply) => {
 // MANAGER — returns all categories (no sensitive filter)
 export const getAllCategories = async (req, reply) => {
     try {
-        const categories = await Category.find().populate("superCategory");
+        const categories = await Category.find().sort({ createdAt: -1 }).populate("superCategory");
         return reply.send(categories);
     } catch (error) {
         return reply.status(500).send({ message: "An error occurred", error });

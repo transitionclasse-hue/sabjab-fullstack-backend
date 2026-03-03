@@ -276,6 +276,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "User Management", icon: "Users" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "phone", "isActivated", "notificationsEnabled", "sensitiveMode"],
           actions: {
             sendNotification: {
@@ -307,6 +308,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Marketing", icon: "Bell" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["title", "body", "type", "status", "sentAt"],
           actions: {
             broadcast: {
@@ -336,6 +338,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Inventory & Catalog", icon: "Archive" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
         },
       };
     }
@@ -354,6 +357,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Support", icon: "HelpCircle" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["customer", "sender", "message", "createdAt"],
           filterProperties: ["customer", "sender", "createdAt"],
           actions: {
@@ -572,6 +576,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Marketing", icon: "Award" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["customer", "totalBalance", "lifetime"],
           showProperties: ["customer", "totalBalance", "lifetime", "transactions"],
           properties: {
@@ -614,6 +619,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Marketing", icon: "Hash" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["referrer", "referralCode", "status", "bonusesAwarded"],
           properties: {
             referralCode: { isDisabled: true },
@@ -627,6 +633,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Marketing", icon: "Star" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["customer", "product", "rating", "comment", "createdAt"],
           filterProperties: ["customer", "product", "rating", "createdAt"],
           properties: {
@@ -671,6 +678,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Content", icon: "BookOpen" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["title", "category", "difficulty", "prepTime", "isActive", "image"],
           editProperties: ["title", "category", "difficulty", "prepTime", "description", "uploadImage", "isActive", "calories", "ingredients", "steps"],
           actions: {
@@ -785,6 +793,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
           editProperties: ["name", "superCategory", "uploadImage", "isSensitive", "canEarnCoins"],
           showProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
@@ -849,6 +858,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           // Show "SubCatName (CategoryName)" in reference dropdowns
           recordRepresentation: (record) => {
             const catName = record.populated?.category?.params?.name || '';
@@ -939,6 +949,7 @@ export async function buildAdminRouter(app) {
             name: "Home Page Builder",
             icon: "Layout",
           },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["title", "type", "isActive"],
           editProperties: ["title", "subTitle", "type", "isActive", "sections", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode"],
           actions: {
@@ -1125,6 +1136,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Inventory & Catalog", icon: "Archive" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "price", "stock", "isAvailable", "isSensitive", "quantity", "superCategory", "category", "subCategory", "image"],
           editProperties: ["name", "description", "uploadFile", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isSensitive", "superCategory", "category", "subCategory", "variations"],
           showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
@@ -1284,6 +1296,7 @@ export async function buildAdminRouter(app) {
             name: "Home Page Builder",
             icon: "Layout",
           },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
           editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect", "showBanner", "isDefault", "isActive", "order", "components"],
           actions: {
@@ -1406,6 +1419,7 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Delivery Management", icon: "Truck" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
         },
       };
     }
