@@ -34,6 +34,7 @@ import {
   updateDriverCodLimit,
   getGlobalCodLimit,
   updateGlobalCodLimit,
+  adjustCustomerWallet,
 } from "../controllers/manager.js";
 import {
   getAllProducts,
@@ -130,4 +131,5 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/driver-rankings", getManagerDriverRankings);
   fastify.get("/manager/finance-history", getManagerFinanceHistory);
   fastify.get("/manager/driver-activity", getManagerDriverActivity);
+  fastify.post("/manager/customers/:customerId/wallet-adjustment", adjustCustomerWallet);
 };

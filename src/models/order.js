@@ -92,6 +92,7 @@ const orderSchema = new mongoose.Schema({
 
   driverEarning: { type: Number, default: 0 },
   codCollected: { type: Number, default: 0 },
+  rewardCoinsEarned: { type: Number, default: 0 }, // Amount of SabJab Coins earned from this order
 
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

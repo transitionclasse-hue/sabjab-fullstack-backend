@@ -244,8 +244,31 @@ export const createOrder = async (req, reply) => {
                 longitude: branchData?.location?.longitude ?? null,
                 address: branchData?.address ?? "Store",
             },
-
         });
+
+        // --- REWARD COINS CALCULATION ---
+        try {
+            const pricingConfig = await PricingConfig.findOne({ key: "primary" });
+            if (pricingConfig?.rewardCoinsEnabled && itemsTotal >= (pricingConfig.minAmountForCoins || 0)) {
+                let eligibleTotal = 0;
+                for (const item of items) {
+                    const productId = item._id || item.id;
+                    const product = await Product.findById(productId).populate("category");
+                    if (product?.category?.canEarnCoins !== false) {
+                        const itemQty = item.qty || item.quantity || item.count || 1;
+                        eligibleTotal += (item.itemPrice || 0) * itemQty;
+                    }
+                }
+                const coinsEarned = Math.floor((eligibleTotal * (pricingConfig.rewardCoinsPercentage || 1)) / 100);
+                if (coinsEarned > 0) {
+                    newOrder.rewardCoinsEarned = coinsEarned;
+                    console.log(`[OrderRewards] Calculated ${coinsEarned} SabJab Coins for Order #${newOrder.orderId} (Eligible Total: ${eligibleTotal})`);
+                }
+            }
+        } catch (rewardError) {
+            console.error("[OrderRewards] Calculation failed:", rewardError.message);
+        }
+        // --------------------------------
         newOrder.driverEarning = await calculateDriverEarning(Number(totalAmount));
 
         const savedOrder = await newOrder.save();
@@ -460,6 +483,28 @@ export const updateOrderStatus = async (req, reply) => {
                             status: "completed"
                         });
                         console.log(`[OrderUpdate] SUCCESS: Created COD collection transaction ${codTxn._id} for driver ${order.deliveryPartner}`);
+                    }
+                }
+
+                // Handle SabJab Coins Reward
+                if (order.rewardCoinsEarned > 0 && order.customer) {
+                    const rewardExits = await WalletTransaction.findOne({
+                        order: order._id,
+                        txnType: "reward_coins",
+                        customer: order.customer
+                    });
+
+                    if (!rewardExits) {
+                        const rewardTxn = await WalletTransaction.create({
+                            customer: order.customer,
+                            order: order._id,
+                            amount: order.rewardCoinsEarned,
+                            type: "credit",
+                            txnType: "reward_coins",
+                            description: `SabJab Coins earned for order #${order.orderId}`,
+                            status: "completed"
+                        });
+                        console.log(`[OrderRewards] SUCCESS: Awarded ${order.rewardCoinsEarned} SabJab Coins to customer ${order.customer} for order ${order.orderId}`);
                     }
                 }
             } catch (calcError) {

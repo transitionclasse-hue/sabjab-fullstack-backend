@@ -33,6 +33,11 @@ const pricingConfigSchema = new mongoose.Schema(
     defaultDriverEarning: { type: Number, default: 30, min: 0 },
     defaultDriverCodLimit: { type: Number, default: 2000, min: 0 }, // NEW: Fallback COD limit
 
+    // Reward Rules (SabJab Coins)
+    rewardCoinsEnabled: { type: Boolean, default: true },
+    rewardCoinsPercentage: { type: Number, default: 1, min: 0, max: 100 }, // X% of purchase
+    minAmountForCoins: { type: Number, default: 1, min: 0 }, // Minimum order value to earn coins
+
     customFees: { type: [customFeeSchema], default: [] },
     cartBarColor: { type: String, default: "#1A1A1A" },
   },

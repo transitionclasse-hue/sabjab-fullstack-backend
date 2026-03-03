@@ -397,12 +397,18 @@ export async function buildAdminRouter(app) {
             "freeDeliveryEnabled",
             "freeDeliveryThreshold",
             "baseDeliveryFee",
+            "rewardCoinsEnabled",
+            "rewardCoinsPercentage",
+            "minAmountForCoins",
             "updatedAt",
           ],
           editProperties: [
             "freeDeliveryEnabled",
             "freeDeliveryThreshold",
             "baseDeliveryFee",
+            "rewardCoinsEnabled",
+            "rewardCoinsPercentage",
+            "minAmountForCoins",
             "promiseProtectEnabled",
             "promiseProtectFee",
             "smallCartFeeEnabled",
@@ -487,6 +493,18 @@ export async function buildAdminRouter(app) {
             },
             lateNightFee: {
               label: "Late Night Fee",
+            },
+            rewardCoinsEnabled: {
+              label: "Enable SabJab Coins Rewards",
+              description: "Whether users earn coins for their purchases.",
+            },
+            rewardCoinsPercentage: {
+              label: "Purchase Reward Percentage (%)",
+              description: "What percentage of the eligible purchase value will be rewarded as SabJab Coins.",
+            },
+            minAmountForCoins: {
+              label: "Min Order Amount for Rewards",
+              description: "Users must spend at least this much (items total) to qualify for SabJab Coins.",
             },
             customFees: {
               label: "Custom Fees",
@@ -767,9 +785,9 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          listProperties: ["name", "superCategory", "image", "isSensitive"],
-          editProperties: ["name", "superCategory", "uploadImage", "isSensitive"],
-          showProperties: ["name", "superCategory", "image", "isSensitive"],
+          listProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
+          editProperties: ["name", "superCategory", "uploadImage", "isSensitive", "canEarnCoins"],
+          showProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
           actions: {
             new: { after: [replaceCategoryKeyWithUrl] },
             edit: { after: [replaceCategoryKeyWithUrl] },

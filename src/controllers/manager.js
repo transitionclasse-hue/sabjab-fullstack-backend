@@ -1118,3 +1118,40 @@ export const getManagerDriverActivity = async (req, reply) => {
   }
 };
 
+export const adjustCustomerWallet = async (req, reply) => {
+  try {
+    const { customerId } = req.params;
+    const { amount, type, txnType, description } = req.body;
+
+    if (!amount || amount <= 0) {
+      return reply.status(400).send({ message: "Invalid amount" });
+    }
+
+    if (!["credit", "debit"].includes(type)) {
+      return reply.status(400).send({ message: "Type must be credit or debit" });
+    }
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return reply.status(404).send({ message: "Customer not found" });
+    }
+
+    const transaction = await WalletTransaction.create({
+      customer: customerId,
+      amount: Number(amount),
+      type,
+      txnType: txnType || "manual_adjustment",
+      description: description || `Manual adjustment by Manager`,
+      status: "completed"
+    });
+
+    return reply.send({
+      success: true,
+      message: `Wallet ${type === 'credit' ? 'credited' : 'debitied'} successfully`,
+      transaction
+    });
+  } catch (error) {
+    console.error("Adjust Wallet Error:", error);
+    return reply.status(500).send({ message: "Failed to adjust wallet", error: error.message });
+  }
+};
