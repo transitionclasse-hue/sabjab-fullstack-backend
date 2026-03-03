@@ -30,32 +30,45 @@ const generateTokens = (user) => {
 
 export const requestEmailOtp = async (req, reply) => {
   try {
-    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "").slice(-10);
-    const phone = Number(phoneStr);
+    const phoneStr = req.body.phone ? String(req.body.phone).replace(/[^0-9]/g, "").slice(-10) : null;
+    const phone = phoneStr && phoneStr.length === 10 ? Number(phoneStr) : null;
     const emailStr = req.body.email ? String(req.body.email).trim().toLowerCase() : null;
     const username = req.body.username ? String(req.body.username).trim() : null;
 
-    if (!phoneStr || phoneStr.length !== 10) {
-      return reply.status(400).send({ message: "Please enter valid number." });
-    }
-
+    let finalPhone = phone;
     let finalEmail = emailStr;
 
-    // If email not provided (likely login), look it up by phone
-    if (!finalEmail) {
-      const user = await Customer.findOne({ phone });
-      if (user && user.email) {
-        finalEmail = user.email;
-      }
+    if (!finalPhone && !finalEmail) {
+      return reply.status(400).send({ message: "Phone or Email is required." });
     }
 
-    if (!finalEmail) {
+    // Identify user
+    let user = null;
+    if (finalPhone) {
+      user = await Customer.findOne({ phone: finalPhone });
+    } else if (finalEmail) {
+      user = await Customer.findOne({ email: finalEmail });
+      if (user) finalPhone = user.phone;
+    }
+
+    if (user && user.email) {
+      finalEmail = user.email;
+    }
+
+    if (!finalEmail && !emailStr) {
       return reply.status(400).send({ message: "Email ID is required for OTP." });
+    }
+
+    // For new registrations via Email-only login flow, we might not have a phone yet.
+    // But the user said phone is mandatory at signup.
+    // So if user not found by email, we should tell frontend to ask for phone.
+    if (!user && !finalPhone) {
+      return reply.status(404).send({ message: "User not found. Please sign up with phone and email.", errorCode: "USER_NOT_FOUND" });
     }
 
     /* ---------- CHECK DUPLICATE EMAIL ---------- */
     const existingUser = await Customer.findOne({ email: finalEmail });
-    if (existingUser && Number(existingUser.phone) !== Number(phone)) {
+    if (existingUser && finalPhone && Number(existingUser.phone) !== Number(finalPhone)) {
       return reply.status(400).send({ message: "Email already linked to another number." });
     }
 
@@ -69,10 +82,11 @@ export const requestEmailOtp = async (req, reply) => {
       otpExpires: Date.now() + 300000,
       role: "Customer",
     };
-    if (username) updateFields.username = username;
+    if (username) updateFields.name = username;
+    if (finalPhone) updateFields.phone = finalPhone; // Ensure phone is saved/updated
 
     await Customer.findOneAndUpdate(
-      { phone },
+      { $or: [{ phone: finalPhone }, { email: finalEmail }] },
       updateFields,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
@@ -114,7 +128,8 @@ export const requestEmailOtp = async (req, reply) => {
 
     return reply.send({
       message: "OTP sent successfully",
-      otp: otp
+      otp: otp,
+      phone: finalPhone // return phone so frontend can use it if it only had email
     });
 
   } catch (error) {
@@ -133,11 +148,16 @@ export const requestEmailOtp = async (req, reply) => {
 export const verifyOtp = async (req, reply) => {
   try {
 
-    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "").slice(-10);
-    const phone = Number(phoneStr);
-    const { otp, password } = req.body;
+    const phoneStr = req.body.phone ? String(req.body.phone).replace(/[^0-9]/g, "").slice(-10) : null;
+    const phone = phoneStr ? Number(phoneStr) : null;
+    const { otp, password, email } = req.body;
 
-    const customer = await Customer.findOne({ phone });
+    let customer = null;
+    if (phone) {
+      customer = await Customer.findOne({ phone });
+    } else if (email) {
+      customer = await Customer.findOne({ email: email.toLowerCase().trim() });
+    }
 
     if (
       !customer ||
@@ -173,24 +193,35 @@ export const verifyOtp = async (req, reply) => {
 
 export const checkPhone = async (req, reply) => {
   try {
-    const phoneStr = String(req.body.phone).replace(/[^0-9]/g, "").slice(-10);
-    if (!phoneStr || phoneStr.length !== 10 || !/^[6-9]/.test(phoneStr)) {
-      return reply.status(400).send({ message: "Please enter valid number." });
+    const { phone: rawPhone, email: rawEmail } = req.body;
+    let query = {};
+
+    if (rawPhone) {
+      const phoneStr = String(rawPhone).replace(/[^0-9]/g, "").slice(-10);
+      if (phoneStr.length === 10) query.phone = Number(phoneStr);
     }
 
-    const phone = Number(phoneStr);
+    if (rawEmail) {
+      query.email = String(rawEmail).trim().toLowerCase();
+    }
 
-    const customer = await Customer.findOne({ phone });
+    if (Object.keys(query).length === 0) {
+      return reply.status(400).send({ message: "Phone or Email required." });
+    }
+
+    const customer = await Customer.findOne(query);
 
     return reply.send({
-      exists: !!customer && !!customer.password,
+      exists: !!customer,
+      hasPassword: !!customer && !!customer.password,
       hasEmail: !!customer && !!customer.email,
-      hasUsername: !!customer && !!customer.username,
-      username: customer ? customer.username : null,
-      email: customer ? customer.email : null
+      hasPhone: !!customer && !!customer.phone,
+      name: customer ? customer.name : null,
+      email: customer ? customer.email : null,
+      phone: customer ? customer.phone : null
     });
   } catch (error) {
-    return reply.status(500).send({ message: "Error checking phone" });
+    return reply.status(500).send({ message: "Error checking identity" });
   }
 };
 

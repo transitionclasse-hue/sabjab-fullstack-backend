@@ -346,6 +346,7 @@ export const getManagerCustomers = async (req, reply) => {
 
         return {
           ...customer,
+          name: customer.name || customer.email || `Customer ${customer.phone || customer._id}`,
           totalOrders: totalOrders || 0,
           totalSpent: totalSpent[0]?.total || 0,
         };
