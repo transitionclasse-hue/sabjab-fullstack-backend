@@ -1298,7 +1298,20 @@ export async function buildAdminRouter(app) {
           },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
-          editProperties: ["name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect", "showBanner", "isDefault", "isActive", "order", "components"],
+          editProperties: [
+            "name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect",
+            "ultraConfig.topGradientColor", "ultraConfig.bottomGradientColor", "ultraConfig.middleGradientColor",
+            "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
+            "showBanner", "isDefault", "isActive", "order", "components"
+          ],
+          showProperties: [
+            "name", "nameAlignment", "icon", "banner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect",
+            "ultraConfig.topGradientColor", "ultraConfig.bottomGradientColor", "ultraConfig.middleGradientColor",
+            "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
+            "showBanner", "isDefault", "isActive", "order", "components"
+          ],
           actions: {
             new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
             edit: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
@@ -1349,9 +1362,14 @@ export async function buildAdminRouter(app) {
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
-            'ultraConfig.topGradientColor': { label: "Top Gradient Color (Hex)", helpText: "Upper background color. Use 8-digit hex for opacity (e.g. #FF573320 for 12% opacity)" },
-            'ultraConfig.bottomGradientColor': { label: "Bottom Gradient Color (Hex)", helpText: "Lower background color (e.g. #FFFFFF)" },
-            'ultraConfig.hideTopBar': { label: "Hide Top Bar?", helpText: "If true, the TopBar and Search bar will be removed from this screen." },
+            'ultraConfig.topGradientColor': { label: "Ultra: Top Gradient Color", helpText: "Upper background color. Use 8-digit hex for opacity (e.g. #FF573320)" },
+            'ultraConfig.bottomGradientColor': { label: "Ultra: Bottom Gradient Color", helpText: "Lower background color (e.g. #FFFFFF)" },
+            'ultraConfig.middleGradientColor': { label: "Ultra: Middle Gradient Color", helpText: "Optional: Mid-point color (e.g. #f0f0f0)" },
+            'ultraConfig.gradientStops': { label: "Ultra: Gradient Stops", helpText: "Comma separated stops (e.g. 0,0.5,1)" },
+            'ultraConfig.titleFontSize': { label: "Ultra: Title Font Size", helpText: "Font size for section headers (default 24)" },
+            'ultraConfig.borderRadiusGlobal': { label: "Ultra: Border Radius", helpText: "Global curvature for cards and boxes (default 16)" },
+            'ultraConfig.topBarColor': { label: "Ultra: Top Bar Background (Hex)", helpText: "Color for the top navigation bar area" },
+            'ultraConfig.hideTopBar': { label: "Ultra: Hide Top Bar?", helpText: "Completely remove location/search bar from top (Landing Page Style)" },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default." },
             components: {
