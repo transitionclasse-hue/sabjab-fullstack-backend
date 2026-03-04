@@ -73,26 +73,26 @@ export const getNearestBranch = async (req, reply) => {
       }
     }
 
-    // Guard against broken data producing nonsense ETAs.
-    const safeDistanceKm =
-      minDistance !== null && minDistance >= 0 && minDistance <= 100 ? minDistance : 5;
-    const etaMinutes = clamp(Math.ceil(safeDistanceKm * 3) + 5, 5, 180);
+    // Fix bug where distance > 100 was reset to 5
+    const actualDistanceKm = minDistance !== null && minDistance >= 0 ? minDistance : 9999;
+    const etaMinutes = clamp(Math.ceil(actualDistanceKm * 3) + 5, 5, 180);
 
     // Check delivery eligibility (Geofencing)
     const deliveryRadius = nearest.deliveryRadius || 2.5;
-    const isWithinRadius = safeDistanceKm <= deliveryRadius;
+    const isWithinRadius = actualDistanceKm <= deliveryRadius;
 
-    // Check Pincode Fallback
+    // Check Pincode but DO NOT bypass the strict geofencing radius
     const isPincodeServiced = userPincode && nearest.servicedPincodes?.includes(String(userPincode));
 
-    const isDeliverable = isWithinRadius || isPincodeServiced;
+    // Strict Geofencing: MUST be within radius
+    const isDeliverable = isWithinRadius;
 
     return reply.send({
       branchId: nearest._id,
       name: nearest.name,
       location: nearest.location,
       address: nearest.address,
-      distanceKm: Number(safeDistanceKm.toFixed(2)),
+      distanceKm: Number(actualDistanceKm.toFixed(2)),
       deliveryRadius,
       isDeliverable,
       isWithinRadius,

@@ -48,7 +48,8 @@ export const getProductReviews = async (req, reply) => {
     try {
         const { productId } = req.params;
 
-        const reviews = await Review.find({ product: productId })
+        // Fetch only visible reviews (or those where isVisible is true / not officially false)
+        const reviews = await Review.find({ product: productId, isVisible: { $ne: false } })
             .populate("customer", "name")
             .sort({ createdAt: -1 });
 
@@ -57,13 +58,76 @@ export const getProductReviews = async (req, reply) => {
             ? reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalReviews
             : 0;
 
+        // Calculate distribution for Amazon-style progress bars
+        const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        reviews.forEach(r => {
+            if (distribution[r.rating] !== undefined) {
+                distribution[r.rating]++;
+            }
+        });
+
+        // Convert the map to an array of objects for the frontend
+        const starDistribution = Object.keys(distribution).reverse().map(star => {
+            const count = distribution[star];
+            return {
+                star: Number(star),
+                count,
+                percentage: totalReviews > 0 ? Math.round((count / totalReviews) * 100) : 0
+            };
+        });
+
         return reply.send({
             reviews,
             avgRating: avgRating.toFixed(1),
-            totalReviews
+            totalReviews,
+            starDistribution
         });
     } catch (error) {
         console.error("Get Product Reviews Error:", error);
+        return reply.status(500).send({ message: "Internal Server Error" });
+    }
+};
+
+/**
+ * ✅ 3. Toggle Review Visibility (Admin)
+ */
+export const toggleReviewVisibility = async (req, reply) => {
+    try {
+        const { id } = req.params;
+        const review = await Review.findById(id);
+
+        if (!review) {
+            return reply.status(404).send({ message: "Review not found." });
+        }
+
+        // Default to true if somehow undefined
+        const currentVisibility = review.isVisible !== undefined ? review.isVisible : true;
+        review.isVisible = !currentVisibility;
+
+        await review.save();
+
+        return reply.send({ message: `Review visibility set to ${review.isVisible}`, review });
+    } catch (error) {
+        console.error("Toggle Review Visibility Error:", error);
+        return reply.status(500).send({ message: "Internal Server Error" });
+    }
+};
+
+/**
+ * ✅ 4. Delete Review (Admin)
+ */
+export const deleteReview = async (req, reply) => {
+    try {
+        const { id } = req.params;
+        const review = await Review.findByIdAndDelete(id);
+
+        if (!review) {
+            return reply.status(404).send({ message: "Review not found." });
+        }
+
+        return reply.send({ message: "Review deleted successfully" });
+    } catch (error) {
+        console.error("Delete Review Error:", error);
         return reply.status(500).send({ message: "Internal Server Error" });
     }
 };
