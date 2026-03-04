@@ -250,6 +250,24 @@ export async function buildAdminRouter(app) {
         { upsert: true, new: true }
       );
     }
+
+    // ✅ Seed App Version Config if not exists
+    await mongoose.models.GlobalConfig.findOneAndUpdate(
+      { key: "app_version_config" },
+      {
+        $setOnInsert: {
+          key: "app_version_config",
+          value: {
+            currentVersion: "1.0.0",
+            updateAvailable: false,
+            updateMessage: "New version is ready to update!",
+            isMandatory: false
+          },
+          description: "Controls app version number and update notifications in Profile section"
+        }
+      },
+      { upsert: true, new: true }
+    );
   }
 
   console.log("🛠️ Building Admin Router... Models found:", Object.keys(mongoose.models).length);
@@ -263,9 +281,13 @@ export async function buildAdminRouter(app) {
           listProperties: ["key", "value", "description"],
           properties: {
             value: {
-              type: 'string',
-              description: 'Occasion ID (e.g., from Occasion list)',
+              type: 'mixed',
+              description: 'Configuration data (Object or String)',
             },
+            'value.currentVersion': { label: 'Current App Version', type: 'string' },
+            'value.updateAvailable': { label: 'Update Available?', type: 'boolean' },
+            'value.updateMessage': { label: 'Update Message', type: 'string' },
+            'value.isMandatory': { label: 'Mandatory Update?', type: 'boolean' },
             key: { isId: true, isReadOnly: true },
           }
         },

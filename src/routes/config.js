@@ -5,4 +5,25 @@ export const configRoutes = async (fastify) => {
       email: process.env.SUPPORT_EMAIL || "support@sabjab.com",
     });
   });
+
+  fastify.get("/config/app-version", async (req, reply) => {
+    try {
+      const GlobalConfig = (await import("../models/globalConfig.js")).default;
+      const config = await GlobalConfig.findOne({ key: "app_version_config" }).lean();
+
+      if (!config) {
+        return reply.send({
+          currentVersion: "1.0.0",
+          updateAvailable: false,
+          updateMessage: "",
+          isMandatory: false
+        });
+      }
+
+      return reply.send(config.value);
+    } catch (error) {
+      console.error("APP VERSION API ERROR:", error);
+      return reply.status(500).send({ message: "Error fetching app version" });
+    }
+  });
 };
