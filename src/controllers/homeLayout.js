@@ -38,6 +38,17 @@ export const getHomeLayout = async (req, reply) => {
             components.sort((a, b) => orderMap.indexOf(String(a._id)) - orderMap.indexOf(String(b._id)));
         }
 
+        // 5. Fetch Store Status
+        const storeStatusDoc = await StoreStatus.findOne({ key: "primary" }).lean();
+        const storeStatus = storeStatusDoc ? buildStoreStatusResponse(storeStatusDoc) : { status: "open", statusLabel: "Open", mode: "schedule" };
+
+        // 6. Fetch Global Special Occasion
+        const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
+        let specialOccasion = null;
+        if (config && config.value) {
+            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor").lean();
+        }
+
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
             if (comp.type === "BENTO_GRID") {
                 // HYBRID: Prioritize curated fields, then fill with generic products (deduplicated)
@@ -68,6 +79,15 @@ export const getHomeLayout = async (req, reply) => {
                 }
             } else if (comp.type === "CATEGORY_STRIP") {
                 comp.resolvedCategories = comp.categories || [];
+                // Filter out specialOccasion from this specific strip if it matches
+                if (specialOccasion) {
+                    comp.resolvedCategories = comp.resolvedCategories.filter(c => String(c._id || c) !== String(specialOccasion._id));
+                }
+            } else if (comp.type === "CATEGORY_CLUSTERS") {
+                // Also filter from clusters if needed (categories live in clusters)
+                if (specialOccasion && comp.categories) {
+                    comp.categories = comp.categories.filter(c => String(c._id || c) !== String(specialOccasion._id));
+                }
             } else if (comp.type === "FEATURED_DEALS") {
                 // Featured deals already populated bigDeal and miniDeals, 
                 // but we'll also put them in resolvedProducts just in case for generic scroller reuse
@@ -83,18 +103,6 @@ export const getHomeLayout = async (req, reply) => {
 
         // 4. Fetch ALL Occasions for the strip
         const occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
-
-        // 5. Fetch Store Status
-        const storeStatusDoc = await StoreStatus.findOne({ key: "primary" }).lean();
-        const storeStatus = storeStatusDoc ? buildStoreStatusResponse(storeStatusDoc) : { status: "open", statusLabel: "Open", mode: "schedule" };
-
-        // 6. Fetch Global Special Occasion
-        const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
-
-        let specialOccasion = null;
-        if (config && config.value) {
-            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor").lean();
-        }
 
         // 7. Build unified response
         const filteredOccasions = specialOccasion
