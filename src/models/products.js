@@ -41,6 +41,14 @@ const productSchema = new mongoose.Schema({
     },
   ],
   isSensitive: { type: Boolean, default: false },
+
+  // Seller System Fields
+  isApproved: { type: Boolean, default: true }, // Defaults to true for Admin created products. Sellers will explicitly create with false
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Seller",
+    default: null
+  }
 });
 
 // Pre-save hook to convert category string to ObjectId

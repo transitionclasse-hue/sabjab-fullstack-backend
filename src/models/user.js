@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String },
   role: {
     type: String,
-    enum: ["Customer", "Admin", "DeliveryPartner"],
+    enum: ["Customer", "Admin", "DeliveryPartner", "Seller"],
     required: true,
   },
   isActivated: { type: Boolean, default: false },
@@ -103,7 +103,30 @@ const adminSchema = new mongoose.Schema({
   notificationsEnabled: { type: Boolean, default: true },
 }, { timestamps: true });
 
+// ================= SELLER =================
+const sellerSchema = new mongoose.Schema({
+  ...userSchema.obj,
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phone: { type: Number },
+  role: { type: String, enum: ["Seller"], default: "Seller" },
+  isApproved: { type: Boolean, default: false }, // Admin must approve before they can go live
+  phoneVerified: { type: Boolean, default: false },
+  businessName: { type: String },
+  businessAddress: { type: String },
+  gstNumber: { type: String },
+  bankAccount: {
+    bankName: { type: String },
+    accountNumber: { type: String },
+    ifsc: { type: String },
+  },
+  walletBalance: { type: Number, default: 0 },
+  pushToken: { type: String, default: null },
+  notificationsEnabled: { type: Boolean, default: true },
+}, { timestamps: true });
+
 // ================= MODELS =================
 export const Customer = mongoose.model("Customer", customerSchema);
 export const DeliveryPartner = mongoose.model("DeliveryPartner", deliveryPartnerSchema);
 export const Admin = mongoose.model("Admin", adminSchema);
+export const Seller = mongoose.model("Seller", sellerSchema);

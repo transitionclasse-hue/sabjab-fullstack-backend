@@ -1,0 +1,97 @@
+import { Seller } from "../../models/user.js";
+import jwt from "jsonwebtoken";
+
+export const generateTokens = (user) => {
+    const accessToken = jwt.sign(
+        { userId: user._id, role: user.role },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1d" }
+    );
+
+    const refreshToken = jwt.sign(
+        { userId: user._id, role: user.role },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: "1d" }
+    );
+
+    return { accessToken, refreshToken };
+};
+
+export const registerSeller = async (req, reply) => {
+    try {
+        const { name, email, password, phone, businessName, businessAddress } = req.body;
+
+        const existingSeller = await Seller.findOne({ email });
+        if (existingSeller) {
+            return reply.status(400).send({ message: "Seller with this email already exists" });
+        }
+
+        const seller = new Seller({
+            name,
+            email,
+            password, // Storing plain text as requested by architecture (or implement hash if global applies)
+            phone,
+            businessName,
+            businessAddress,
+            role: "Seller",
+            isApproved: false // Requires admin approval
+        });
+
+        await seller.save();
+
+        const { accessToken, refreshToken } = generateTokens(seller);
+        return reply.status(201).send({
+            message: "Seller registered successfully. Pending Admin approval.",
+            accessToken,
+            refreshToken,
+            seller
+        });
+    } catch (error) {
+        console.error("Seller Registration Error:", error);
+        return reply.status(500).send({ message: "An error occurred during registration", error: error.message });
+    }
+};
+
+export const loginSeller = async (req, reply) => {
+    try {
+        const { email, password } = req.body;
+
+        const seller = await Seller.findOne({ email, role: "Seller" });
+        if (!seller) {
+            return reply.status(404).send({ message: "Seller not found" });
+        }
+
+        if (seller.password !== password) {
+            return reply.status(401).send({ message: "Invalid credentials" });
+        }
+
+        if (!seller.isApproved) {
+            // They can login, but we notify frontend they are pending
+        }
+
+        const { accessToken, refreshToken } = generateTokens(seller);
+        return reply.send({
+            message: "Login successful",
+            accessToken,
+            refreshToken,
+            seller
+        });
+    } catch (error) {
+        console.error("Seller Login Error:", error);
+        return reply.status(500).send({ message: "An error occurred during login", error: error.message });
+    }
+};
+
+export const getSellerProfile = async (req, reply) => {
+    try {
+        const { userId } = req.user;
+        const seller = await Seller.findById(userId).select("-password");
+        if (!seller) {
+            return reply.status(404).send({ message: "Seller profile not found" });
+        }
+        return reply.send(seller);
+    } catch (error) {
+        console.error("Fetch Seller Profile Error:", error);
+        return reply.status(500).send({ message: "An error occurred fetching profile", error: error.message });
+    }
+};
