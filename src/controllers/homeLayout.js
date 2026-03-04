@@ -68,6 +68,13 @@ export const getHomeLayout = async (req, reply) => {
                 }
             } else if (comp.type === "CATEGORY_STRIP") {
                 comp.resolvedCategories = comp.categories || [];
+            } else if (comp.type === "FEATURED_DEALS") {
+                // Featured deals already populated bigDeal and miniDeals, 
+                // but we'll also put them in resolvedProducts just in case for generic scroller reuse
+                comp.resolvedProducts = [
+                    ...(comp.bigDeal ? [comp.bigDeal] : []),
+                    ...(comp.miniDeals || [])
+                ];
             } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"].includes(comp.type)) {
                 comp.resolvedProducts = comp.products || [];
             }

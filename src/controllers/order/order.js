@@ -887,3 +887,24 @@ export const cancelOrder = async (req, reply) => {
         return reply.status(500).send({ message: "Failed to cancel order", error: error.message });
     }
 };
+
+export const getCustomerSavings = async (req, reply) => {
+    try {
+        const { userId } = req.user;
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+
+        const orders = await Order.find({
+            customer: userId,
+            status: ORDER_STATUS.DELIVERED,
+            createdAt: { $gte: startOfMonth }
+        }).select("discountAmount");
+
+        const totalSavings = orders.reduce((sum, order) => sum + (order.discountAmount || 0), 0);
+        return reply.send({ totalSavings });
+    } catch (error) {
+        console.error("getCustomerSavings error:", error);
+        return reply.status(500).send({ message: "Failed to calculate savings", error: error.message });
+    }
+};
