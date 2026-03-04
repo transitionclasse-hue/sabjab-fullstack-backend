@@ -26,7 +26,7 @@
     bellEl.title = "New Orders";
     bellEl.style.position = "fixed";
     bellEl.style.top = "16px";
-    bellEl.style.left = "16px";
+    bellEl.style.right = "16px";
     bellEl.style.width = "46px";
     bellEl.style.height = "46px";
     bellEl.style.borderRadius = "23px";
