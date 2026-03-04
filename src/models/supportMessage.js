@@ -7,6 +7,10 @@ const supportMessageSchema = new mongoose.Schema(
             ref: "Customer",
             required: true,
         },
+        ticket: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Ticket",
+        },
         sender: {
             type: String,
             enum: ["customer", "support"],

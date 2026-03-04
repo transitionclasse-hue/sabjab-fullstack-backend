@@ -374,14 +374,14 @@ export async function buildAdminRouter(app) {
       };
     }
 
-    if (model.modelName === "SupportMessage") {
+    if (model.modelName === "Ticket") {
       return {
         resource: model,
         options: {
           navigation: { name: "Support", icon: "HelpCircle" },
-          sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["customer", "sender", "message", "createdAt"],
-          filterProperties: ["customer", "sender", "createdAt"],
+          sort: { sortBy: 'lastMessageAt', direction: 'desc' },
+          listProperties: ["ticketId", "customer", "category", "status", "priority", "lastMessageAt"],
+          filterProperties: ["ticketId", "customer", "category", "status", "priority"],
           actions: {
             reply: {
               actionType: 'record',
@@ -392,11 +392,18 @@ export async function buildAdminRouter(app) {
                 if (request.method === 'post') {
                   const { replyMessage } = request.payload;
                   const SupportMessage = mongoose.models.SupportMessage;
+                  const Ticket = mongoose.models.Ticket;
 
                   await SupportMessage.create({
                     customer: record.params.customer,
+                    ticket: record.params._id,
                     sender: 'support',
                     message: replyMessage
+                  });
+
+                  await Ticket.findByIdAndUpdate(record.params._id, {
+                    lastMessageAt: new Date(),
+                    status: 'Pending' // Mark as pending when support replies
                   });
 
                   return {
@@ -408,8 +415,33 @@ export async function buildAdminRouter(app) {
                   record: record.toJSON(context.currentAdmin),
                 };
               }
+            },
+            resolve: {
+              actionType: 'record',
+              icon: 'CheckCircle',
+              handler: async (request, response, context) => {
+                const { record } = context;
+                const Ticket = mongoose.models.Ticket;
+                await Ticket.findByIdAndUpdate(record.params._id, { status: 'Resolved' });
+                return {
+                  record: record.toJSON(context.currentAdmin),
+                  notice: { message: 'Ticket marked as Resolved!', type: 'success' },
+                };
+              }
             }
           }
+        },
+      };
+    }
+
+    if (model.modelName === "SupportMessage") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "Support", icon: "MessageSquare" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
+          listProperties: ["ticket", "customer", "sender", "message", "createdAt"],
+          filterProperties: ["ticket", "customer", "sender", "createdAt"],
         },
       };
     }
@@ -1737,10 +1769,6 @@ export async function buildAdminRouter(app) {
       component: Components.Dashboard,
     },
     pages: {
-      'Live Support': {
-        component: Components.SupportDashboard,
-        icon: 'Chat',
-      },
       'Component Guide': {
         component: Components.ComponentGuide,
         icon: 'Book',

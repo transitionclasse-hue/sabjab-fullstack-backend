@@ -16,6 +16,8 @@ import GreenPointsConfig from "./greenPointsConfig.js";
 import Referral from "./referral.js";
 import WalletTransaction from "./walletTransaction.js";
 import Occasion from "./occasion.js";
+import Ticket from "./ticket.js";
+import SupportMessage from "./supportMessage.js";
 
 export {
   Order,
@@ -38,4 +40,6 @@ export {
   Referral,
   WalletTransaction,
   Occasion,
+  Ticket,
+  SupportMessage,
 };
