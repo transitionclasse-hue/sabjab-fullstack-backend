@@ -49,6 +49,9 @@ const start = async () => {
       logger: true,
       bodyLimit: 50 * 1024 * 1024, // 50MB global limit
     });
+    app.get('/health', async (request, reply) => {
+  return { status: 'API running' };
+    });
 
     // ---------------- COOKIE + SESSION ----------------
 
