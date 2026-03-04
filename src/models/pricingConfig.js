@@ -40,6 +40,7 @@ const pricingConfigSchema = new mongoose.Schema(
 
     customFees: { type: [customFeeSchema], default: [] },
     cartBarColor: { type: String, default: "#1A1A1A" },
+    etaColor: { type: String, default: "#1A1A1A" },
   },
   { timestamps: true }
 );

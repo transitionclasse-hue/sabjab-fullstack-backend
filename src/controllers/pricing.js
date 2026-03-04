@@ -19,6 +19,7 @@ const DEFAULT_PRICING_CONFIG = {
   defaultDriverEarning: 30,
   customFees: [],
   cartBarColor: "#1A1A1A",
+  etaColor: "#1A1A1A",
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -246,6 +247,7 @@ export const updatePricingConfig = async (req, reply) => {
       defaultDriverEarning: Math.max(0, toNumber(body.defaultDriverEarning, 30)),
       customFees: sanitizeCustomFees(body.customFees),
       cartBarColor: String(body.cartBarColor || "#1A1A1A").trim(),
+      etaColor: String(body.etaColor || "#1A1A1A").trim(),
     };
 
     const config = await PricingConfig.findOneAndUpdate(
