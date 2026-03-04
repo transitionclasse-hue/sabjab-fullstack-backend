@@ -111,7 +111,8 @@ export const getHomeLayout = async (req, reply) => {
                 showBanner: variation.showBanner,
                 banner: variation.banner,
                 icon: variation.icon,
-                weatherEffect: variation.weatherEffect || 'none'
+                weatherEffect: variation.weatherEffect || 'none',
+                ultraConfig: variation.ultraConfig || {}
             } : null,
             layout: hydratedComponents || [],
             categories: filteredOccasions || [],
@@ -132,17 +133,18 @@ export const getActiveHomeVersion = async (req, reply) => {
 
         let variation;
         if (variationId) {
-            variation = await Occasion.findById(variationId).select("homeScreenVersion weatherEffect").lean();
+            variation = await Occasion.findById(variationId).select("homeScreenVersion weatherEffect ultraConfig").lean();
         }
 
         if (!variation) {
-            variation = await Occasion.findOne({ isDefault: true }).select("homeScreenVersion weatherEffect").lean() ||
-                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("homeScreenVersion weatherEffect").lean();
+            variation = await Occasion.findOne({ isDefault: true }).select("homeScreenVersion weatherEffect ultraConfig").lean() ||
+                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("homeScreenVersion weatherEffect ultraConfig").lean();
         }
 
         return reply.send({
             homeScreenVersion: variation?.homeScreenVersion || "HomeScreen",
-            weatherEffect: variation?.weatherEffect || "none"
+            weatherEffect: variation?.weatherEffect || "none",
+            ultraConfig: variation?.ultraConfig || {}
         });
     } catch (error) {
         console.error("Home Version Fetch Error:", error);

@@ -49,8 +49,18 @@ const occasionSchema = new mongoose.Schema({
     },
     homeScreenVersion: { // ✅ NEW: Phase 7 Dynamic Routing Control
         type: String,
-        enum: ["HomeScreen", "HomeScreen2", "HomeScreen3", "HomeScreen4", "HomeScreen5", "HomeScreen6", "HomeScreen7", "HomeScreen8", "HomeScreen9"],
+        enum: ["HomeScreen", "HomeScreen2", "HomeScreen3", "HomeScreen4", "HomeScreen5", "HomeScreen6", "HomeScreen7", "HomeScreen8", "HomeScreen9", "HomeScreen10"],
         default: "HomeScreen"
+    },
+    ultraConfig: { // ✅ NEW: Deep customization specifically for HomeScreen10
+        topGradientColor: { type: String, default: "" },
+        bottomGradientColor: { type: String, default: "" },
+        middleGradientColor: { type: String, default: "" },
+        gradientStops: { type: String, default: "0,0.5,1" },
+        titleFontSize: { type: Number, default: 24 },
+        borderRadiusGlobal: { type: Number, default: 16 },
+        hideTopBar: { type: Boolean, default: false },
+        topBarColor: { type: String, default: "#ffffff" }
     },
     weatherEffect: { // ✅ Controls weather effect on HomeScreen7 topbar
         type: String,

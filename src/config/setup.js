@@ -1335,6 +1335,7 @@ export async function buildAdminRouter(app) {
                 { value: "HomeScreen7", label: "v7 - Weather Driven" },
                 { value: "HomeScreen8", label: "v8 - Decreasing Gradient" },
                 { value: "HomeScreen9", label: "v9 - Nostalgic Style" },
+                { value: "HomeScreen10", label: "v10 - Ultra Customizable" },
               ]
             },
             weatherEffect: {
@@ -1348,6 +1349,9 @@ export async function buildAdminRouter(app) {
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
+            'ultraConfig.topGradientColor': { label: "Top Gradient Color (Hex)", helpText: "Upper background color. Use 8-digit hex for opacity (e.g. #FF573320 for 12% opacity)" },
+            'ultraConfig.bottomGradientColor': { label: "Bottom Gradient Color (Hex)", helpText: "Lower background color (e.g. #FFFFFF)" },
+            'ultraConfig.hideTopBar': { label: "Hide Top Bar?", helpText: "If true, the TopBar and Search bar will be removed from this screen." },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default." },
             components: {
