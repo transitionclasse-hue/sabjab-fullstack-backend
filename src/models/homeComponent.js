@@ -25,7 +25,8 @@ const homeComponentSchema = new mongoose.Schema({
             "CHRISTMAS_SPECIAL", // ✅ NEW: Snowy Christmas layout
             "TRIPLE_SECTION_GRID", // ✅ NEW: Side-by-side collections
             "CATEGORY_GRID_FOUR_IMAGES", // ✅ NEW: Grid of categories showing 4 product images each
-            "PRODUCT_GRID_3X2" // ✅ NEW: 3 columns, 2 rows of products
+            "PRODUCT_GRID_3X2", // ✅ NEW: 3 columns, 2 rows of products
+            "MINI_VIDEO" // ✅ NEW: Floating mini video promotion
         ],
         required: true,
     },
@@ -33,6 +34,12 @@ const homeComponentSchema = new mongoose.Schema({
         type: String,
     },
     buttonText: { // NEW: For CTA buttons
+        type: String,
+    },
+    videoUrl: { // NEW: URL for video (MINI_VIDEO)
+        type: String,
+    },
+    videoThumbnail: { // NEW: Optional thumbnail for video
         type: String,
     },
     // Used explicitly for "FEATURED_DEALS" section type

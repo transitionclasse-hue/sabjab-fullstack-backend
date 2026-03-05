@@ -1002,7 +1002,7 @@ export async function buildAdminRouter(app) {
           },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["title", "type", "isActive"],
-          editProperties: ["title", "subTitle", "type", "isActive", "sections", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode"],
+          editProperties: ["title", "subTitle", "type", "isActive", "sections", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "themeMode", "videoUrl"],
           actions: {
             new: { after: [replaceBannerKeyWithUrl] },
             edit: { after: [replaceBannerKeyWithUrl] },
@@ -1027,7 +1027,8 @@ export async function buildAdminRouter(app) {
                 { value: "CHRISTMAS_SPECIAL", label: "Snowy Christmas Layout" },
                 { value: "TRIPLE_SECTION_GRID", label: "Premium Triple Section Pager (Side-by-Side)" },
                 { value: "CATEGORY_GRID_FOUR_IMAGES", label: "🖼️ Category 2x2 Image Grid (New)" },
-                { value: "PRODUCT_GRID_3X2", label: "📦 Elegant 3x2 Product Grid (New)" }
+                { value: "PRODUCT_GRID_3X2", label: "📦 Elegant 3x2 Product Grid (New)" },
+                { value: "MINI_VIDEO", label: "🎥 Floating Mini Video Promotion (New)" }
               ],
             },
             sections: {
@@ -1101,7 +1102,7 @@ export async function buildAdminRouter(app) {
               helpText: "Required for Heroes and banners. Hidden for simple grids.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO", "HAPPY_HOLI"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "PROMO_BANNER", "GRADIENT_HERO", "HAPPY_HOLI", "MINI_VIDEO"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1135,6 +1136,11 @@ export async function buildAdminRouter(app) {
                 const hiddenTypes = ["IMAGE_CAROUSEL", "CATEGORY_STRIP"];
                 return !!(type && !hiddenTypes.includes(type));
               }
+            },
+            videoUrl: {
+              label: "Direct Video URL (MP4 Preferred)",
+              helpText: "Paste the raw link to your video (Cloudinary, Drive, etc). Recommended size 110x160.",
+              isVisible: (context) => Boolean(context.record?.params?.type === "MINI_VIDEO"),
             },
           },
         },

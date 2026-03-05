@@ -134,7 +134,7 @@ export const getHomeLayout = async (req, reply) => {
                     ...(comp.bigDeal ? [comp.bigDeal] : []),
                     ...(comp.miniDeals || [])
                 ];
-            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2"].includes(comp.type)) {
+            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "MINI_VIDEO"].includes(comp.type)) {
                 comp.resolvedProducts = comp.products || [];
             }
             return comp;
