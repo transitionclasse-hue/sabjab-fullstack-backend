@@ -17,6 +17,9 @@ const occasionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"
     }],
+    searchPlaceholders: [{ // NEW: Dynamic rotating placeholders in search bar
+        type: String
+    }],
     isActive: {
         type: Boolean,
         default: true

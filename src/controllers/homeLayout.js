@@ -135,6 +135,7 @@ export const getHomeLayout = async (req, reply) => {
                 showBanner: variation.showBanner,
                 banner: variation.banner,
                 icon: variation.icon,
+                searchPlaceholders: variation.searchPlaceholders || [],
                 ultraConfig: variation.ultraConfig || {}
             } : null,
             layout: hydratedComponents || [],

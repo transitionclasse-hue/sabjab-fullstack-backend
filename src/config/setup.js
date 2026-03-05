@@ -1351,6 +1351,7 @@ export async function buildAdminRouter(app) {
           listProperties: ["_id", "name", "themeColor", "themeEffect", "searchBarStyle", "topBarStyle", "showBanner", "isDefault", "isActive"],
           editProperties: [
             "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
+            "searchPlaceholders",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor", "ultraConfig.navActiveTextColor", "ultraConfig.navInactiveTextColor",
@@ -1358,6 +1359,7 @@ export async function buildAdminRouter(app) {
           ],
           showProperties: [
             "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
+            "searchPlaceholders",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor", "ultraConfig.navActiveTextColor", "ultraConfig.navInactiveTextColor",
