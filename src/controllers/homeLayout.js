@@ -85,26 +85,23 @@ export const getHomeLayout = async (req, reply) => {
             } else if (comp.type === "CATEGORY_GRID_FOUR_IMAGES") {
                 if (comp.categories?.length > 0) {
                     comp.resolvedCategories = await Promise.all(comp.categories.map(async (catModel) => {
-                        // catModel is a populated SubCategory object
-                        const subCatId = catModel._id || catModel.id;
-                        const parentCatId = catModel.category?._id || catModel.category || null;
+                        // catModel is a populated Category or SubCategory object
+                        const itemId = catModel._id || catModel.id;
+                        const parentCatId = catModel.category?._id || catModel.category ||
+                            catModel.superCategory?._id || catModel.superCategory || null;
 
-                        // 1. Try to find products in THIS subcategory
-                        let count = await Product.countDocuments({ subCategory: subCatId, isAvailable: true });
-                        let products = await Product.find({ subCategory: subCatId, isAvailable: true })
+                        // 1. Try to find products that match this ID in either category or subCategory field
+                        const productQuery = {
+                            $or: [{ category: itemId }, { subCategory: itemId }],
+                            isAvailable: true
+                        };
+
+                        let count = await Product.countDocuments(productQuery);
+                        let products = await Product.find(productQuery)
                             .sort({ createdAt: -1 })
                             .limit(4)
                             .select("image")
                             .lean();
-
-                        // 2. FALLBACK: If no products in subcategory, try parent category
-                        if (products.length === 0 && parentCatId) {
-                            products = await Product.find({ category: parentCatId, isAvailable: true })
-                                .sort({ createdAt: -1 })
-                                .limit(4)
-                                .select("image")
-                                .lean();
-                        }
 
                         return {
                             ...catModel,
@@ -112,6 +109,7 @@ export const getHomeLayout = async (req, reply) => {
                             productCount: count,
                             previewImages: products.map(p => p.image)
                         };
+
                     }));
                 } else {
                     comp.resolvedCategories = [];
