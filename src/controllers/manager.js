@@ -16,8 +16,8 @@ export const getManagerOverview = async (req, reply) => {
       Order.countDocuments({ status: "delivered" }),
       Customer.countDocuments({}),
       DeliveryPartner.countDocuments({}),
-      Occasion.findOne({ isDefault: true }).select("weatherEffect").lean() ||
-      Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("weatherEffect").lean()
+      Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle").lean() ||
+      Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean()
     ]);
 
     return reply.send({
@@ -26,7 +26,8 @@ export const getManagerOverview = async (req, reply) => {
       deliveredOrders,
       totalCustomers: customers,
       totalDrivers: drivers,
-      weatherEffect: activeOccasion?.weatherEffect || "none",
+      themeEffect: activeOccasion?.themeEffect || "none",
+      searchBarStyle: activeOccasion?.searchBarStyle || "standard",
     });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch overview", error: error.message });

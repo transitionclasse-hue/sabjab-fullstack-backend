@@ -1351,17 +1351,17 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["_id", "name", "themeColor", "themeMode", "weatherEffect", "showBanner", "isDefault", "isActive"],
+          listProperties: ["_id", "name", "themeColor", "themeEffect", "searchBarStyle", "showBanner", "isDefault", "isActive"],
           editProperties: [
-            "name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect",
-            "ultraConfig.topGradientColor", "ultraConfig.bottomGradientColor", "ultraConfig.middleGradientColor",
+            "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "themeEffect", "themeColor",
+            "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           showProperties: [
-            "name", "nameAlignment", "icon", "banner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect",
-            "ultraConfig.topGradientColor", "ultraConfig.bottomGradientColor", "ultraConfig.middleGradientColor",
+            "name", "nameAlignment", "icon", "banner", "searchBarStyle", "themeEffect", "themeColor",
+            "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
             "showBanner", "isDefault", "isActive", "order", "components"
@@ -1371,7 +1371,7 @@ export async function buildAdminRouter(app) {
             edit: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
           },
           properties: {
-            name: { label: "Variation Name (e.g. Holi Special)" },
+            name: { label: "Variation Name (e.g. Holi Special, All)" },
             nameAlignment: {
               label: "Name Alignment (UI)",
               availableValues: [
@@ -1379,60 +1379,46 @@ export async function buildAdminRouter(app) {
                 { value: "right", label: "Right Aligned" }
               ]
             },
-            themeMode: {
-              label: "Force Visual Theme",
+            searchBarStyle: {
+              label: "🔍 Search Bar Style",
               availableValues: [
-                { value: "auto", label: "Inherit Device Theme" },
-                { value: "light", label: "Force Light Mode" },
-                { value: "dark", label: "Force Midnight Dark" },
-                { value: "snow", label: "Snow Effect" },
-                { value: "rain", label: "Rain Effect" },
-                { value: "autumn", label: "Autumn Leaves Effect" }
+                { value: "standard", label: "Standard Search Bar" },
+                { value: "glassmorphic", label: "Glassmorphic (V2 Style)" },
+                { value: "frosty", label: "❄️ Frosty Winter Search Bar" },
+                { value: "neon", label: "✨ Neon Glow Search Bar" },
               ]
             },
-            homeScreenVersion: {
-              label: "Home Screen Version",
+            themeEffect: {
+              label: "🎨 Theme & Weather Effect",
               availableValues: [
-                { value: "HomeScreen", label: "v1 - Standard Grid" },
-                { value: "HomeScreen2", label: "v2 - Modern Aesthetic" },
-                { value: "HomeScreen3", label: "v3 - Animated Search" },
-                { value: "HomeScreen4", label: "v4 - Crumbled Paper" },
-                { value: "HomeScreen5", label: "v5 - Festive Style" },
-                { value: "HomeScreen6", label: "v6 - Pooja/Night Style" },
-                { value: "HomeScreen7", label: "v7 - Weather Driven" },
-                { value: "HomeScreen8", label: "v8 - Decreasing Gradient" },
-                { value: "HomeScreen9", label: "v9 - Nostalgic Style" },
-                { value: "HomeScreen10", label: "v10 - Ultra Customizable" },
-              ]
-            },
-            weatherEffect: {
-              label: "🌦️ Weather Effect (HomeScreen7 TopBar Only)",
-              availableValues: [
-                { value: "none", label: "None — Clear Sky" },
-                { value: "rain", label: "🌧️ Rain" },
-                { value: "snow", label: "❄️ Snow" },
+                { value: "none", label: "None — Default" },
+                { value: "light", label: "☀️ Force Light Mode" },
+                { value: "dark", label: "🌙 Force Midnight Dark" },
+                { value: "snow", label: "❄️ Snow Effect" },
+                { value: "rain", label: "🌧️ Rain Effect" },
                 { value: "autumn", label: "🍂 Autumn Leaves" },
-                { value: "rainspecialeffect", label: "🌩️⚡ Cinematic Storm (Special)" },
+                { value: "heavyrain", label: "⛈️ Heavy Rain (Clouds + Waves)" },
+                { value: "cinematicstorm", label: "🌩️⚡ Cinematic Storm (Special)" },
               ]
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
             'ultraConfig.topGradientColor': { label: "Ultra: Top Gradient Color", helpText: "Upper background color. Use 8-digit hex for opacity (e.g. #FF573320)" },
-            'ultraConfig.bottomGradientColor': { label: "Ultra: Bottom Gradient Color", helpText: "Lower background color (e.g. #FFFFFF)" },
             'ultraConfig.middleGradientColor': { label: "Ultra: Middle Gradient Color", helpText: "Optional: Mid-point color (e.g. #f0f0f0)" },
+            'ultraConfig.bottomGradientColor': { label: "Ultra: Bottom Gradient Color", helpText: "Lower background color (e.g. #FFFFFF)" },
             'ultraConfig.gradientStops': { label: "Ultra: Gradient Stops", helpText: "Comma separated stops (e.g. 0,0.5,1)" },
             'ultraConfig.titleFontSize': { label: "Ultra: Title Font Size", helpText: "Font size for section headers (default 24)" },
             'ultraConfig.borderRadiusGlobal': { label: "Ultra: Border Radius", helpText: "Global curvature for cards and boxes (default 16)" },
             'ultraConfig.topBarColor': { label: "Ultra: Top Bar Background (Hex)", helpText: "Color for the top navigation bar area" },
-            'ultraConfig.hideTopBar': { label: "Ultra: Hide Top Bar?", helpText: "Completely remove location/search bar from top (Landing Page Style)" },
+            'ultraConfig.hideTopBar': { label: "Ultra: Hide Top Bar?", helpText: "Completely remove location/search bar from top" },
             showBanner: { label: "Show Occasion Banner?" },
-            isDefault: { label: "Is Default Variation?", helpText: "Only one should be default." },
+            isDefault: { label: "Is Default Variation?", helpText: "Only one should be default. The 'All' occasion is typically the default." },
             components: {
               label: "Assigned Home Components",
               description: "Select and order components for this variation screen.",
               type: 'reference',
               reference: 'HomeComponent',
               isArray: true,
-              remote: true // Full search for components
+              remote: true
             },
             icon: {
               isVisible: { list: true, filter: false, show: true, edit: false },

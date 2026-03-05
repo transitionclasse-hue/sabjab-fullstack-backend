@@ -128,12 +128,12 @@ export const getHomeLayout = async (req, reply) => {
                 id: variation._id,
                 name: variation.name,
                 themeColor: variation.themeColor,
-                themeMode: variation.themeMode || 'auto',
+                themeEffect: variation.themeEffect || 'none',
+                searchBarStyle: variation.searchBarStyle || 'standard',
                 nameAlignment: variation.nameAlignment || 'left',
                 showBanner: variation.showBanner,
                 banner: variation.banner,
                 icon: variation.icon,
-                weatherEffect: variation.weatherEffect || 'none',
                 ultraConfig: variation.ultraConfig || {}
             } : null,
             layout: hydratedComponents || [],
@@ -158,17 +158,18 @@ export const getActiveHomeVersion = async (req, reply) => {
 
         let variation;
         if (variationId) {
-            variation = await Occasion.findById(variationId).select("homeScreenVersion weatherEffect ultraConfig").lean();
+            variation = await Occasion.findById(variationId).select("themeEffect searchBarStyle ultraConfig").lean();
         }
 
         if (!variation) {
-            variation = await Occasion.findOne({ isDefault: true }).select("homeScreenVersion weatherEffect ultraConfig").lean() ||
-                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("homeScreenVersion weatherEffect ultraConfig").lean();
+            variation = await Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle ultraConfig").lean() ||
+                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle ultraConfig").lean();
         }
 
         return reply.send({
-            homeScreenVersion: variation?.homeScreenVersion || "HomeScreen",
-            weatherEffect: variation?.weatherEffect || "none",
+            homeScreenVersion: "HomeScreen",
+            themeEffect: variation?.themeEffect || "none",
+            searchBarStyle: variation?.searchBarStyle || "standard",
             ultraConfig: variation?.ultraConfig || {}
         });
     } catch (error) {
