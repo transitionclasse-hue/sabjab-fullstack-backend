@@ -1391,6 +1391,7 @@ export async function buildAdminRouter(app) {
                 { value: "standard", label: "Standard (Delivery ETA + Status)" },
                 { value: "nostalgic", label: "🙏 Nostalgic (Namaste Greeting)" },
                 { value: "weather", label: "🌦️ Weather Bar (Particles Behind)" },
+                { value: "scooty", label: "🛵 Scooty Delivery Animation" },
               ]
             },
             themeEffect: {
