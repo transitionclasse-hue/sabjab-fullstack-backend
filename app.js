@@ -50,7 +50,7 @@ const start = async () => {
       bodyLimit: 50 * 1024 * 1024, // 50MB global limit
     });
     app.get('/health', async (request, reply) => {
-  return { status: 'API running' };
+      return { status: 'API running' };
     });
 
     // ---------------- COOKIE + SESSION ----------------
@@ -77,23 +77,8 @@ const start = async () => {
     });
 
     // ---------------- MULTIPART UPLOADS ----------------
-    // Combined registration for both AdminJS and API routes
-    await app.register(fastifyMultipart, {
-      attachFieldsToBody: true,
-      limits: {
-        fileSize: 50 * 1024 * 1024, // 50MB global limit
-        fieldSize: 10 * 1024 * 1024, // 10MB text fields
-      },
-      onFile: async (part) => {
-        // Buffering utility used by AdminJS components
-        const chunks = [];
-        for await (const chunk of part.file) {
-          chunks.push(chunk);
-        }
-        part._buf = Buffer.concat(chunks);
-        part.toBuffer = async () => part._buf;
-      }
-    });
+    // fastifyMultipart is handled by AdminJS internally or locally in routes if needed.
+    // We removed global registration here because it caused conflicts with @adminjs/fastify.
 
     // ---------------- ROUTES ----------------
     await registerRoutes(app);

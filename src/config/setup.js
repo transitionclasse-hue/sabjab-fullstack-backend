@@ -339,10 +339,10 @@ export async function buildAdminRouter(app) {
               component: Components.SendNotification,
               handler: async (request, response, context) => {
                 if (request.method === 'post') {
-                  const { title, body } = request.payload;
-                  const count = await broadcastPushNotification(title, body);
+                  const { title, body, userType } = request.payload;
+                  const count = await broadcastPushNotification(title, body, {}, userType || 'Customer');
                   return {
-                    notice: { message: `Broadcast started for ${count} customers!`, type: 'success' },
+                    notice: { message: `Broadcast started for ${count} ${userType === 'DeliveryPartner' ? 'Drivers' : 'Customers'}!`, type: 'success' },
                   };
                 }
                 return {};
@@ -1489,7 +1489,38 @@ export async function buildAdminRouter(app) {
       };
     }
 
-    const driverModels = ["DeliveryPartner", "Payout", "WalletTransaction"];
+    if (model.modelName === "DeliveryPartner") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "Delivery Management", icon: "Truck" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
+          actions: {
+            sendNotification: {
+              actionType: 'record',
+              icon: 'Send',
+              component: Components.SendNotification,
+              handler: async (request, response, context) => {
+                const { record } = context;
+                if (request.method === 'post') {
+                  const { title, body } = request.payload;
+                  await sendPushNotification(record.params._id, title, body, {}, 'DeliveryPartner');
+                  return {
+                    record: record.toJSON(context.currentAdmin),
+                    notice: { message: 'Notification sent successfully!', type: 'success' },
+                  };
+                }
+                return {
+                  record: record.toJSON(context.currentAdmin),
+                };
+              }
+            }
+          }
+        },
+      };
+    }
+
+    const driverModels = ["Payout", "WalletTransaction"];
     if (driverModels.includes(model.modelName)) {
       return {
         resource: model,

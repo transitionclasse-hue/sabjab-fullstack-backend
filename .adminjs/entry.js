@@ -17,6 +17,8 @@ import OrderStatusBadge from '../src/components/OrderStatusBadge'
 AdminJS.UserComponents.OrderStatusBadge = OrderStatusBadge
 import DriverStatusBadge from '../src/components/DriverStatusBadge'
 AdminJS.UserComponents.DriverStatusBadge = DriverStatusBadge
+import ComponentGuide from '../src/components/ComponentGuide'
+AdminJS.UserComponents.ComponentGuide = ComponentGuide
 import UploadEditComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadEditComponent'
 AdminJS.UserComponents.UploadEditComponent = UploadEditComponent
 import UploadListComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadListComponent'

@@ -67,24 +67,29 @@ export const sendPushNotification = async (userId, title, body, data = {}, userT
 /**
  * Broadcast notification to all users with push tokens
  */
-export const broadcastPushNotification = async (title, body, data = {}) => {
+export const broadcastPushNotification = async (title, body, data = {}, userType = 'Customer') => {
     try {
-        const customers = await Customer.find({
+        let Model;
+        if (userType === 'Customer') Model = Customer;
+        else if (userType === 'DeliveryPartner') Model = DeliveryPartner;
+        else if (userType === 'Admin') Model = Admin;
+
+        const users = await Model.find({
             pushToken: { $ne: null },
             notificationsEnabled: true
         });
 
-        if (customers.length === 0) {
-            console.log("No customers with push tokens found for broadcast.");
+        if (users.length === 0) {
+            console.log(`No ${userType} with push tokens found for broadcast.`);
             return 0;
         }
 
         const messages = [];
-        for (const customer of customers) {
-            if (Expo.isExpoPushToken(customer.pushToken)) {
+        for (const user of users) {
+            if (Expo.isExpoPushToken(user.pushToken)) {
                 messages.push({
-                    to: customer.pushToken,
-                    sound: "default",
+                    to: user.pushToken,
+                    sound: user.notificationSound || "default",
                     title,
                     body,
                     data,
@@ -108,7 +113,7 @@ export const broadcastPushNotification = async (title, body, data = {}) => {
         await Notification.create({
             title,
             body,
-            data,
+            data: { ...data, userType },
             status: "sent",
             type: "broadcast",
             sentAt: new Date()

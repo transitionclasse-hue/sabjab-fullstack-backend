@@ -165,6 +165,17 @@ export const assignDriverByManager = async (req, reply) => {
     req.server.io.to(String(driver._id)).emit("driver:order-assigned", {
       order: populatedOrder,
     });
+
+    // Send Push Notification to Driver
+    const { sendPushNotification } = await import("../utils/notification.js");
+    await sendPushNotification(
+      String(driver._id),
+      "New Order Assigned! 📦",
+      `You have a new order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || 'SabJab'}.`,
+      { orderId: String(populatedOrder._id), type: 'ORDER_ASSIGNED' },
+      'DeliveryPartner'
+    );
+
     req.server.io.to(String(driver._id)).emit("driver:order-status-update", {
       orderId: String(order._id),
       status: "assigned",

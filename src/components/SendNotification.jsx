@@ -6,6 +6,7 @@ const SendNotification = (props) => {
     const { record, resource, action } = props;
     const [title, setTitle] = useState('');
     const [body, setBody] = useState('');
+    const [pushToDrivers, setPushToDrivers] = useState(false);
     const [loading, setLoading] = useState(false);
     const api = new ApiClient();
 
@@ -18,7 +19,7 @@ const SendNotification = (props) => {
         setLoading(false);
         try {
             setLoading(true);
-            const payload = { title, body };
+            const payload = { title, body, userType: pushToDrivers ? "DeliveryPartner" : "Customer" };
 
             // If it's a record action (Individual), we already have the customer
             // If it's a resource action (Broadcast), we don't.
@@ -51,8 +52,29 @@ const SendNotification = (props) => {
     return (
         <Box variant="white" padding="xl">
             <Text variant="lg" mb="xl">
-                {record ? `Send Individual Notification to ${record.params.name || 'Customer'}` : 'Broadcast Push Notification to All Users'}
+                {record ? `Send Individual Notification to ${record.params.name || 'User'}` : 'Broadcast Push Notification'}
             </Text>
+
+            {!record && (
+                <FormGroup>
+                    <Label>User Group</Label>
+                    <Box flex flexDirection="row" alignItems="center" mt="sm">
+                        <Button
+                            variant={!pushToDrivers ? "primary" : "light"}
+                            onClick={() => setPushToDrivers(false)}
+                            mr="default"
+                        >
+                            Customers
+                        </Button>
+                        <Button
+                            variant={pushToDrivers ? "primary" : "light"}
+                            onClick={() => setPushToDrivers(true)}
+                        >
+                            Drivers
+                        </Button>
+                    </Box>
+                </FormGroup>
+            )}
 
             <FormGroup>
                 <Label>Notification Title</Label>
