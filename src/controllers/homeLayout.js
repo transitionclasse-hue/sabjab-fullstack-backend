@@ -79,6 +79,24 @@ export const getHomeLayout = async (req, reply) => {
                         return sec;
                     }));
                 }
+            } else if (comp.type === "CATEGORY_GRID_FOUR_IMAGES") {
+                if (comp.categories?.length > 0) {
+                    comp.resolvedCategories = await Promise.all(comp.categories.map(async (cat) => {
+                        const count = await Product.countDocuments({ subCategory: cat._id, isAvailable: true });
+                        const products = await Product.find({ subCategory: cat._id, isAvailable: true })
+                            .sort({ createdAt: -1 })
+                            .limit(4)
+                            .select("image")
+                            .lean();
+                        return {
+                            ...cat,
+                            productCount: count,
+                            previewImages: products.map(p => p.image)
+                        };
+                    }));
+                } else {
+                    comp.resolvedCategories = [];
+                }
             } else if (comp.type === "CATEGORY_STRIP") {
                 comp.resolvedCategories = comp.categories || [];
                 // Filter out specialOccasion from this specific strip if it matches
@@ -97,7 +115,7 @@ export const getHomeLayout = async (req, reply) => {
                     ...(comp.bigDeal ? [comp.bigDeal] : []),
                     ...(comp.miniDeals || [])
                 ];
-            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"].includes(comp.type)) {
+            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2"].includes(comp.type)) {
                 comp.resolvedProducts = comp.products || [];
             }
             return comp;

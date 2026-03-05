@@ -23,7 +23,9 @@ const homeComponentSchema = new mongoose.Schema({
             "HAPPY_HOLI",      // ✅ NEW: Vibrant Holi layout
             "DIWALI_SPECIAL",   // ✅ NEW: Sparking Diwali layout
             "CHRISTMAS_SPECIAL", // ✅ NEW: Snowy Christmas layout
-            "TRIPLE_SECTION_GRID" // ✅ NEW: Side-by-side collections
+            "TRIPLE_SECTION_GRID", // ✅ NEW: Side-by-side collections
+            "CATEGORY_GRID_FOUR_IMAGES", // ✅ NEW: Grid of categories showing 4 product images each
+            "PRODUCT_GRID_3X2" // ✅ NEW: 3 columns, 2 rows of products
         ],
         required: true,
     },
