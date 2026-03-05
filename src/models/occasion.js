@@ -44,7 +44,7 @@ const occasionSchema = new mongoose.Schema({
     },
     themeEffect: { // UNIFIED: Replaces old themeMode + weatherEffect
         type: String,
-        enum: ["none", "light", "dark", "snow", "rain", "autumn", "heavyrain", "cinematicstorm"],
+        enum: ["none", "light", "dark", "snow", "rain", "autumn", "heavyrain", "cinematicstorm", "rainspecialeffect"],
         default: "none"
     },
     searchBarStyle: { // NEW: Explicit search bar control
