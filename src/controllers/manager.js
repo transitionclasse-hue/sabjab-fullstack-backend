@@ -10,12 +10,14 @@ const parseBool = (v) => String(v).toLowerCase() === "true";
 export const getManagerOverview = async (req, reply) => {
   try {
     await expireStaleAssignedOrders(req.server.io);
-    const [totalOrders, activeOrders, deliveredOrders, customers, drivers] = await Promise.all([
+    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, activeOccasion] = await Promise.all([
       Order.countDocuments({}),
       Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
       Order.countDocuments({ status: "delivered" }),
       Customer.countDocuments({}),
       DeliveryPartner.countDocuments({}),
+      Occasion.findOne({ isDefault: true }).select("weatherEffect").lean() ||
+      Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("weatherEffect").lean()
     ]);
 
     return reply.send({
@@ -24,6 +26,7 @@ export const getManagerOverview = async (req, reply) => {
       deliveredOrders,
       totalCustomers: customers,
       totalDrivers: drivers,
+      weatherEffect: activeOccasion?.weatherEffect || "none",
     });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch overview", error: error.message });
