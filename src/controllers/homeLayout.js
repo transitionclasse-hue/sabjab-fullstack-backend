@@ -130,6 +130,7 @@ export const getHomeLayout = async (req, reply) => {
                 themeColor: variation.themeColor,
                 themeEffect: variation.themeEffect || 'none',
                 searchBarStyle: variation.searchBarStyle || 'standard',
+                topBarStyle: variation.topBarStyle || 'standard',
                 nameAlignment: variation.nameAlignment || 'left',
                 showBanner: variation.showBanner,
                 banner: variation.banner,
@@ -158,12 +159,12 @@ export const getActiveHomeVersion = async (req, reply) => {
 
         let variation;
         if (variationId) {
-            variation = await Occasion.findById(variationId).select("themeEffect searchBarStyle ultraConfig").lean();
+            variation = await Occasion.findById(variationId).select("themeEffect searchBarStyle topBarStyle ultraConfig").lean();
         }
 
         if (!variation) {
-            variation = await Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle ultraConfig").lean() ||
-                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle ultraConfig").lean();
+            variation = await Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle topBarStyle ultraConfig").lean() ||
+                await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle topBarStyle ultraConfig").lean();
         }
 
         return reply.send({

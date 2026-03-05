@@ -1351,16 +1351,16 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["_id", "name", "themeColor", "themeEffect", "searchBarStyle", "showBanner", "isDefault", "isActive"],
+          listProperties: ["_id", "name", "themeColor", "themeEffect", "searchBarStyle", "topBarStyle", "showBanner", "isDefault", "isActive"],
           editProperties: [
-            "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "themeEffect", "themeColor",
+            "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           showProperties: [
-            "name", "nameAlignment", "icon", "banner", "searchBarStyle", "themeEffect", "themeColor",
+            "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
@@ -1386,6 +1386,14 @@ export async function buildAdminRouter(app) {
                 { value: "glassmorphic", label: "Glassmorphic (V2 Style)" },
                 { value: "frosty", label: "❄️ Frosty Winter Search Bar" },
                 { value: "neon", label: "✨ Neon Glow Search Bar" },
+              ]
+            },
+            topBarStyle: {
+              label: "📌 Top Bar Style",
+              availableValues: [
+                { value: "standard", label: "Standard (Delivery ETA + Status)" },
+                { value: "nostalgic", label: "🙏 Nostalgic (Namaste Greeting)" },
+                { value: "weather", label: "🌦️ Weather Bar (Particles Behind)" },
               ]
             },
             themeEffect: {
