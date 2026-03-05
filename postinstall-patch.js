@@ -41,7 +41,11 @@ export const buildRouter = async (admin, fastifyApp) => {
 
     // PATCHED: Encapsulate the admin router in its own Fastify context
     await fastifyApp.register(async (adminInstance) => {
-        // PATCHED: multipart is now registered globally in app.js with correct limits and onFile hook
+        // PATCHED: Register multipart INSIDE admin context so file uploads work
+        await adminInstance.register(await import('@fastify/multipart'), {
+            attachFieldsToBody: true,
+            limits: { fileSize: 10 * 1024 * 1024 }
+        });
 
         admin.initialize().then(() => {
             log.debug('AdminJS: bundle ready');
