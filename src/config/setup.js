@@ -1353,14 +1353,14 @@ export async function buildAdminRouter(app) {
             "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
-            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor", "ultraConfig.navActiveTextColor", "ultraConfig.navInactiveTextColor",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           showProperties: [
             "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
-            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor", "ultraConfig.navActiveTextColor", "ultraConfig.navInactiveTextColor",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           actions: {
@@ -1417,6 +1417,8 @@ export async function buildAdminRouter(app) {
             'ultraConfig.hideTopBar': { label: "Ultra: Hide Top Bar?", helpText: "Completely remove location/search bar from top" },
             'ultraConfig.etaBgColor': { label: "Ultra: ETA Box Color", helpText: "Custom background color for the ETA/5 Mins badge" },
             'ultraConfig.etaTextColor': { label: "Ultra: ETA Text Color", helpText: "Custom text color for the ETA/5 Mins badge" },
+            'ultraConfig.navActiveTextColor': { label: "Ultra: Nav Active Text Color", helpText: "Text color for the selected occasion tab" },
+            'ultraConfig.navInactiveTextColor': { label: "Ultra: Nav Inactive Text Color", helpText: "Text color for unselected occasion tabs" },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default. The 'All' occasion is typically the default." },
             components: {

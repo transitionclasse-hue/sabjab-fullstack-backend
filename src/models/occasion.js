@@ -67,7 +67,9 @@ const occasionSchema = new mongoose.Schema({
         hideTopBar: { type: Boolean, default: false },
         topBarColor: { type: String, default: "#ffffff" },
         etaBgColor: { type: String, default: "" }, // New: Per-occasion ETA box color
-        etaTextColor: { type: String, default: "" } // New: Per-occasion ETA text color
+        etaTextColor: { type: String, default: "" }, // New: Per-occasion ETA text color
+        navActiveTextColor: { type: String, default: "" }, // New: Active occasion text color
+        navInactiveTextColor: { type: String, default: "" } // New: Inactive occasion text color
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
