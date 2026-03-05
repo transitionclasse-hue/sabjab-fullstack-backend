@@ -768,18 +768,15 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          listProperties: ["mode", "openingTime", "closingTime", "etaBoxColor", "updatedAt"],
-          editProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes", "etaBoxColor"],
-          showProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes", "etaBoxColor", "updatedAt"],
+          listProperties: ["mode", "openingTime", "closingTime", "updatedAt"],
+          editProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes"],
+          showProperties: ["mode", "openingTime", "closingTime", "alertBeforeMinutes", "updatedAt"],
           navigation: {
             name: "App Settings",
             icon: "Settings",
           },
           properties: {
-            etaBoxColor: {
-              label: "ETA Box Color (Hex Code)",
-              description: "E.g., #6366F1 or any valid hex color. This controls the 'time in box' background color in the header.",
-            },
+
             _id: { isVisible: false },
             __v: { isVisible: false },
             key: {
@@ -1356,14 +1353,14 @@ export async function buildAdminRouter(app) {
             "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
-            "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           showProperties: [
             "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
-            "ultraConfig.hideTopBar", "ultraConfig.topBarColor",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.etaBgColor", "ultraConfig.etaTextColor",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           actions: {
@@ -1418,6 +1415,8 @@ export async function buildAdminRouter(app) {
             'ultraConfig.borderRadiusGlobal': { label: "Ultra: Border Radius", helpText: "Global curvature for cards and boxes (default 16)" },
             'ultraConfig.topBarColor': { label: "Ultra: Top Bar Background (Hex)", helpText: "Color for the top navigation bar area" },
             'ultraConfig.hideTopBar': { label: "Ultra: Hide Top Bar?", helpText: "Completely remove location/search bar from top" },
+            'ultraConfig.etaBgColor': { label: "Ultra: ETA Box Color", helpText: "Custom background color for the ETA/5 Mins badge" },
+            'ultraConfig.etaTextColor': { label: "Ultra: ETA Text Color", helpText: "Custom text color for the ETA/5 Mins badge" },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default. The 'All' occasion is typically the default." },
             components: {

@@ -139,7 +139,11 @@ export const getHomeLayout = async (req, reply) => {
             } : null,
             layout: hydratedComponents || [],
             customCategories: filteredOccasions || [],
-            storeStatus: storeStatus || { status: "open", mode: "schedule" },
+            storeStatus: {
+                ...storeStatus,
+                etaBoxColor: variation?.ultraConfig?.etaBgColor || storeStatus.etaBoxColor,
+                etaTextColor: variation?.ultraConfig?.etaTextColor || "#ffffff" // Default white if not set
+            },
             specialOccasion: specialOccasion || null,
             // Full baseline dataset:
             allCategories: allCategories || [],
