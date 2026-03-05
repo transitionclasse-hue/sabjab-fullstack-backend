@@ -1,5 +1,7 @@
 import HomeComponent from "../models/homeComponent.js";
 import Product from "../models/products.js";
+import Category from "../models/category.js";
+import SuperCategory from "../models/superCategory.js";
 import Occasion from "../models/occasion.js";
 import StoreStatus from "../models/storeStatus.js";
 import GlobalConfig from "../models/globalConfig.js";
@@ -104,7 +106,19 @@ export const getHomeLayout = async (req, reply) => {
         // 4. Fetch ALL Occasions for the strip
         const occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
 
-        // 7. Build unified response
+        // 7. Fetch the baseline categories and products that the app needs initially
+        const [allCategories, allSuperCategories, allProducts] = await Promise.all([
+            Category.find({}).lean(),
+            SuperCategory.find({}).lean(),
+            Product.find({
+                $or: [
+                    { isAvailable: true },
+                    { "variations.isAvailable": true }
+                ]
+            }).lean()
+        ]);
+
+        // 8. Build unified response
         const filteredOccasions = specialOccasion
             ? occasions.filter(o => String(o._id) !== String(specialOccasion._id))
             : occasions;
@@ -123,10 +137,13 @@ export const getHomeLayout = async (req, reply) => {
                 ultraConfig: variation.ultraConfig || {}
             } : null,
             layout: hydratedComponents || [],
-            categories: filteredOccasions || [],
             customCategories: filteredOccasions || [],
             storeStatus: storeStatus || { status: "open", mode: "schedule" },
-            specialOccasion: specialOccasion || null
+            specialOccasion: specialOccasion || null,
+            // Full baseline dataset:
+            allCategories: allCategories || [],
+            allSuperCategories: allSuperCategories || [],
+            allProducts: allProducts || []
         });
 
     } catch (error) {
