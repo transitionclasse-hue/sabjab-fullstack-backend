@@ -49,7 +49,7 @@ const occasionSchema = new mongoose.Schema({
     },
     searchBarStyle: { // NEW: Explicit search bar control
         type: String,
-        enum: ["standard", "glassmorphic", "frosty", "neon"],
+        enum: ["standard", "glassmorphic", "frosty", "neon", "pill", "standard_solo", "pill_solo"],
         default: "standard"
     },
     topBarStyle: { // NEW: Top bar variation
