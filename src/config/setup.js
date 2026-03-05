@@ -1351,7 +1351,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["_id", "name", "themeColor", "showBanner", "isDefault", "isActive"],
+          listProperties: ["_id", "name", "themeColor", "themeMode", "weatherEffect", "showBanner", "isDefault", "isActive"],
           editProperties: [
             "name", "nameAlignment", "uploadIcon", "uploadBanner", "themeColor", "themeMode", "homeScreenVersion", "weatherEffect",
             "ultraConfig.topGradientColor", "ultraConfig.bottomGradientColor", "ultraConfig.middleGradientColor",
