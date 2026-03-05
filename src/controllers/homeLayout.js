@@ -87,29 +87,34 @@ export const getHomeLayout = async (req, reply) => {
                     comp.resolvedCategories = await Promise.all(comp.categories.map(async (catModel) => {
                         // catModel is a populated Category or SubCategory object
                         const itemId = catModel._id || catModel.id;
+
+                        // Robust parent ID mapping:
+                        // 1. If it's a SubCategory, its parent is 'category'
+                        // 2. If it's a Category, its parent is 'superCategory'
                         const parentCatId = catModel.category?._id || catModel.category ||
                             catModel.superCategory?._id || catModel.superCategory || null;
 
-                        // 1. Try to find products that match this ID in either category or subCategory field
+                        // Calculate product coverage for this exact item
                         const productQuery = {
                             $or: [{ category: itemId }, { subCategory: itemId }],
                             isAvailable: true
                         };
 
-                        let count = await Product.countDocuments(productQuery);
-                        let products = await Product.find(productQuery)
-                            .sort({ createdAt: -1 })
-                            .limit(4)
-                            .select("image")
-                            .lean();
+                        const [count, products] = await Promise.all([
+                            Product.countDocuments(productQuery),
+                            Product.find(productQuery)
+                                .sort({ createdAt: -1 })
+                                .limit(4)
+                                .select("image")
+                                .lean()
+                        ]);
 
                         return {
                             ...catModel,
                             parentCategoryId: parentCatId,
                             productCount: count,
-                            previewImages: products.map(p => p.image)
+                            previewImages: products.map(p => p.image).filter(Boolean)
                         };
-
                     }));
                 } else {
                     comp.resolvedCategories = [];
