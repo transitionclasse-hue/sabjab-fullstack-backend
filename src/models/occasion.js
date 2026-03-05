@@ -44,7 +44,7 @@ const occasionSchema = new mongoose.Schema({
     },
     themeMode: { // New: Force Dark or Light theme for this occasion
         type: String,
-        enum: ["dark", "light", "auto"],
+        enum: ["dark", "light", "auto", "snow", "rain", "autumn"],
         default: "auto"
     },
     homeScreenVersion: { // ✅ NEW: Phase 7 Dynamic Routing Control

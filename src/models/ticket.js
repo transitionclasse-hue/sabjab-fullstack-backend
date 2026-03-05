@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import Counter from "./counter.js";
 
 const ticketSchema = new mongoose.Schema(
     {
@@ -50,7 +51,6 @@ ticketSchema.index({ customer: 1, status: 1 });
 ticketSchema.index({ ticketId: 1 });
 
 async function getNextSequenceValue(sequenceName) {
-    const Counter = mongoose.models.Counter;
     const sequenceDocument = await Counter.findOneAndUpdate(
         { name: sequenceName },
         { $inc: { sequence_value: 1 } },
