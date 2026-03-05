@@ -1014,7 +1014,7 @@ export async function buildAdminRouter(app) {
                 { value: "CATEGORY_CLUSTERS", label: "2x2 Dynamic Category Grid" },
                 { value: "FEATURED_DEALS", label: "Deals Section (Configurable)" },
                 { value: "PRODUCT_SCROLLER", label: "Product Horizontal Scroller" },
-                { value: "PRODUCT_GRID", label: "Modern Product Grid" },
+                { value: "PRODUCT_GRID", label: "Product Grid (Modern Layout)" },
                 { value: "PROMO_BANNER", label: "Promotional Banner" },
                 { value: "IMAGE_CAROUSEL", label: "Image Carousel Slider" },
                 { value: "BENTO_GRID", label: "Premium Bento Grid (1 Large + 2 Small)" },
@@ -1025,7 +1025,9 @@ export async function buildAdminRouter(app) {
                 { value: "HAPPY_HOLI", label: "Vibrant Happy Holi Layout" },
                 { value: "DIWALI_SPECIAL", label: "Sparking Diwali Grid (2x2)" },
                 { value: "CHRISTMAS_SPECIAL", label: "Snowy Christmas Layout" },
-                { value: "TRIPLE_SECTION_GRID", label: "Premium Triple Section Pager (Side-by-Side)" }
+                { value: "TRIPLE_SECTION_GRID", label: "Premium Triple Section Pager (Side-by-Side)" },
+                { value: "CATEGORY_GRID_FOUR_IMAGES", label: "🖼️ Category 2x2 Image Grid (New)" },
+                { value: "PRODUCT_GRID_3X2", label: "📦 Elegant 3x2 Product Grid (New)" }
               ],
             },
             sections: {
@@ -1038,7 +1040,7 @@ export async function buildAdminRouter(app) {
               helpText: "Appears below the main title. Type 'Dove' to search anytime!",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1047,7 +1049,7 @@ export async function buildAdminRouter(app) {
               helpText: "Text for the action button.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1074,8 +1076,11 @@ export async function buildAdminRouter(app) {
             categories: {
               label: "Select Sub-Categories",
               helpText: "Pick the sub-categories or categories to display in this strip.",
-              remote: true, // Enables full database search
-              isVisible: (context) => Boolean(context.record?.params?.type === "CATEGORY_STRIP"),
+              isVisible: (context) => {
+                const type = context.record?.params?.type;
+                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_GRID_FOUR_IMAGES"];
+                return !!(type && visibleTypes.includes(type));
+              }
             },
             products: {
               label: "Main Product Collection",
@@ -1083,7 +1088,7 @@ export async function buildAdminRouter(app) {
               remote: true, // Enables full database search
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
