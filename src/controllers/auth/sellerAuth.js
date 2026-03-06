@@ -8,6 +8,8 @@ const sanitizeSeller = (seller) => {
     return safeSeller;
 };
 
+const canManageSellerApprovals = (role) => role === "Admin" || role === "Manager";
+
 export const generateTokens = (user) => {
     const accessToken = jwt.sign(
         { userId: user._id, role: user.role },
@@ -100,5 +102,48 @@ export const getSellerProfile = async (req, reply) => {
     } catch (error) {
         console.error("Fetch Seller Profile Error:", error);
         return reply.status(500).send({ message: "An error occurred fetching profile", error: error.message });
+    }
+};
+
+export const getPendingSellers = async (req, reply) => {
+    try {
+        const { role } = req.user;
+        if (!canManageSellerApprovals(role)) {
+            return reply.status(403).send({ message: "Unauthorized. Admin or Manager only." });
+        }
+
+        const sellers = await Seller.find({ isApproved: false })
+            .sort({ createdAt: -1 })
+            .select("-password")
+            .lean();
+
+        return reply.send({ success: true, count: sellers.length, sellers });
+    } catch (error) {
+        console.error("Fetch Pending Sellers Error:", error);
+        return reply.status(500).send({ message: "An error occurred fetching pending sellers", error: error.message });
+    }
+};
+
+export const approveSeller = async (req, reply) => {
+    try {
+        const { role } = req.user;
+        if (!canManageSellerApprovals(role)) {
+            return reply.status(403).send({ message: "Unauthorized. Admin or Manager only." });
+        }
+
+        const seller = await Seller.findByIdAndUpdate(
+            req.params.id,
+            { isApproved: true },
+            { new: true }
+        ).select("-password");
+
+        if (!seller) {
+            return reply.status(404).send({ message: "Seller not found" });
+        }
+
+        return reply.send({ success: true, message: "Seller approved successfully", seller });
+    } catch (error) {
+        console.error("Approve Seller Error:", error);
+        return reply.status(500).send({ message: "An error occurred approving seller", error: error.message });
     }
 };

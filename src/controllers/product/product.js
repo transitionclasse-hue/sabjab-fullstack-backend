@@ -1,24 +1,34 @@
 import Product from "../../models/products.js";
 import SubCategory from "../../models/subCategory.js";
+import { Seller } from "../../models/user.js";
 import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
-const LIVE_PRODUCT_FILTER = { isApproved: true };
 const isManagerCatalogRequest = (req) => req?.raw?.url?.includes("/manager/products");
+
+const getLiveVisibilityFilter = async () => {
+    const approvedSellerIds = await Seller.find({ isApproved: true }).distinct("_id");
+    return {
+        isApproved: true,
+        $or: [
+            { sellerId: { $exists: false } },
+            { sellerId: null },
+            { sellerId: { $in: approvedSellerIds } },
+        ],
+    };
+};
 
 export const getProductsByCategoryId = async (req, reply) => {
     const { categoryId } = req.params;
     try {
         const hideSensitive = await getSafeSensitiveMode(req);
+        const liveVisibilityFilter = await getLiveVisibilityFilter();
 
         // Find SubCategories that belong to this categoryId
         const subCategories = await SubCategory.find({ category: categoryId });
         const subCategoryIds = subCategories.map(sub => sub._id);
 
         const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
-
-        const query = {
-            ...sensitiveFilter,
-            ...LIVE_PRODUCT_FILTER,
+        const categoryFilter = {
             $or: [
                 { category: categoryId },
                 { subCategory: categoryId },
@@ -27,6 +37,12 @@ export const getProductsByCategoryId = async (req, reply) => {
                     { subCategory: { $in: subCategoryIds } },
                 ] : []),
             ]
+        };
+
+        const query = {
+            ...sensitiveFilter,
+            isApproved: true,
+            $and: [liveVisibilityFilter, categoryFilter],
         };
 
         const products = await Product.find(query).exec();
@@ -45,16 +61,22 @@ export const searchProducts = async (req, reply) => {
         }
 
         const hideSensitive = await getSafeSensitiveMode(req);
+        const liveVisibilityFilter = await getLiveVisibilityFilter();
         const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
         const shouldFilterChoice = ["1", "true", "yes"].includes(String(choiceOnly || "").toLowerCase());
 
         const products = await Product.find({
             ...sensitiveFilter,
-            ...LIVE_PRODUCT_FILTER,
+            isApproved: true,
             ...(shouldFilterChoice ? { isChoice: true } : {}),
-            $or: [
-                { name: { $regex: searchTerm, $options: "i" } },
-                { description: { $regex: searchTerm, $options: "i" } }
+            $and: [
+                liveVisibilityFilter,
+                {
+                    $or: [
+                        { name: { $regex: searchTerm, $options: "i" } },
+                        { description: { $regex: searchTerm, $options: "i" } }
+                    ]
+                }
             ]
         }).exec();
 
@@ -72,7 +94,9 @@ export const getAllProducts = async (req, reply) => {
 
         const query = hideSensitive ? { isSensitive: { $ne: true } } : {};
         if (!isManagerCatalogRequest(req)) {
+            const liveVisibilityFilter = await getLiveVisibilityFilter();
             query.isApproved = true;
+            query.$and = [liveVisibilityFilter];
         }
 
         if (filter === "coins") {
@@ -93,9 +117,11 @@ export const getAllProducts = async (req, reply) => {
 
 export const getProductById = async (req, reply) => {
     try {
+        const liveVisibilityFilter = await getLiveVisibilityFilter();
         const product = await Product.findOne({
             _id: req.params.id,
-            ...LIVE_PRODUCT_FILTER,
+            isApproved: true,
+            $and: [liveVisibilityFilter],
         }).exec();
         if (!product) {
             return reply.code(404).send({ message: "Product not found" });

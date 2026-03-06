@@ -5,14 +5,32 @@ import SuperCategory from "../models/superCategory.js";
 import Occasion from "../models/occasion.js";
 import StoreStatus from "../models/storeStatus.js";
 import GlobalConfig from "../models/globalConfig.js";
+import { Seller } from "../models/user.js";
 import { buildStoreStatusResponse } from "./storeStatus.js";
 
-const isApprovedProduct = (product) => product && product.isApproved !== false;
-const filterApprovedProducts = (products = []) => products.filter(isApprovedProduct);
+const createApprovedProductChecker = (approvedSellerIds) => (product) => {
+    if (!product || product.isApproved === false) return false;
+    const sellerId = product?.sellerId?._id || product?.sellerId || null;
+    if (!sellerId) return true;
+    return approvedSellerIds.has(String(sellerId));
+};
+
+const buildSellerVisibilityQuery = (approvedSellerIds) => ({
+    $or: [
+        { sellerId: { $exists: false } },
+        { sellerId: null },
+        { sellerId: { $in: [...approvedSellerIds] } },
+    ],
+});
 
 export const getHomeLayout = async (req, reply) => {
     try {
         const { variationId } = req.query;
+        const approvedSellerIdList = await Seller.find({ isApproved: true }).distinct("_id");
+        const approvedSellerIds = new Set(approvedSellerIdList.map((id) => String(id)));
+        const isApprovedProduct = createApprovedProductChecker(approvedSellerIds);
+        const filterApprovedProducts = (products = []) => products.filter(isApprovedProduct);
+        const sellerVisibilityQuery = buildSellerVisibilityQuery(approvedSellerIdList);
 
         // 1. Find the target variation (requested or default)
         let variation;
@@ -83,6 +101,7 @@ export const getHomeLayout = async (req, reply) => {
                             sec.products = await Product.find({
                                 _id: { $in: sec.products },
                                 isApproved: true,
+                                ...sellerVisibilityQuery,
                             }).lean();
                         }
                         return sec;
@@ -102,9 +121,12 @@ export const getHomeLayout = async (req, reply) => {
 
                         // Calculate product coverage for this exact item
                         const productQuery = {
-                            $or: [{ category: itemId }, { subCategory: itemId }],
                             isAvailable: true,
                             isApproved: true,
+                            $and: [
+                                sellerVisibilityQuery,
+                                { $or: [{ category: itemId }, { subCategory: itemId }] },
+                            ],
                         };
 
                         const [count, products] = await Promise.all([
@@ -163,9 +185,14 @@ export const getHomeLayout = async (req, reply) => {
             SuperCategory.find({}).lean(),
             Product.find({
                 isApproved: true,
-                $or: [
-                    { isAvailable: true },
-                    { "variations.isAvailable": true }
+                $and: [
+                    sellerVisibilityQuery,
+                    {
+                        $or: [
+                            { isAvailable: true },
+                            { "variations.isAvailable": true }
+                        ]
+                    }
                 ]
             }).lean()
         ]);
