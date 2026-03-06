@@ -220,13 +220,15 @@ export async function buildAdminRouter(app) {
     await mongoose.models.GlobalConfig.findOneAndUpdate(
       { key: "support_contact" },
       {
+        $set: {
+          description: "Support contact details. Expected: { phone, email }"
+        },
         $setOnInsert: {
           key: "support_contact",
           value: {
             phone: "+911234567890",
             email: "support@sabjab.com"
           },
-          description: "Support contact details for the mobile app"
         },
       },
       { upsert: true, new: true }
@@ -235,13 +237,15 @@ export async function buildAdminRouter(app) {
     await mongoose.models.GlobalConfig.findOneAndUpdate(
       { key: "safe_mode_config" },
       {
+        $set: {
+          description: "Emergency Controls for Native Apps. Expected: { isWebViewMode: boolean, webViewUrl: string }"
+        },
         $setOnInsert: {
           key: "safe_mode_config",
           value: {
             isWebViewMode: false,
             webViewUrl: "https://sabjab.com"
           },
-          description: "Controls the WebView fallback for native apps (Safe Mode)"
         }
       },
       { upsert: true, new: true }
@@ -257,10 +261,12 @@ export async function buildAdminRouter(app) {
       await mongoose.models.GlobalConfig.findOneAndUpdate(
         { key: "header_special_occasion" },
         {
+          $set: {
+            description: "Special Occasion displayed in home header. Expected: MongoDB ObjectID String"
+          },
           $setOnInsert: {
             key: "header_special_occasion",
             value: activeOccasion._id,
-            description: "Active occasion displayed next to search bar"
           }
         },
         { upsert: true, new: true }
@@ -279,7 +285,7 @@ export async function buildAdminRouter(app) {
             updateMessage: "New version is ready to update!",
             isMandatory: false
           },
-          description: "Controls app version number and update notifications in Profile section"
+          description: "Controls app versioning. Expected: { currentVersion, updateAvailable, updateMessage, isMandatory }"
         }
       },
       { upsert: true, new: true }
@@ -300,11 +306,10 @@ export async function buildAdminRouter(app) {
           properties: {
             value: {
               type: 'mixed',
-              description: 'Configuration data. For Safe Mode, use: {"isWebViewMode": true/false, "webViewUrl": "..."}',
+              description: 'JSON Configuration. Safe Mode: {"isWebViewMode": bool, "webViewUrl": "string"}. Update: {"currentVersion": "1.0.0", "updateAvailable": bool}. Support: {"phone": "...", "email": "..."}',
             },
-            'value.isWebViewMode': { type: 'boolean', label: 'Enable Safe Mode (WebView Home)' },
-            'value.webViewUrl': { type: 'string', label: 'WebView URL (Fallback)' },
             key: { isId: true, isReadOnly: true },
+            description: { type: 'textarea' }
           }
         },
       };
