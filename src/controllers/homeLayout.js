@@ -165,7 +165,10 @@ export const getHomeLayout = async (req, reply) => {
             }).select("-components").sort({ order: 1 }).lean();
         } else {
             // Priority 3: Default global strip for normal home screen
-            occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
+            occasions = await Occasion.find({
+                isActive: true,
+                isChoice: { $ne: true }
+            }).select("-components").sort({ order: 1 }).lean();
         }
 
         // 7. Fetch the baseline categories and products that the app needs initially
