@@ -48,14 +48,4 @@ export const configRoutes = async (fastify) => {
     }
   });
 
-  // ✅ PUBLIC PROFILE CONFIG (For Customer App)
-  fastify.get("/profile-config", async (req, reply) => {
-    try {
-      const ProfileConfig = (await import("../models/profileConfig.js")).default;
-      const config = await ProfileConfig.findOne({ isActive: true }).sort({ createdAt: -1 });
-      return reply.send({ success: true, data: config });
-    } catch (error) {
-      return reply.status(500).send({ success: false, message: error.message });
-    }
-  });
 };

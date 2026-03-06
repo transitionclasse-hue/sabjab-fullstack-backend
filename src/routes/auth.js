@@ -9,7 +9,8 @@ import {
     loginPassword,
     updateCustomerProfile,
     deleteCustomerAccount,
-    updateAdminProfile
+    updateAdminProfile,
+    updateAdminPushToken
 } from "../controllers/auth/auth.js";
 import { verifyToken } from "../middleware/auth.js";
 import {
@@ -18,6 +19,7 @@ import {
     getSellerProfile,
     getPendingSellers,
     approveSeller,
+    updateSellerProfile
 } from "../controllers/auth/sellerAuth.js";
 
 export const authRoutes = async (fastify) => {
@@ -31,13 +33,13 @@ export const authRoutes = async (fastify) => {
     fastify.post("/delivery/login", loginDeliveryPartner);
     fastify.post("/auth/login", loginAdmin); // For Manager App
     fastify.put("/auth/profile", { preHandler: [verifyToken] }, updateAdminProfile);
-    fastify.put("/admin/push-token", { preHandler: [verifyToken] }, (await import("../controllers/auth/auth.js")).updateAdminPushToken); // Dynamic import to avoid circular if needed or just add to import list
+    fastify.put("/admin/push-token", { preHandler: [verifyToken] }, updateAdminPushToken);
 
     // Seller Endpoints
     fastify.post("/seller/register", registerSeller);
     fastify.post("/seller/login", loginSeller);
     fastify.get("/seller/profile", { preHandler: [verifyToken] }, getSellerProfile);
-    fastify.put("/seller/profile", { preHandler: [verifyToken] }, (await import("../controllers/auth/sellerAuth.js")).updateSellerProfile);
+    fastify.put("/seller/profile", { preHandler: [verifyToken] }, updateSellerProfile);
     fastify.get("/admin/sellers/pending", { preHandler: [verifyToken] }, getPendingSellers);
     fastify.put("/admin/sellers/:id/approve", { preHandler: [verifyToken] }, approveSeller);
 
