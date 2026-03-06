@@ -81,7 +81,9 @@ const occasionSchema = new mongoose.Schema({
         navActiveTextColor: { type: String, default: "" }, // New: Active occasion text color
         navActiveTextDarkColor: { type: String, default: "" }, // New: Active text color in dark mode
         navInactiveTextColor: { type: String, default: "" }, // New: Inactive occasion text color
-        navInactiveTextDarkColor: { type: String, default: "" } // New: Inactive text color in dark mode
+        navInactiveTextDarkColor: { type: String, default: "" }, // New: Inactive text color in dark mode
+        addressColor: { type: String, default: "" }, // New: Color for the address/location text
+        addressDarkColor: { type: String, default: "" } // New: Color for the address/location text in dark mode
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
