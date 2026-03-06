@@ -9,6 +9,7 @@ const categorySchema = new mongoose.Schema({
     required: true
   },
   isSensitive: { type: Boolean, default: false },
+  isChoice: { type: Boolean, default: false },
   canEarnCoins: { type: Boolean, default: true }, // Whether products in this category earn SabJab Coins
 });
 

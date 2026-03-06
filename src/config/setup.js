@@ -360,6 +360,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory & Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
+          listProperties: ["name", "isChoice", "createdAt"],
+          editProperties: model.modelName === "SuperCategory"
+            ? ["name", "order", "isChoice"]
+            : ["name", "image", "isChoice", "isSensitive", "canEarnCoins"],
         },
       };
     }
@@ -1368,7 +1372,7 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["_id", "name", "themeColor", "themeEffect", "searchBarStyle", "topBarStyle", "showBanner", "isDefault", "isActive"],
+          listProperties: ["_id", "name", "themeColor", "themeEffect", "searchBarStyle", "topBarStyle", "showBanner", "isDefault", "isChoice", "isActive"],
           editProperties: [
             "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor", "darkThemeColor",
             "searchPlaceholders",
@@ -1376,7 +1380,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
             "ultraConfig.stripOccasions",
-            "showBanner", "isDefault", "isActive", "order", "components"
+            "showBanner", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           showProperties: [
             "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor", "darkThemeColor",
@@ -1385,7 +1389,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
             "ultraConfig.stripOccasions",
-            "showBanner", "isDefault", "isActive", "order", "components"
+            "showBanner", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           actions: {
             new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
@@ -1437,6 +1441,7 @@ export async function buildAdminRouter(app) {
             },
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
             darkThemeColor: { label: "Dark Theme Accent Color (HEX)", helpText: "Explicit accent color for dark modes" },
+            isChoice: { label: "✨ Choice Category?", helpText: "If ON, this category will appear in Choice Section Strip." },
             'ultraConfig.topGradientColor': { label: "Ultra: Top Gradient Color", helpText: "Upper background color. Use 8-digit hex for opacity (e.g. #FF573320)" },
             'ultraConfig.middleGradientColor': { label: "Ultra: Middle Gradient Color", helpText: "Optional: Mid-point color (e.g. #f0f0f0)" },
             'ultraConfig.bottomGradientColor': { label: "Ultra: Bottom Gradient Color", helpText: "Lower background color (e.g. #FFFFFF)" },

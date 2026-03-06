@@ -14,6 +14,7 @@ const subCategorySchema = new mongoose.Schema({
         ref: "Category",
         required: true,
     },
+    isChoice: { type: Boolean, default: false },
 });
 
 const SubCategory = mongoose.model("SubCategory", subCategorySchema);

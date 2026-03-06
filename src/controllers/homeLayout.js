@@ -146,19 +146,25 @@ export const getHomeLayout = async (req, reply) => {
         // 4. Fetch Occasions for the strip
         let occasions = [];
         const stripOccasionIds = variation?.ultraConfig?.stripOccasions;
+        const isChoicePage = variation?.name?.toLowerCase() === 'choice';
 
         if (stripOccasionIds && Array.isArray(stripOccasionIds) && stripOccasionIds.length > 0) {
-            // Variation-specific custom strip
+            // Priority 1: Specifically selected IDs for this variation
             occasions = await Occasion.find({
                 _id: { $in: stripOccasionIds },
                 isActive: true
             }).select("-components").lean();
 
-            // Ensure they follow the order defined in stripOccasions array
             const idMap = stripOccasionIds.map(id => String(id));
             occasions.sort((a, b) => idMap.indexOf(String(a._id)) - idMap.indexOf(String(b._id)));
+        } else if (isChoicePage) {
+            // Priority 2: Automatically show categories flagged as "isChoice" on Choice page
+            occasions = await Occasion.find({
+                isChoice: true,
+                isActive: true
+            }).select("-components").sort({ order: 1 }).lean();
         } else {
-            // Default global strip
+            // Priority 3: Default global strip for normal home screen
             occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
         }
 
