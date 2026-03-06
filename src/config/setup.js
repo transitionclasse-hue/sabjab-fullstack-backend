@@ -8,6 +8,7 @@ import uploadFeature from "@adminjs/upload";
 import { CloudinaryProvider } from "./uploadProvider.js";
 import { authenticate } from "./config.js";
 import { sendPushNotification, broadcastPushNotification } from "../utils/notification.js";
+import ProfileConfig from "../models/profileConfig.js";
 import fs from "fs";
 
 function logToFile(message) {
@@ -1824,6 +1825,20 @@ export async function buildAdminRouter(app) {
           delete: { isVisible: true },
         },
       }
+    }
+  });
+
+  resources.push({
+    resource: ProfileConfig,
+    options: {
+      navigation: { name: "App Settings", icon: "Settings" },
+      listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isEngageVisible"],
+      editProperties: [
+        "isActive",
+        "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isDiscoverVisible", "isEngageVisible", "isInsightsVisible",
+        "backgroundColor", "onBackgroundTextColor", "accentColor",
+        "backgroundDarkColor", "onBackgroundTextDarkColor", "accentDarkColor"
+      ]
     }
   });
 

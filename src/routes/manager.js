@@ -36,6 +36,7 @@ import {
   updateGlobalCodLimit,
   adjustCustomerWallet,
 } from "../controllers/manager.js";
+import { updateProfileConfig } from "../controllers/profileConfig.js";
 import {
   getAllProducts,
   getProductById,
@@ -132,4 +133,5 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/finance-history", getManagerFinanceHistory);
   fastify.get("/manager/driver-activity", getManagerDriverActivity);
   fastify.post("/manager/customers/:customerId/wallet-adjustment", adjustCustomerWallet);
+  fastify.post("/manager/profile-config", updateProfileConfig);
 };

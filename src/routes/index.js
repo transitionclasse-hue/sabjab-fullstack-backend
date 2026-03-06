@@ -23,6 +23,7 @@ import recipeRoutes from "./recipeRoutes.js";
 import { uploadRoutes } from "./upload.js";
 import { suggestionRoutes } from "./suggestion.js";
 import { ticketRoutes } from "./ticket.js";
+import profileConfigRoutes from "./profileConfig.js";
 
 const prefix = "/api";
 
@@ -90,4 +91,7 @@ export const registerRoutes = async (fastify) => {
   fastify.register(suggestionRoutes, { prefix });
   // Support Tickets
   fastify.register(ticketRoutes, { prefix });
+
+  // Profile Page Configuration
+  fastify.register(profileConfigRoutes, { prefix: `${prefix}/profile-config` });
 };
