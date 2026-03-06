@@ -10,8 +10,9 @@ import { Seller } from "../models/user.js";
 import { buildStoreStatusResponse } from "./storeStatus.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(value || "").toLowerCase());
 
-const findVariationByIdentifier = async ({ identifier, populateComponents = false, select = "" }) => {
+const findVariationByIdentifier = async ({ identifier, populateComponents = false, select = "", requireChoice = false }) => {
     const normalized = String(identifier || "").trim();
     if (!normalized) return null;
 
@@ -27,11 +28,15 @@ const findVariationByIdentifier = async ({ identifier, populateComponents = fals
     };
 
     if (mongoose.Types.ObjectId.isValid(normalized)) {
-        const byId = await buildQuery({ _id: normalized });
+        const byId = await buildQuery({
+            _id: normalized,
+            ...(requireChoice ? { isChoice: true, isActive: true } : {}),
+        });
         if (byId) return byId;
     }
 
     const byName = await buildQuery({
+        ...(requireChoice ? { isChoice: true, isActive: true } : {}),
         name: {
             $regex: `^${escapeRegex(normalized)}$`,
             $options: "i",
@@ -74,12 +79,15 @@ const buildSellerVisibilityQuery = (approvedSellerIds) => ({
 
 export const getHomeLayout = async (req, reply) => {
     try {
-        const { variationId } = req.query;
+        const { variationId, choiceOnly } = req.query;
+        const shouldFilterChoice = isChoiceOnlyRequest(choiceOnly);
         const approvedSellerIdList = await Seller.find({ isApproved: true }).distinct("_id");
         const approvedSellerIds = new Set(approvedSellerIdList.map((id) => String(id)));
         const isApprovedProduct = createApprovedProductChecker(approvedSellerIds);
-        const filterApprovedProducts = (products = []) => products.filter(isApprovedProduct);
+        const filterApprovedProducts = (products = []) =>
+            products.filter((product) => isApprovedProduct(product) && (!shouldFilterChoice || product?.isChoice === true));
         const sellerVisibilityQuery = buildSellerVisibilityQuery(approvedSellerIdList);
+        const choiceProductFilter = shouldFilterChoice ? { isChoice: true } : {};
 
         // 1. Find the target variation (requested or default)
         let variation;
@@ -87,12 +95,17 @@ export const getHomeLayout = async (req, reply) => {
             variation = await findVariationByIdentifier({
                 identifier: variationId,
                 populateComponents: true,
+                requireChoice: shouldFilterChoice,
             });
         }
 
         if (!variation) {
-            variation = await Occasion.findOne({ isDefault: true }).populate("components").lean() ||
-                await Occasion.findOne({ isActive: true }).populate("components").sort({ order: 1 }).lean();
+            if (shouldFilterChoice) {
+                variation = await Occasion.findOne({ isChoice: true, isActive: true }).populate("components").sort({ order: 1 }).lean();
+            } else {
+                variation = await Occasion.findOne({ isDefault: true }).populate("components").lean() ||
+                    await Occasion.findOne({ isActive: true }).populate("components").sort({ order: 1 }).lean();
+            }
         }
 
         // 2. Fetch components explicitly assigned to this variation
@@ -124,7 +137,7 @@ export const getHomeLayout = async (req, reply) => {
         const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
         let specialOccasion = null;
         if (config && config.value) {
-            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor darkThemeColor").lean();
+            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor darkThemeColor isChoice").lean();
         }
 
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
@@ -153,6 +166,7 @@ export const getHomeLayout = async (req, reply) => {
                             sec.products = await Product.find({
                                 _id: { $in: sec.products },
                                 isApproved: true,
+                                ...choiceProductFilter,
                                 ...sellerVisibilityQuery,
                             }).lean();
                         }
@@ -175,6 +189,7 @@ export const getHomeLayout = async (req, reply) => {
                         const productQuery = {
                             isAvailable: true,
                             isApproved: true,
+                            ...choiceProductFilter,
                             $and: [
                                 sellerVisibilityQuery,
                                 { $or: [{ category: itemId }, { subCategory: itemId }] },
@@ -225,7 +240,7 @@ export const getHomeLayout = async (req, reply) => {
         }));
 
         // 4. Fetch Occasions for the strip
-        const isChoicePage = variation?.isChoice === true || variation?.name?.toLowerCase() === 'choice';
+        const isChoicePage = shouldFilterChoice || variation?.isChoice === true || variation?.name?.toLowerCase() === 'choice';
         const occasions = await Occasion.find({
             isActive: true,
             isChoice: isChoicePage ? true : { $ne: true }
@@ -233,10 +248,11 @@ export const getHomeLayout = async (req, reply) => {
 
         // 7. Fetch the baseline categories and products that the app needs initially
         const [allCategories, allSuperCategories, allProducts] = await Promise.all([
-            Category.find({}).lean(),
-            SuperCategory.find({}).lean(),
+            Category.find(shouldFilterChoice ? { isChoice: true } : {}).lean(),
+            SuperCategory.find(shouldFilterChoice ? { isChoice: true } : {}).lean(),
             Product.find({
                 isApproved: true,
+                ...choiceProductFilter,
                 $and: [
                     sellerVisibilityQuery,
                     {
@@ -253,6 +269,8 @@ export const getHomeLayout = async (req, reply) => {
         const filteredOccasions = specialOccasion
             ? occasions.filter(o => String(o._id) !== String(specialOccasion._id))
             : occasions;
+        const effectiveSpecialOccasion =
+            shouldFilterChoice && specialOccasion?.isChoice !== true ? null : specialOccasion;
 
         return reply.send({
             variation: variation ? {
@@ -280,7 +298,7 @@ export const getHomeLayout = async (req, reply) => {
                 etaBoxDarkColor: variation?.ultraConfig?.etaBgDarkColor || storeStatus.etaBoxDarkColor,
                 etaTextDarkColor: variation?.ultraConfig?.etaTextDarkColor || storeStatus.etaTextDarkColor || "#ffffff"
             },
-            specialOccasion: specialOccasion || null,
+            specialOccasion: effectiveSpecialOccasion || null,
             // Full baseline dataset:
             allCategories: allCategories || [],
             allSuperCategories: allSuperCategories || [],
