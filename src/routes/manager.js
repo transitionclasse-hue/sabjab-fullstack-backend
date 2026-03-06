@@ -37,6 +37,9 @@ import {
   adjustCustomerWallet,
   getSafeModeConfig,
   updateSafeModeConfig,
+  createManagerDriver,
+  updateManagerDriver,
+  deleteManagerDriver,
 } from "../controllers/manager.js";
 import { updateProfileConfig } from "../controllers/profileConfig.js";
 import {
@@ -138,4 +141,10 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/profile-config", updateProfileConfig);
   fastify.get("/manager/safe-mode-config", getSafeModeConfig);
   fastify.post("/manager/safe-mode-config", updateSafeModeConfig);
+
+  // Driver CRUD for Manager
+  fastify.post("/manager/drivers", createManagerDriver);
+  fastify.put("/manager/drivers/:id", updateManagerDriver);
+  fastify.patch("/manager/drivers/:id/status", updateManagerDriver);
+  fastify.delete("/manager/drivers/:id", deleteManagerDriver);
 };

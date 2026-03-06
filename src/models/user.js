@@ -101,6 +101,19 @@ const adminSchema = new mongoose.Schema({
   role: { type: String, enum: ["Admin"], default: "Admin" },
   pushToken: { type: String, default: null },
   notificationsEnabled: { type: Boolean, default: true },
+  
+  // Extra Profile Fields for Manager App
+  department: { type: String },
+  employeeId: { type: String },
+  address: { type: String },
+  city: { type: String },
+  state: { type: String },
+  pincode: { type: String },
+  emergencyContact: { type: String },
+  joiningDate: { type: String },
+  workShift: { type: String },
+  managerLevel: { type: String },
+  profileImage: { type: String },
 }, { timestamps: true });
 
 // ================= SELLER =================

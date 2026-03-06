@@ -37,6 +37,7 @@ export const authRoutes = async (fastify) => {
     fastify.post("/seller/register", registerSeller);
     fastify.post("/seller/login", loginSeller);
     fastify.get("/seller/profile", { preHandler: [verifyToken] }, getSellerProfile);
+    fastify.put("/seller/profile", { preHandler: [verifyToken] }, (await import("../controllers/auth/sellerAuth.js")).updateSellerProfile);
     fastify.get("/admin/sellers/pending", { preHandler: [verifyToken] }, getPendingSellers);
     fastify.put("/admin/sellers/:id/approve", { preHandler: [verifyToken] }, approveSeller);
 

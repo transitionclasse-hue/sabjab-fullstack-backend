@@ -459,7 +459,11 @@ export const updateAdminPushToken = async (req, reply) => {
 
 export const updateAdminProfile = async (req, reply) => {
   try {
-    const { name, email, password, notificationsEnabled } = req.body;
+    const { 
+      name, email, password, notificationsEnabled,
+      department, employeeId, address, city, state, pincode,
+      emergencyContact, joiningDate, workShift, managerLevel, profileImage
+    } = req.body;
     const userId = req.user.userId;
 
     const admin = await Admin.findById(userId);
@@ -473,6 +477,19 @@ export const updateAdminProfile = async (req, reply) => {
     if (typeof notificationsEnabled === 'boolean') {
       admin.notificationsEnabled = notificationsEnabled;
     }
+
+    // New Fields Sync
+    if (department !== undefined) admin.department = department;
+    if (employeeId !== undefined) admin.employeeId = employeeId;
+    if (address !== undefined) admin.address = address;
+    if (city !== undefined) admin.city = city;
+    if (state !== undefined) admin.state = state;
+    if (pincode !== undefined) admin.pincode = pincode;
+    if (emergencyContact !== undefined) admin.emergencyContact = emergencyContact;
+    if (joiningDate !== undefined) admin.joiningDate = joiningDate;
+    if (workShift !== undefined) admin.workShift = workShift;
+    if (managerLevel !== undefined) admin.managerLevel = managerLevel;
+    if (profileImage !== undefined) admin.profileImage = profileImage;
 
     await admin.save();
 

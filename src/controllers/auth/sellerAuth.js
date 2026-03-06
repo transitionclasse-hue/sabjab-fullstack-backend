@@ -147,3 +147,36 @@ export const approveSeller = async (req, reply) => {
         return reply.status(500).send({ message: "An error occurred approving seller", error: error.message });
     }
 };
+
+export const updateSellerProfile = async (req, reply) => {
+    try {
+        const { userId } = req.user;
+        const { name, phone, businessName, businessAddress, gstNumber } = req.body;
+
+        const updatedSeller = await Seller.findByIdAndUpdate(
+            userId,
+            {
+                $set: {
+                    ...(name && { name }),
+                    ...(phone && { phone }),
+                    ...(businessName && { businessName }),
+                    ...(businessAddress && { businessAddress }),
+                    ...(gstNumber && { gstNumber }),
+                },
+            },
+            { new: true }
+        ).select("-password");
+
+        if (!updatedSeller) {
+            return reply.status(404).send({ message: "Seller not found" });
+        }
+
+        return reply.send({
+            message: "Profile updated successfully",
+            seller: updatedSeller,
+        });
+    } catch (error) {
+        console.error("Update Seller Profile Error:", error);
+        return reply.status(500).send({ message: "An error occurred updating profile", error: error.message });
+    }
+};

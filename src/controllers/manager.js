@@ -1220,3 +1220,50 @@ export const adjustCustomerWallet = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to adjust wallet", error: error.message });
   }
 };
+
+export const createManagerDriver = async (req, reply) => {
+  try {
+    const { name, phone, email, vehicleType, licenseNumber, branch } = req.body;
+    const { DeliveryPartner } = await import("../models/user.js");
+    
+    const newDriver = new DeliveryPartner({
+      name,
+      phone,
+      email,
+      vehicleType,
+      licenseNumber,
+      branch: branch || null,
+      role: "DeliveryPartner",
+      isActivated: true
+    });
+
+    await newDriver.save();
+    return reply.status(201).send(newDriver);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to create driver", error: error.message });
+  }
+};
+
+export const updateManagerDriver = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const { DeliveryPartner } = await import("../models/user.js");
+    const updatedDriver = await DeliveryPartner.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updatedDriver) return reply.status(404).send({ message: "Driver not found" });
+    return reply.send(updatedDriver);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update driver", error: error.message });
+  }
+};
+
+export const deleteManagerDriver = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const { DeliveryPartner } = await import("../models/user.js");
+    const deletedDriver = await DeliveryPartner.findByIdAndDelete(id);
+    if (!deletedDriver) return reply.status(404).send({ message: "Driver not found" });
+    return reply.send({ success: true, message: "Driver deleted successfully" });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to delete driver", error: error.message });
+  }
+};
