@@ -992,11 +992,28 @@ export async function buildAdminRouter(app) {
 
     if (model.modelName === "HomeComponent") {
       const bannerProvider = new CloudinaryProvider();
-      const replaceBannerKeyWithUrl = async (response, request, context) => {
+      const videoProvider = new CloudinaryProvider();
+
+      const replaceMediaKeysWithUrl = async (response, request, context) => {
+        let changed = false;
+        
+        // Handle Banner Image
         if (bannerProvider.lastUploadedUrl && context.record && context.record.isValid()) {
           console.log('🔗 Replacing bannerImage key with full URL:', bannerProvider.lastUploadedUrl);
           await context.record.update({ bannerImage: bannerProvider.lastUploadedUrl });
           bannerProvider.lastUploadedUrl = null;
+          changed = true;
+        }
+
+        // Handle Video URL
+        if (videoProvider.lastUploadedUrl && context.record && context.record.isValid()) {
+          console.log('🎥 Replacing videoUrl key with full URL:', videoProvider.lastUploadedUrl);
+          await context.record.update({ videoUrl: videoProvider.lastUploadedUrl });
+          videoProvider.lastUploadedUrl = null;
+          changed = true;
+        }
+
+        if (changed) {
           return { ...response, record: context.record.toJSON(context.currentAdmin) };
         }
         return response;
@@ -1009,12 +1026,13 @@ export async function buildAdminRouter(app) {
             name: "Home Page Builder",
             icon: "Layout",
           },
+          label: "Home Page Sections", // User friendly label
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["title", "type", "isActive"],
-          editProperties: ["title", "subTitle", "type", "isActive", "sections", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "carouselImages", "buttonText", "themeColor", "darkThemeColor", "themeMode", "videoUrl"],
+          editProperties: ["title", "subTitle", "type", "isActive", "sections", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "uploadVideo", "carouselImages", "buttonText", "themeColor", "darkThemeColor", "themeMode", "videoUrl", "videoThumbnail"],
           actions: {
-            new: { after: [replaceBannerKeyWithUrl] },
-            edit: { after: [replaceBannerKeyWithUrl] },
+            new: { after: [replaceMediaKeysWithUrl] },
+            edit: { after: [replaceMediaKeysWithUrl] },
           },
           properties: {
             type: {
@@ -1148,7 +1166,18 @@ export async function buildAdminRouter(app) {
             },
             videoUrl: {
               label: "Direct Video URL (MP4 Preferred)",
-              helpText: "Paste the raw link to your video (Cloudinary, Drive, etc). Recommended size 110x160.",
+              helpText: "Paste the raw link or use 'Upload Video' below. Recommended size 110x160.",
+              isVisible: (context) => Boolean(context.record?.params?.type === "MINI_VIDEO"),
+            },
+            uploadVideo: {
+              label: "🎥 Upload Component Video",
+              type: "file",
+              helpText: "Click here to upload an MP4 directly to Cloudinary.",
+              isVisible: (context) => Boolean(context.record?.params?.type === "MINI_VIDEO"),
+            },
+            videoThumbnail: {
+              label: "Video Poster / Thumbnail URL",
+              helpText: "Optional: Static image shown before video plays.",
               isVisible: (context) => Boolean(context.record?.params?.type === "MINI_VIDEO"),
             },
           },
@@ -1162,11 +1191,26 @@ export async function buildAdminRouter(app) {
               file: 'uploadBanner',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
-                return `${id}/${sanitizeFilename(filename)}`;
+                return `${id}/banner_${sanitizeFilename(filename)}`;
               },
             },
             validation: {
               mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'],
+            },
+          }),
+          uploadFeature({
+            componentLoader,
+            provider: videoProvider,
+            properties: {
+              key: 'videoUrl',
+              file: 'uploadVideo',
+              uploadPath: (record, filename) => {
+                const id = record.id() || `new_${Date.now()}`;
+                return `${id}/video_${sanitizeFilename(filename)}`;
+              },
+            },
+            validation: {
+              mimeTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
             },
           }),
         ],
@@ -1176,29 +1220,30 @@ export async function buildAdminRouter(app) {
     if (model.modelName === "Product") {
       // Store the last uploaded URL for retrieval in the after-hook
       const productProvider = new CloudinaryProvider();
+      const productVideoProvider = new CloudinaryProvider();
 
       // After-hook that replaces the stored key with the full Cloudinary URL
       const replaceKeyWithUrl = async (response, request, context) => {
-        const url = productProvider.lastUploadedUrl;
-        const recordId = response.record?.params?._id;
-
-        if (url && recordId) {
-          logToFile(`🔗 Syncing Cloudinary URL for Product ${recordId}: ${url}`);
-          console.log(`🔗 Syncing Cloudinary URL for Product ${recordId}: ${url}`);
-          try {
-            await mongoose.models.Product.findByIdAndUpdate(recordId, { image: url });
-            // Update the response record so the UI shows the new URL immediately
-            if (response.record && response.record.params) {
-              response.record.params.image = url;
-            }
-          } catch (e) {
-            logToFile(`❌ Sync Error for Product: ${e.message}`);
-            console.error('❌ Sync Error for Product:', e.message);
-          }
-          // Important: Clear the lastUploadedUrl to prevent it from leaking to other requests
+        let changed = false;
+        
+        // Handle Product Image
+        if (productProvider.lastUploadedUrl && context.record && context.record.isValid()) {
+          console.log(`🔗 Syncing Cloudinary Image for Product: ${productProvider.lastUploadedUrl}`);
+          await context.record.update({ image: productProvider.lastUploadedUrl });
           productProvider.lastUploadedUrl = null;
-        } else {
-          logToFile(`ℹ️ Sync Hook called but no data: url=${url}, recordId=${recordId}`);
+          changed = true;
+        }
+
+        // Handle Product Video
+        if (productVideoProvider.lastUploadedUrl && context.record && context.record.isValid()) {
+          console.log(`🎥 Syncing Cloudinary Video for Product: ${productVideoProvider.lastUploadedUrl}`);
+          await context.record.update({ video: productVideoProvider.lastUploadedUrl });
+          productVideoProvider.lastUploadedUrl = null;
+          changed = true;
+        }
+
+        if (changed && response.record) {
+          return { ...response, record: context.record.toJSON(context.currentAdmin) };
         }
         return response;
       };
@@ -1209,7 +1254,7 @@ export async function buildAdminRouter(app) {
           navigation: { name: "Inventory & Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "price", "stock", "isAvailable", "isChoice", "isSensitive", "quantity", "superCategory", "category", "subCategory", "image"],
-          editProperties: ["name", "description", "uploadFile", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
           showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
           actions: {
             new: { after: [replaceKeyWithUrl] },
@@ -1307,7 +1352,13 @@ export async function buildAdminRouter(app) {
             },
             video: {
               label: 'Product Video URL',
+              helpText: "Raw link (MP4/WebM) or use 'Upload Video' below.",
               type: 'string'
+            },
+            uploadVideo: {
+              label: "📹 Upload Product Video",
+              type: "file",
+              helpText: "Max 50MB. MP4 format recommended.",
             },
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
@@ -1334,6 +1385,21 @@ export async function buildAdminRouter(app) {
             },
             validation: {
               mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'],
+            },
+          }),
+          uploadFeature({
+            componentLoader,
+            provider: productVideoProvider,
+            properties: {
+              key: 'video',
+              file: 'uploadVideo',
+              uploadPath: (record, filename) => {
+                const id = record.id() || `new_${Date.now()}`;
+                return `${id}/video_${sanitizeFilename(filename)}`;
+              },
+            },
+            validation: {
+              mimeTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
             },
           }),
         ],
@@ -1832,10 +1898,11 @@ export async function buildAdminRouter(app) {
     resource: ProfileConfig,
     options: {
       navigation: { name: "App Settings", icon: "Settings" },
-      listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isEngageVisible"],
+      label: "Profile Page Controls", // User friendly label
+      listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isSupportVisible", "isVersionVisible", "isQuickActionsVisible"],
       editProperties: [
         "isActive",
-        "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isDiscoverVisible", "isEngageVisible", "isInsightsVisible",
+        "isPreferencesVisible", "isActivityVisible", "isQuickActionsVisible", "isCoinsVisible", "isEducationVisible", "isDiscoverVisible", "isEngageVisible", "isInsightsVisible", "isSupportVisible", "isVersionVisible",
         "backgroundColor", "onBackgroundTextColor", "accentColor",
         "backgroundDarkColor", "onBackgroundTextDarkColor", "accentDarkColor"
       ]

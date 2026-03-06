@@ -8,6 +8,9 @@ const profileConfigSchema = new mongoose.Schema({
     isDiscoverVisible: { type: Boolean, default: true },
     isEngageVisible: { type: Boolean, default: true },
     isInsightsVisible: { type: Boolean, default: true },
+    isSupportVisible: { type: Boolean, default: true },
+    isVersionVisible: { type: Boolean, default: true },
+    isQuickActionsVisible: { type: Boolean, default: true },
     
     // Light Mode Styles
     backgroundColor: { type: String, default: "#F8FAFC" },
