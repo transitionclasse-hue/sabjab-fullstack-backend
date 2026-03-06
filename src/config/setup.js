@@ -232,6 +232,21 @@ export async function buildAdminRouter(app) {
       { upsert: true, new: true }
     );
 
+    await mongoose.models.GlobalConfig.findOneAndUpdate(
+      { key: "safe_mode_config" },
+      {
+        $setOnInsert: {
+          key: "safe_mode_config",
+          value: {
+            isWebViewMode: false,
+            webViewUrl: "https://sabjab.com"
+          },
+          description: "Controls the WebView fallback for native apps (Safe Mode)"
+        }
+      },
+      { upsert: true, new: true }
+    );
+
     // ✅ Seed Special Occasion ID if not exists (for header banner)
     const Occasion = mongoose.models.Occasion;
     const ramadan = await Occasion.findOne({ name: "Ramadan Specials" });
