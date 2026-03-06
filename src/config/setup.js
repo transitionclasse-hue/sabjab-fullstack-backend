@@ -1203,9 +1203,9 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory & Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "isAvailable", "isSensitive", "quantity", "superCategory", "category", "subCategory", "image"],
-          editProperties: ["name", "description", "uploadFile", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isSensitive", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
+          listProperties: ["name", "price", "stock", "isAvailable", "isChoice", "isSensitive", "quantity", "superCategory", "category", "subCategory", "image"],
+          editProperties: ["name", "description", "uploadFile", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
           actions: {
             new: { after: [replaceKeyWithUrl] },
             edit: { after: [replaceKeyWithUrl] },
@@ -1240,6 +1240,11 @@ export async function buildAdminRouter(app) {
               label: "Is Available?",
               type: "boolean",
               helpText: "Toggle to show/hide product from the store.",
+            },
+            isChoice: {
+              label: "✨ Choice Platform Product?",
+              type: "boolean",
+              helpText: "If TRUE, product gets a premium 'Choice' badge in UI.",
             },
             superCategory: {
               label: "Super Category",
@@ -1370,6 +1375,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
+            "ultraConfig.stripOccasions",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           showProperties: [
@@ -1378,6 +1384,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
+            "ultraConfig.stripOccasions",
             "showBanner", "isDefault", "isActive", "order", "components"
           ],
           actions: {
@@ -1449,6 +1456,13 @@ export async function buildAdminRouter(app) {
             'ultraConfig.navInactiveTextDarkColor': { label: "Ultra: Nav Inactive Text (Dark)", helpText: "Text color for inactive tabs in dark mode" },
             'ultraConfig.addressColor': { label: "Ultra: Address Text (Light)", helpText: "Color for the home screen address text" },
             'ultraConfig.addressDarkColor': { label: "Ultra: Address Text (Dark)", helpText: "Color for the home screen address text in dark mode" },
+            'ultraConfig.stripOccasions': {
+              label: "Ultra: Strip Customization",
+              helpText: "Pick which occasions show in the top horizontal strip for this variation.",
+              type: 'reference',
+              reference: 'Occasion',
+              isArray: true
+            },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default. The 'All' occasion is typically the default." },
             components: {

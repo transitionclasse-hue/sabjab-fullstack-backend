@@ -143,8 +143,24 @@ export const getHomeLayout = async (req, reply) => {
             return comp;
         }));
 
-        // 4. Fetch ALL Occasions for the strip
-        const occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
+        // 4. Fetch Occasions for the strip
+        let occasions = [];
+        const stripOccasionIds = variation?.ultraConfig?.stripOccasions;
+
+        if (stripOccasionIds && Array.isArray(stripOccasionIds) && stripOccasionIds.length > 0) {
+            // Variation-specific custom strip
+            occasions = await Occasion.find({
+                _id: { $in: stripOccasionIds },
+                isActive: true
+            }).select("-components").lean();
+
+            // Ensure they follow the order defined in stripOccasions array
+            const idMap = stripOccasionIds.map(id => String(id));
+            occasions.sort((a, b) => idMap.indexOf(String(a._id)) - idMap.indexOf(String(b._id)));
+        } else {
+            // Default global strip
+            occasions = await Occasion.find({ isActive: true }).select("-components").sort({ order: 1 }).lean();
+        }
 
         // 7. Fetch the baseline categories and products that the app needs initially
         const [allCategories, allSuperCategories, allProducts] = await Promise.all([
