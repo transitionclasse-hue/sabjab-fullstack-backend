@@ -278,20 +278,35 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "App Settings", icon: "Settings" },
+          navigation: { name: "Emergency Controls", icon: "ShieldAlert" },
+          label: "Safe Mode Control",
           listProperties: ["key", "value", "description"],
+          editProperties: ["key", "value", "description"],
           properties: {
             value: {
               type: 'mixed',
-              description: 'Configuration data (Object or String)',
+              description: 'Configuration data (Object/JSON)',
             },
-            'value.currentVersion': { label: 'Current App Version', type: 'string' },
-            'value.updateAvailable': { label: 'Update Available?', type: 'boolean' },
-            'value.updateMessage': { label: 'Update Message', type: 'string' },
-            'value.isMandatory': { label: 'Mandatory Update?', type: 'boolean' },
             key: { isId: true, isReadOnly: true },
           }
         },
+      };
+    }
+
+    if (model.modelName === "ProfileConfig") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "App Settings", icon: "Settings" },
+          label: "Profile Page Controls",
+          listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isSupportVisible", "isVersionVisible", "isQuickActionsVisible"],
+          editProperties: [
+            "isActive",
+            "isPreferencesVisible", "isActivityVisible", "isQuickActionsVisible", "isCoinsVisible", "isEducationVisible", "isDiscoverVisible", "isEngageVisible", "isInsightsVisible", "isSupportVisible", "isVersionVisible",
+            "backgroundColor", "onBackgroundTextColor", "accentColor",
+            "backgroundDarkColor", "onBackgroundTextDarkColor", "accentDarkColor"
+          ]
+        }
       };
     }
     if (model.modelName === "Customer") {
@@ -1895,33 +1910,7 @@ export async function buildAdminRouter(app) {
     }
   });
 
-  resources.push({
-    resource: ProfileConfig,
-    options: {
-      navigation: { name: "App Settings", icon: "Settings" },
-      label: "Profile Page Controls", // User friendly label
-      listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isSupportVisible", "isVersionVisible", "isQuickActionsVisible"],
-      editProperties: [
-        "isActive",
-        "isPreferencesVisible", "isActivityVisible", "isQuickActionsVisible", "isCoinsVisible", "isEducationVisible", "isDiscoverVisible", "isEngageVisible", "isInsightsVisible", "isSupportVisible", "isVersionVisible",
-        "backgroundColor", "onBackgroundTextColor", "accentColor",
-        "backgroundDarkColor", "onBackgroundTextDarkColor", "accentDarkColor"
-      ]
-    }
-  });
-
-  resources.push({
-    resource: GlobalConfig,
-    options: {
-      navigation: { name: "Safe Mode Control", icon: "ShieldAlert" },
-      label: "Emergency Controls",
-      listProperties: ["key", "value", "description"],
-      editProperties: ["key", "value", "description"],
-      properties: {
-        value: { type: 'string' } // Ensure it's editable as string for simple toggles/urls
-      }
-    }
-  });
+  // Consolidate all customizations within the main map mapping logic above for consistency.
 
   const admin = new AdminJS({
     rootPath: "/admin",
