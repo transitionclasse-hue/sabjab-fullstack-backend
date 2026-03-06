@@ -18,6 +18,7 @@ import WalletTransaction from "./walletTransaction.js";
 import Occasion from "./occasion.js";
 import Ticket from "./ticket.js";
 import SupportMessage from "./supportMessage.js";
+import GlobalConfig from "./globalConfig.js";
 
 export {
   Order,
@@ -42,4 +43,5 @@ export {
   Occasion,
   Ticket,
   SupportMessage,
+  GlobalConfig,
 };

@@ -26,4 +26,23 @@ export const configRoutes = async (fastify) => {
       return reply.status(500).send({ message: "Error fetching app version" });
     }
   });
+
+  fastify.get("/config/safe-mode", async (req, reply) => {
+    try {
+      const GlobalConfig = (await import("../models/globalConfig.js")).default;
+      const config = await GlobalConfig.findOne({ key: "safe_mode_config" }).lean();
+
+      if (!config) {
+        return reply.send({
+          isWebViewMode: false,
+          webViewUrl: "https://sabjab.com"
+        });
+      }
+
+      return reply.send(config.value);
+    } catch (error) {
+      console.error("SAFE MODE API ERROR:", error);
+      return reply.status(500).send({ message: "Error fetching safe mode config" });
+    }
+  });
 };

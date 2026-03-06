@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction } from "../models/index.js";
+import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig } from "../models/index.js";
 import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
@@ -1136,6 +1136,50 @@ export const getManagerDriverActivity = async (req, reply) => {
     return reply.send(drivers);
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch driver activity", error: error.message });
+  }
+};
+
+// =====================================================
+// SAFE MODE (WEBVIEW) CONFIGURATION
+// =====================================================
+
+export const getSafeModeConfig = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "safe_mode_config" }).lean();
+    if (!config) {
+      return reply.send({
+        success: true,
+        data: {
+          isWebViewMode: false,
+          webViewUrl: "https://sabjab.com"
+        }
+      });
+    }
+    return reply.send({ success: true, data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch safe mode config", error: error.message });
+  }
+};
+
+export const updateSafeModeConfig = async (req, reply) => {
+  try {
+    const { isWebViewMode, webViewUrl } = req.body;
+    let config = await GlobalConfig.findOne({ key: "safe_mode_config" });
+
+    if (!config) {
+      config = new GlobalConfig({
+        key: "safe_mode_config",
+        value: { isWebViewMode, webViewUrl },
+        description: "Controls the WebView fallback for native apps (Safe Mode)"
+      });
+    } else {
+      config.value = { isWebViewMode, webViewUrl };
+    }
+
+    await config.save();
+    return reply.send({ success: true, message: "Safe Mode config updated successfully", data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update safe mode config", error: error.message });
   }
 };
 

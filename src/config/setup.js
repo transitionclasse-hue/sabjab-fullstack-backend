@@ -9,6 +9,7 @@ import { CloudinaryProvider } from "./uploadProvider.js";
 import { authenticate } from "./config.js";
 import { sendPushNotification, broadcastPushNotification } from "../utils/notification.js";
 import ProfileConfig from "../models/profileConfig.js";
+import GlobalConfig from "../models/globalConfig.js";
 import fs from "fs";
 
 function logToFile(message) {
@@ -1906,6 +1907,19 @@ export async function buildAdminRouter(app) {
         "backgroundColor", "onBackgroundTextColor", "accentColor",
         "backgroundDarkColor", "onBackgroundTextDarkColor", "accentDarkColor"
       ]
+    }
+  });
+
+  resources.push({
+    resource: GlobalConfig,
+    options: {
+      navigation: { name: "Safe Mode Control", icon: "ShieldAlert" },
+      label: "Emergency Controls",
+      listProperties: ["key", "value", "description"],
+      editProperties: ["key", "value", "description"],
+      properties: {
+        value: { type: 'string' } // Ensure it's editable as string for simple toggles/urls
+      }
     }
   });
 
