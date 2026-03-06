@@ -77,12 +77,17 @@ export const createOrder = async (req, reply) => {
         const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod } = req.body;
 
         const customerData = await Customer.findById(userId);
-        let branchData = await Branch.findById(branchId);
+        let branchData = branchId ? await Branch.findById(branchId) : null;
 
         // FALLBACK: If no branchId provided or branch not found, pick the first available branch
         if (!branchData) {
-            console.log("No valid branchId provided, falling back to first available branch");
-            branchData = await Branch.findOne({});
+            console.log("No valid branchId provided, falling back to main branch");
+            branchData = await Branch.findOne({ isMain: true });
+        }
+
+        if (!branchData) {
+            console.log("Main branch not configured, falling back to first available branch");
+            branchData = await Branch.findOne({}).sort({ _id: 1 });
             if (!branchData) {
                 return reply.status(404).send({ message: "No branches registered in system" });
             }
