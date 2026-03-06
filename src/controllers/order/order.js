@@ -98,6 +98,11 @@ export const createOrder = async (req, reply) => {
             return reply.status(404).send({ message: "Customer not found" });
         }
 
+        const resolvedBranchId = branchData?._id;
+        if (!resolvedBranchId) {
+            return reply.status(400).send({ message: "Unable to resolve branch for this order" });
+        }
+
         // --- STOCK VALIDATION & ATOMIC UPDATES ---
         const stockUpdates = [];
         for (const item of items) {
@@ -230,7 +235,7 @@ export const createOrder = async (req, reply) => {
                 count: item.qty || item.quantity || item.count || 1,
                 variation: item.variationData // NEW: Save selected variation details
             })),
-            branch: branchId,
+            branch: resolvedBranchId,
             totalPrice: Number(totalAmount),
             paymentMethod: paymentMethod || "COD",
             couponCode: validatedCouponCode,
