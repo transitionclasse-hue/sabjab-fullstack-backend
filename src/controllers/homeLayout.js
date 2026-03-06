@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import HomeComponent from "../models/homeComponent.js";
 import Product from "../models/products.js";
 import Category from "../models/category.js";
@@ -7,6 +8,47 @@ import StoreStatus from "../models/storeStatus.js";
 import GlobalConfig from "../models/globalConfig.js";
 import { Seller } from "../models/user.js";
 import { buildStoreStatusResponse } from "./storeStatus.js";
+
+const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const findVariationByIdentifier = async ({ identifier, populateComponents = false, select = "" }) => {
+    const normalized = String(identifier || "").trim();
+    if (!normalized) return null;
+
+    const buildQuery = (filter) => {
+        let query = Occasion.findOne(filter);
+        if (populateComponents) {
+            query = query.populate("components");
+        }
+        if (select) {
+            query = query.select(select);
+        }
+        return query.lean();
+    };
+
+    if (mongoose.Types.ObjectId.isValid(normalized)) {
+        const byId = await buildQuery({ _id: normalized });
+        if (byId) return byId;
+    }
+
+    const byName = await buildQuery({
+        name: {
+            $regex: `^${escapeRegex(normalized)}$`,
+            $options: "i",
+        }
+    });
+
+    if (byName) return byName;
+
+    if (normalized.toLowerCase() === "choice") {
+        return buildQuery({
+            isChoice: true,
+            isActive: true,
+        });
+    }
+
+    return null;
+};
 
 const createApprovedProductChecker = (approvedSellerIds) => (product) => {
     if (!product || product.isApproved === false) return false;
@@ -35,7 +77,10 @@ export const getHomeLayout = async (req, reply) => {
         // 1. Find the target variation (requested or default)
         let variation;
         if (variationId) {
-            variation = await Occasion.findById(variationId).populate("components").lean();
+            variation = await findVariationByIdentifier({
+                identifier: variationId,
+                populateComponents: true,
+            });
         }
 
         if (!variation) {
@@ -246,7 +291,10 @@ export const getActiveHomeVersion = async (req, reply) => {
 
         let variation;
         if (variationId) {
-            variation = await Occasion.findById(variationId).select("themeEffect searchBarStyle topBarStyle ultraConfig").lean();
+            variation = await findVariationByIdentifier({
+                identifier: variationId,
+                select: "themeEffect searchBarStyle topBarStyle ultraConfig",
+            });
         }
 
         if (!variation) {

@@ -1,10 +1,11 @@
 import { getAllCategories, getCategoriesBySuperCategoryId } from "../controllers/product/category.js"; //
-import { getSubCategoriesByCategoryId } from "../controllers/product/subCategory.js"; //
+import { getAllSubCategories, getSubCategoriesByCategoryId } from "../controllers/product/subCategory.js"; //
 import { getProductsByCategoryId, getAllProducts, getProductById, searchProducts } from "../controllers/product/product.js";
 import { uploadSellerProduct, getMySellerProducts, getPendingSellerProducts, approveSellerProduct } from "../controllers/product/sellerProduct.js";
 import { verifyToken } from "../middleware/auth.js";
 export const categoryRoutes = async (fastify, options) => {
     fastify.get("/categories", getAllCategories); //
+    fastify.get("/subcategories", getAllSubCategories); //
     fastify.get("/supercategories/:superCategoryId/categories", getCategoriesBySuperCategoryId); //
     fastify.get("/categories/:categoryId/subcategories", getSubCategoriesByCategoryId); //
 };

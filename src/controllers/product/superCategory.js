@@ -1,8 +1,11 @@
 import SuperCategory from "../../models/superCategory.js";
 
+const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(value || "").toLowerCase());
+
 export const getAllSuperCategories = async (req, reply) => {
     try {
-        const superCategories = await SuperCategory.find().sort({ order: 1 });
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
+        const superCategories = await SuperCategory.find(shouldFilterChoice ? { isChoice: true } : {}).sort({ order: 1 });
         return reply.send(superCategories);
     } catch (error) {
         return reply.status(500).send({ message: "An error occurred fetching supercategories", error });

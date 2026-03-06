@@ -1,11 +1,17 @@
 import { SubCategory } from "../../models/index.js";
 
+const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(value || "").toLowerCase());
+
 export const getSubCategoriesByCategoryId = async (req, reply) => {
     try {
         const { categoryId } = req.params;
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
 
         // Find all subcategories linked to this parent category
-        const subCategories = await SubCategory.find({ category: categoryId }).exec();
+        const subCategories = await SubCategory.find({
+            category: categoryId,
+            ...(shouldFilterChoice ? { isChoice: true } : {}),
+        }).exec();
 
         return reply.send({
             message: "Subcategories fetched successfully",
@@ -63,7 +69,10 @@ export const deleteSubCategory = async (req, reply) => {
 
 export const getAllSubCategories = async (req, reply) => {
     try {
-        const subCategories = await SubCategory.find().sort({ createdAt: -1 }).exec();
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
+        const subCategories = await SubCategory.find(shouldFilterChoice ? { isChoice: true } : {})
+            .sort({ createdAt: -1 })
+            .exec();
         return reply.send({
             message: "All subcategories fetched successfully",
             data: subCategories

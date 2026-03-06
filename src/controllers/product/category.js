@@ -1,16 +1,20 @@
 import Category from "../../models/category.js";
 import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
+const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(value || "").toLowerCase());
+
 // PUBLIC — used by the frontend; respects sensitive mode
 export const getCategoriesBySuperCategoryId = async (req, reply) => {
     try {
         const { superCategoryId } = req.params;
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
         const hideSensitive = await getSafeSensitiveMode(req);
         const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
 
         const categories = await Category.find({
             superCategory: superCategoryId,
-            ...sensitiveFilter
+            ...sensitiveFilter,
+            ...(shouldFilterChoice ? { isChoice: true } : {}),
         }).exec();
 
         return reply.send({
@@ -25,7 +29,10 @@ export const getCategoriesBySuperCategoryId = async (req, reply) => {
 // MANAGER — returns all categories (no sensitive filter)
 export const getAllCategories = async (req, reply) => {
     try {
-        const categories = await Category.find().sort({ createdAt: -1 }).populate("superCategory");
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
+        const categories = await Category.find(shouldFilterChoice ? { isChoice: true } : {})
+            .sort({ createdAt: -1 })
+            .populate("superCategory");
         return reply.send(categories);
     } catch (error) {
         return reply.status(500).send({ message: "An error occurred", error });

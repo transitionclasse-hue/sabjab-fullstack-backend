@@ -4,6 +4,7 @@ import { Seller } from "../../models/user.js";
 import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
 const isManagerCatalogRequest = (req) => req?.raw?.url?.includes("/manager/products");
+const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(value || "").toLowerCase());
 
 const getLiveVisibilityFilter = async () => {
     const approvedSellerIds = await Seller.find({ isApproved: true }).distinct("_id");
@@ -20,6 +21,7 @@ const getLiveVisibilityFilter = async () => {
 export const getProductsByCategoryId = async (req, reply) => {
     const { categoryId } = req.params;
     try {
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
         const hideSensitive = await getSafeSensitiveMode(req);
         const liveVisibilityFilter = await getLiveVisibilityFilter();
 
@@ -42,6 +44,7 @@ export const getProductsByCategoryId = async (req, reply) => {
         const query = {
             ...sensitiveFilter,
             isApproved: true,
+            ...(shouldFilterChoice ? { isChoice: true } : {}),
             $and: [liveVisibilityFilter, categoryFilter],
         };
 
@@ -89,14 +92,18 @@ export const searchProducts = async (req, reply) => {
 // User-facing (usually) or Manager-facing — handles filtering
 export const getAllProducts = async (req, reply) => {
     try {
-        const { filter } = req.query || {};
+        const { filter, choiceOnly } = req.query || {};
         const hideSensitive = await getSafeSensitiveMode(req);
+        const shouldFilterChoice = isChoiceOnlyRequest(choiceOnly);
 
         const query = hideSensitive ? { isSensitive: { $ne: true } } : {};
         if (!isManagerCatalogRequest(req)) {
             const liveVisibilityFilter = await getLiveVisibilityFilter();
             query.isApproved = true;
             query.$and = [liveVisibilityFilter];
+        }
+        if (shouldFilterChoice) {
+            query.isChoice = true;
         }
 
         if (filter === "coins") {
