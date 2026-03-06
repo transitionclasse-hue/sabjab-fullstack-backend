@@ -42,7 +42,7 @@ export const configRoutes = async (fastify) => {
       return reply.send(config.value);
     } catch (error) {
       console.error("SAFE MODE API ERROR:", error);
-      return reply.status(500).send({ message: "Error fetching safe mode config" });
+      return reply.send({ isWebViewMode: false });
     }
   });
 };
