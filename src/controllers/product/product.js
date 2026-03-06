@@ -33,20 +33,23 @@ export const getProductsByCategoryId = async (req, reply) => {
 };
 
 export const searchProducts = async (req, reply) => {
-    const { query } = req.query;
+    const { query, q, choiceOnly } = req.query;
     try {
-        if (!query) {
+        const searchTerm = (query || q || "").trim();
+        if (!searchTerm) {
             return reply.send([]);
         }
 
         const hideSensitive = await getSafeSensitiveMode(req);
         const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
+        const shouldFilterChoice = ["1", "true", "yes"].includes(String(choiceOnly || "").toLowerCase());
 
         const products = await Product.find({
             ...sensitiveFilter,
+            ...(shouldFilterChoice ? { isChoice: true } : {}),
             $or: [
-                { name: { $regex: query, $options: "i" } },
-                { description: { $regex: query, $options: "i" } }
+                { name: { $regex: searchTerm, $options: "i" } },
+                { description: { $regex: searchTerm, $options: "i" } }
             ]
         }).exec();
 
