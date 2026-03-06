@@ -51,7 +51,7 @@ export const getHomeLayout = async (req, reply) => {
         const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
         let specialOccasion = null;
         if (config && config.value) {
-            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor").lean();
+            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor darkThemeColor").lean();
         }
 
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
@@ -168,6 +168,7 @@ export const getHomeLayout = async (req, reply) => {
                 id: variation._id,
                 name: variation.name,
                 themeColor: variation.themeColor,
+                darkThemeColor: variation.darkThemeColor || null,
                 themeEffect: variation.themeEffect || 'none',
                 searchBarStyle: variation.searchBarStyle || 'standard',
                 topBarStyle: variation.topBarStyle || 'standard',
@@ -183,7 +184,9 @@ export const getHomeLayout = async (req, reply) => {
             storeStatus: {
                 ...storeStatus,
                 etaBoxColor: variation?.ultraConfig?.etaBgColor || storeStatus.etaBoxColor,
-                etaTextColor: variation?.ultraConfig?.etaTextColor || "#ffffff" // Default white if not set
+                etaTextColor: variation?.ultraConfig?.etaTextColor || storeStatus.etaTextColor || "#ffffff",
+                etaBoxDarkColor: variation?.ultraConfig?.etaBgDarkColor || storeStatus.etaBoxDarkColor,
+                etaTextDarkColor: variation?.ultraConfig?.etaTextDarkColor || storeStatus.etaTextDarkColor || "#ffffff"
             },
             specialOccasion: specialOccasion || null,
             // Full baseline dataset:

@@ -32,6 +32,10 @@ const occasionSchema = new mongoose.Schema({
         type: String,
         default: "#22c55e"
     },
+    darkThemeColor: { // NEW: Explicit color for Dark/Midnight themes
+        type: String,
+        default: null
+    },
     showBanner: {
         type: Boolean,
         default: true
@@ -69,10 +73,15 @@ const occasionSchema = new mongoose.Schema({
         borderRadiusGlobal: { type: Number, default: 16 },
         hideTopBar: { type: Boolean, default: false },
         topBarColor: { type: String, default: "#ffffff" },
+        topBarDarkColor: { type: String, default: "" }, // New: Top bar color in dark mode
         etaBgColor: { type: String, default: "" }, // New: Per-occasion ETA box color
+        etaBgDarkColor: { type: String, default: "" }, // New: ETA box color in dark mode
         etaTextColor: { type: String, default: "" }, // New: Per-occasion ETA text color
+        etaTextDarkColor: { type: String, default: "" }, // New: ETA text color in dark mode
         navActiveTextColor: { type: String, default: "" }, // New: Active occasion text color
-        navInactiveTextColor: { type: String, default: "" } // New: Inactive occasion text color
+        navActiveTextDarkColor: { type: String, default: "" }, // New: Active text color in dark mode
+        navInactiveTextColor: { type: String, default: "" }, // New: Inactive occasion text color
+        navInactiveTextDarkColor: { type: String, default: "" } // New: Inactive text color in dark mode
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,

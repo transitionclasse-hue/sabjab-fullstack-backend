@@ -129,6 +129,9 @@ export const buildStoreStatusResponse = (config) => {
     alertBeforeMinutes: config.alertBeforeMinutes,
     minutesToBoundary,
     etaBoxColor: config.etaBoxColor || "#6366F1",
+    etaTextColor: config.etaTextColor || "#ffffff",
+    etaBoxDarkColor: config.etaBoxDarkColor || "#4F46E5",
+    etaTextDarkColor: config.etaTextDarkColor || "#ffffff",
     note: config.note || "",
     updatedAt: config.updatedAt,
   };

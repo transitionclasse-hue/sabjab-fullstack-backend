@@ -77,6 +77,10 @@ const homeComponentSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    darkThemeColor: { // NEW: Explicit color for Dark/Midnight themes
+        type: String,
+        default: null,
+    },
     themeMode: { // ✅ NEW: Per-component theme variations
         type: String,
         enum: ["light", "dark", "glass", "snow", "rain", "autumn"],

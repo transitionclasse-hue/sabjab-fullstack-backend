@@ -31,6 +31,18 @@ const storeStatusSchema = new mongoose.Schema(
       type: String,
       default: "#6366F1",
     },
+    etaTextColor: { // NEW: Explicit text color
+      type: String,
+      default: "#ffffff",
+    },
+    etaBoxDarkColor: { // NEW: Box color for Dark theme
+      type: String,
+      default: "#4F46E5",
+    },
+    etaTextDarkColor: { // NEW: Text color for Dark theme
+      type: String,
+      default: "#ffffff",
+    },
     note: {
       type: String,
       default: "",
