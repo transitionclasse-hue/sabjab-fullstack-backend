@@ -35,6 +35,8 @@ import {
   getGlobalCodLimit,
   updateGlobalCodLimit,
   adjustCustomerWallet,
+  getSafeModeConfig,
+  updateSafeModeConfig,
 } from "../controllers/manager.js";
 import { updateProfileConfig } from "../controllers/profileConfig.js";
 import {
@@ -134,4 +136,6 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/driver-activity", getManagerDriverActivity);
   fastify.post("/manager/customers/:customerId/wallet-adjustment", adjustCustomerWallet);
   fastify.post("/manager/profile-config", updateProfileConfig);
+  fastify.get("/manager/safe-mode-config", getSafeModeConfig);
+  fastify.post("/manager/safe-mode-config", updateSafeModeConfig);
 };
