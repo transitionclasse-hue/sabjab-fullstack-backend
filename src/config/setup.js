@@ -55,10 +55,9 @@ const assignDriverToOrder = async (order, driver, driverEarning = null) => {
   if (!order || !driver) return null;
 
   order.deliveryPartner = driver._id;
-  if (order.status === "available") {
-    order.status = "assigned";
-    order.assignedAt = new Date();
-  }
+  // Always update status and reset timer on assignment/re-assignment
+  order.status = "assigned";
+  order.assignedAt = new Date();
 
   // Set explicit earning if provided, otherwise calculate
   if (driverEarning !== null && driverEarning !== undefined && driverEarning !== "") {
@@ -117,7 +116,7 @@ const afterEditOrderHook = async (originalResponse, request, context, app) => {
         changed = true;
       }
 
-      if (dbOrder.status === "available") {
+      if (dbOrder.status === "available" || dbOrder.isModified('deliveryPartner')) {
         dbOrder.status = "assigned";
         dbOrder.assignedAt = new Date();
         changed = true;
@@ -1718,7 +1717,7 @@ export async function buildAdminRouter(app) {
           icon: "UserCheck",
           component: Components.AssignDriver,
           handler: async (request, response, context) => {
-            const { currentAdmin } = context;
+            const { record, currentAdmin } = context;
             // Safer way to get record ID as custom components might not always pass record context fully
             const recordId = context.record?.id || request.params.recordId;
 

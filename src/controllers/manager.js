@@ -205,6 +205,11 @@ export const updateOrderStatusByManager = async (req, reply) => {
 
     const oldStatus = order.status;
     order.status = status;
+
+    if (status === "assigned" && oldStatus !== "assigned") {
+      order.assignedAt = new Date();
+    }
+
     await order.save();
 
     // TRIGGER EARNING LOGIC if manager marks as DELIVERED
