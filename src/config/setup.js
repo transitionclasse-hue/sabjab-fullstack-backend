@@ -1928,7 +1928,7 @@ export async function buildAdminRouter(app) {
     branding: {
       companyName: "SabJab Premium Store Admin",
       withMadeWithLove: false,
-      logo: "https://res.cloudinary.com/dponzgerb/image/upload/v1723444869/category/uic8gcnbzknosdvva13o.png",
+      logo: "https://res.cloudinary.com/dkihsmzv8/image/upload/v1772798078/admin_branding/admin_logo_new.png",
       theme: {
         colors: {
           primary100: "#22c55e", // Professional Emerald Green
