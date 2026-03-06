@@ -7,6 +7,9 @@ import StoreStatus from "../models/storeStatus.js";
 import GlobalConfig from "../models/globalConfig.js";
 import { buildStoreStatusResponse } from "./storeStatus.js";
 
+const isApprovedProduct = (product) => product && product.isApproved !== false;
+const filterApprovedProducts = (products = []) => products.filter(isApprovedProduct);
+
 export const getHomeLayout = async (req, reply) => {
     try {
         const { variationId } = req.query;
@@ -58,10 +61,10 @@ export const getHomeLayout = async (req, reply) => {
             if (comp.type === "BENTO_GRID") {
                 // HYBRID: Prioritize curated fields, then fill with generic products (deduplicated)
                 const curated = [];
-                if (comp.bigDeal) curated.push(comp.bigDeal);
-                if (comp.miniDeals?.length) curated.push(...comp.miniDeals);
+                if (isApprovedProduct(comp.bigDeal)) curated.push(comp.bigDeal);
+                if (comp.miniDeals?.length) curated.push(...filterApprovedProducts(comp.miniDeals));
 
-                const fallback = comp.products || [];
+                const fallback = filterApprovedProducts(comp.products || []);
                 const combined = [...curated, ...fallback];
 
                 // Deduplicate by ID
@@ -77,7 +80,10 @@ export const getHomeLayout = async (req, reply) => {
                 if (comp.sections?.length > 0) {
                     comp.sections = await Promise.all(comp.sections.map(async (sec) => {
                         if (sec.products?.length > 0) {
-                            sec.products = await Product.find({ _id: { $in: sec.products } }).lean();
+                            sec.products = await Product.find({
+                                _id: { $in: sec.products },
+                                isApproved: true,
+                            }).lean();
                         }
                         return sec;
                     }));
@@ -97,7 +103,8 @@ export const getHomeLayout = async (req, reply) => {
                         // Calculate product coverage for this exact item
                         const productQuery = {
                             $or: [{ category: itemId }, { subCategory: itemId }],
-                            isAvailable: true
+                            isAvailable: true,
+                            isApproved: true,
                         };
 
                         const [count, products] = await Promise.all([
@@ -134,48 +141,28 @@ export const getHomeLayout = async (req, reply) => {
                 // Featured deals already populated bigDeal and miniDeals, 
                 // but we'll also put them in resolvedProducts just in case for generic scroller reuse
                 comp.resolvedProducts = [
-                    ...(comp.bigDeal ? [comp.bigDeal] : []),
-                    ...(comp.miniDeals || [])
+                    ...(isApprovedProduct(comp.bigDeal) ? [comp.bigDeal] : []),
+                    ...filterApprovedProducts(comp.miniDeals || [])
                 ];
             } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "MINI_VIDEO"].includes(comp.type)) {
-                comp.resolvedProducts = comp.products || [];
+                comp.resolvedProducts = filterApprovedProducts(comp.products || []);
             }
             return comp;
         }));
 
         // 4. Fetch Occasions for the strip
-        let occasions = [];
-        const stripOccasionIds = variation?.ultraConfig?.stripOccasions;
         const isChoicePage = variation?.name?.toLowerCase() === 'choice';
-
-        if (stripOccasionIds && Array.isArray(stripOccasionIds) && stripOccasionIds.length > 0) {
-            // Priority 1: Specifically selected IDs for this variation
-            occasions = await Occasion.find({
-                _id: { $in: stripOccasionIds },
-                isActive: true
-            }).select("-components").lean();
-
-            const idMap = stripOccasionIds.map(id => String(id));
-            occasions.sort((a, b) => idMap.indexOf(String(a._id)) - idMap.indexOf(String(b._id)));
-        } else if (isChoicePage) {
-            // Priority 2: Automatically show categories flagged as "isChoice" on Choice page
-            occasions = await Occasion.find({
-                isChoice: true,
-                isActive: true
-            }).select("-components").sort({ order: 1 }).lean();
-        } else {
-            // Priority 3: Default global strip for normal home screen
-            occasions = await Occasion.find({
-                isActive: true,
-                isChoice: { $ne: true }
-            }).select("-components").sort({ order: 1 }).lean();
-        }
+        const occasions = await Occasion.find({
+            isActive: true,
+            isChoice: isChoicePage ? true : { $ne: true }
+        }).select("-components").sort({ order: 1 }).lean();
 
         // 7. Fetch the baseline categories and products that the app needs initially
         const [allCategories, allSuperCategories, allProducts] = await Promise.all([
             Category.find({}).lean(),
             SuperCategory.find({}).lean(),
             Product.find({
+                isApproved: true,
                 $or: [
                     { isAvailable: true },
                     { "variations.isAvailable": true }

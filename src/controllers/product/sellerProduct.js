@@ -1,6 +1,8 @@
 import Product from "../../models/products.js";
 import { Seller } from "../../models/user.js";
 
+const canReviewSellerProducts = (role) => role === "Admin" || role === "Manager";
+
 // Seller explicitly uploads a product. It is always marked isApproved: false.
 export const uploadSellerProduct = async (req, reply) => {
     try {
@@ -19,6 +21,7 @@ export const uploadSellerProduct = async (req, reply) => {
         const productData = {
             ...req.body,
             isApproved: false,
+            isChoice: true,
             sellerId: userId
         };
 
@@ -56,12 +59,12 @@ export const getMySellerProducts = async (req, reply) => {
     }
 };
 
-// Admin fetching all pending seller products for review
+// Admin or Manager fetching all pending seller products for review
 export const getPendingSellerProducts = async (req, reply) => {
     try {
         const { role } = req.user;
-        if (role !== "Admin") {
-            return reply.status(403).send({ message: "Unauthorized. Admin only." });
+        if (!canReviewSellerProducts(role)) {
+            return reply.status(403).send({ message: "Unauthorized. Admin or Manager only." });
         }
 
         const pendingProducts = await Product.find({ isApproved: false, sellerId: { $ne: null } })
@@ -76,12 +79,12 @@ export const getPendingSellerProducts = async (req, reply) => {
     }
 };
 
-// Admin approving a specific seller product
+// Admin or Manager approving a specific seller product
 export const approveSellerProduct = async (req, reply) => {
     try {
         const { role } = req.user;
-        if (role !== "Admin") {
-            return reply.status(403).send({ message: "Unauthorized. Admin only." });
+        if (!canReviewSellerProducts(role)) {
+            return reply.status(403).send({ message: "Unauthorized. Admin or Manager only." });
         }
 
         const { id } = req.params;

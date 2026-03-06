@@ -2,6 +2,9 @@ import Product from "../../models/products.js";
 import SubCategory from "../../models/subCategory.js";
 import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
+const LIVE_PRODUCT_FILTER = { isApproved: true };
+const isManagerCatalogRequest = (req) => req?.raw?.url?.includes("/manager/products");
+
 export const getProductsByCategoryId = async (req, reply) => {
     const { categoryId } = req.params;
     try {
@@ -15,6 +18,7 @@ export const getProductsByCategoryId = async (req, reply) => {
 
         const query = {
             ...sensitiveFilter,
+            ...LIVE_PRODUCT_FILTER,
             $or: [
                 { category: categoryId },
                 { subCategory: categoryId },
@@ -46,6 +50,7 @@ export const searchProducts = async (req, reply) => {
 
         const products = await Product.find({
             ...sensitiveFilter,
+            ...LIVE_PRODUCT_FILTER,
             ...(shouldFilterChoice ? { isChoice: true } : {}),
             $or: [
                 { name: { $regex: searchTerm, $options: "i" } },
@@ -66,6 +71,9 @@ export const getAllProducts = async (req, reply) => {
         const hideSensitive = await getSafeSensitiveMode(req);
 
         const query = hideSensitive ? { isSensitive: { $ne: true } } : {};
+        if (!isManagerCatalogRequest(req)) {
+            query.isApproved = true;
+        }
 
         if (filter === "coins") {
             // Products that have a coinPrice > 0 are redeemable via coins
@@ -85,7 +93,10 @@ export const getAllProducts = async (req, reply) => {
 
 export const getProductById = async (req, reply) => {
     try {
-        const product = await Product.findById(req.params.id).exec();
+        const product = await Product.findOne({
+            _id: req.params.id,
+            ...LIVE_PRODUCT_FILTER,
+        }).exec();
         if (!product) {
             return reply.code(404).send({ message: "Product not found" });
         }

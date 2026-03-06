@@ -1,6 +1,13 @@
 import { Seller } from "../../models/user.js";
 import jwt from "jsonwebtoken";
 
+const sanitizeSeller = (seller) => {
+    if (!seller) return null;
+    const safeSeller = seller.toObject ? seller.toObject() : { ...seller };
+    delete safeSeller.password;
+    return safeSeller;
+};
+
 export const generateTokens = (user) => {
     const accessToken = jwt.sign(
         { userId: user._id, role: user.role },
@@ -44,7 +51,7 @@ export const registerSeller = async (req, reply) => {
             message: "Seller registered successfully. Pending Admin approval.",
             accessToken,
             refreshToken,
-            seller
+            seller: sanitizeSeller(seller)
         });
     } catch (error) {
         console.error("Seller Registration Error:", error);
@@ -74,7 +81,7 @@ export const loginSeller = async (req, reply) => {
             message: "Login successful",
             accessToken,
             refreshToken,
-            seller
+            seller: sanitizeSeller(seller)
         });
     } catch (error) {
         console.error("Seller Login Error:", error);
