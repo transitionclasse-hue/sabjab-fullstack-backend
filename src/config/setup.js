@@ -294,14 +294,16 @@ export async function buildAdminRouter(app) {
         resource: model,
         options: {
           navigation: { name: "Emergency Controls", icon: "ShieldAlert" },
-          label: "Safe Mode Control",
+          label: "Global Settings",
           listProperties: ["key", "value", "description"],
           editProperties: ["key", "value", "description"],
           properties: {
             value: {
               type: 'mixed',
-              description: 'Configuration data (Object/JSON)',
+              description: 'Configuration data. For Safe Mode, use: {"isWebViewMode": true/false, "webViewUrl": "..."}',
             },
+            'value.isWebViewMode': { type: 'boolean', label: 'Enable Safe Mode (WebView Home)' },
+            'value.webViewUrl': { type: 'string', label: 'WebView URL (Fallback)' },
             key: { isId: true, isReadOnly: true },
           }
         },
@@ -314,13 +316,41 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "App Settings", icon: "Settings" },
           label: "Profile Page Controls",
-          listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible", "isCoinsVisible", "isEducationVisible", "isSupportVisible", "isVersionVisible", "isQuickActionsVisible"],
+          listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible"],
           editProperties: [
             "isActive",
-            "isPreferencesVisible", "isActivityVisible", "isQuickActionsVisible", "isCoinsVisible", "isEducationVisible", "isDiscoverVisible", "isEngageVisible", "isInsightsVisible", "isSupportVisible", "isVersionVisible",
+            "isQuickActionsVisible",
+            "isPreferencesVisible", 
+            "isActivityVisible", 
+            "isCoinsVisible", 
+            "isEducationVisible", 
+            "isDiscoverVisible", 
+            "isEngageVisible", 
+            "isInsightsVisible", 
+            "isSupportVisible", 
+            "isVersionVisible",
             "backgroundColor", "onBackgroundTextColor", "accentColor",
             "backgroundDarkColor", "onBackgroundTextDarkColor", "accentDarkColor"
-          ]
+          ],
+          properties: {
+            isEducationVisible: { label: "Visible: ClassMadad (Education)" },
+            isQuickActionsVisible: { label: "Visible: Quick Actions (Wallet, Orders, Support)" },
+            isPreferencesVisible: { label: "Visible: Preferences (Theme, Sensitive Mode)" },
+            isActivityVisible: { label: "Visible: My Activity (History, Wishlist)" },
+            isCoinsVisible: { label: "Visible: SabJab Coins & Benefits" },
+            isDiscoverVisible: { label: "Visible: Discover (Home Services)" },
+            isEngageVisible: { label: "Visible: Engage (Games, Recipes, Reminders)" },
+            isInsightsVisible: { label: "Visible: Insights (Spending Analysis)" },
+            isSupportVisible: { label: "Visible: Support & Legal" },
+            isVersionVisible: { label: "Visible: Version Info" },
+            
+            backgroundColor: { label: "Background color (Light Mode)" },
+            onBackgroundTextColor: { label: "Text color (Light Mode)" },
+            accentColor: { label: "Accent color (Light Mode)" },
+            backgroundDarkColor: { label: "Background color (Dark Mode)" },
+            onBackgroundTextDarkColor: { label: "Text color (Dark Mode)" },
+            accentDarkColor: { label: "Accent color (Dark Mode)" },
+          }
         }
       };
     }
