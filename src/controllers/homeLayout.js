@@ -41,10 +41,17 @@ const findVariationByIdentifier = async ({ identifier, populateComponents = fals
     if (byName) return byName;
 
     if (normalized.toLowerCase() === "choice") {
-        return buildQuery({
+        let query = Occasion.findOne({
             isChoice: true,
             isActive: true,
-        });
+        }).sort({ order: 1 });
+        if (populateComponents) {
+            query = query.populate("components");
+        }
+        if (select) {
+            query = query.select(select);
+        }
+        return query.lean();
     }
 
     return null;
@@ -218,7 +225,7 @@ export const getHomeLayout = async (req, reply) => {
         }));
 
         // 4. Fetch Occasions for the strip
-        const isChoicePage = variation?.name?.toLowerCase() === 'choice';
+        const isChoicePage = variation?.isChoice === true || variation?.name?.toLowerCase() === 'choice';
         const occasions = await Occasion.find({
             isActive: true,
             isChoice: isChoicePage ? true : { $ne: true }
@@ -251,6 +258,7 @@ export const getHomeLayout = async (req, reply) => {
             variation: variation ? {
                 id: variation._id,
                 name: variation.name,
+                isChoice: variation.isChoice === true,
                 themeColor: variation.themeColor,
                 darkThemeColor: variation.darkThemeColor || null,
                 themeEffect: variation.themeEffect || 'none',
