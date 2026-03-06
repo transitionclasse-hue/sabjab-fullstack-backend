@@ -8,7 +8,8 @@ import {
     checkPhone,
     loginPassword,
     updateCustomerProfile,
-    deleteCustomerAccount
+    deleteCustomerAccount,
+    updateAdminProfile
 } from "../controllers/auth/auth.js";
 import { verifyToken } from "../middleware/auth.js";
 import {
@@ -29,6 +30,7 @@ export const authRoutes = async (fastify) => {
     // Delivery Partner Endpoint
     fastify.post("/delivery/login", loginDeliveryPartner);
     fastify.post("/auth/login", loginAdmin); // For Manager App
+    fastify.put("/auth/profile", { preHandler: [verifyToken] }, updateAdminProfile);
     fastify.put("/admin/push-token", { preHandler: [verifyToken] }, (await import("../controllers/auth/auth.js")).updateAdminPushToken); // Dynamic import to avoid circular if needed or just add to import list
 
     // Seller Endpoints

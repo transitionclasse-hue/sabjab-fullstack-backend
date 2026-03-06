@@ -456,3 +456,29 @@ export const updateAdminPushToken = async (req, reply) => {
     return reply.status(500).send({ message: "Error updating admin push token", error: error.message });
   }
 };
+
+export const updateAdminProfile = async (req, reply) => {
+  try {
+    const { name, email, password, notificationsEnabled } = req.body;
+    const userId = req.user.userId;
+
+    const admin = await Admin.findById(userId);
+    if (!admin) {
+      return reply.status(404).send({ message: "Admin not found" });
+    }
+
+    if (name) admin.name = name;
+    if (email) admin.email = email.toLowerCase();
+    if (password) admin.password = password;
+    if (typeof notificationsEnabled === 'boolean') {
+      admin.notificationsEnabled = notificationsEnabled;
+    }
+
+    await admin.save();
+
+    return reply.send(admin);
+  } catch (error) {
+    console.error("❌ UPDATE ADMIN PROFILE ERROR:", error);
+    return reply.status(500).send({ message: "Error updating admin profile", error: error.message });
+  }
+};
