@@ -1351,6 +1351,9 @@ export async function buildAdminRouter(app) {
               after: [replaceKeyWithUrl],
               before: [async (request, context) => {
                 if (request.method === 'post' && request.payload) {
+                  const id = context.record?.id?.() || `new_${Date.now()}`;
+
+                  // 1. Handle Product Variations
                   const variations = request.payload.variations || [];
                   for (let i = 0; i < variations.length; i++) {
                     const uploadFile = variations[i].uploadImage;
@@ -1358,9 +1361,30 @@ export async function buildAdminRouter(app) {
                       console.log(`🎭 [Variation Upload] Processing variation ${i}...`);
                       const provider = new CloudinaryProvider();
                       const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
-                      const id = context.record?.id?.() || `new_${Date.now()}`;
-                      const key = await provider.upload(uploadFile, `${id}/${filename}`);
-                      request.payload[`variations.${i}.image`] = key;
+                      const result = await provider.upload(uploadFile, `${id}/${filename}`);
+                      // FIX: Map to result.secure_url, not the whole result object
+                      request.payload[`variations.${i}.image`] = result.secure_url;
+                    }
+                  }
+
+                  // 2. Handle Additional Gallery Images
+                  const galleryFiles = request.payload.uploadGallery;
+                  if (galleryFiles) {
+                    const galleryArray = Array.isArray(galleryFiles) ? galleryFiles : [galleryFiles];
+                    const uploadedUrls = [];
+                    const provider = new CloudinaryProvider();
+                    console.log(`📸 [Gallery Upload] Processing ${galleryArray.length} images...`);
+                    
+                    for (let i = 0; i < galleryArray.length; i++) {
+                      const file = galleryArray[i];
+                      if (file && file.size > 0) {
+                        const filename = `gallery_${i}_${sanitizeFilename(file.name)}`;
+                        const res = await provider.upload(file, `${id}/${filename}`);
+                        uploadedUrls.push(res.secure_url);
+                      }
+                    }
+                    if (uploadedUrls.length > 0) {
+                      request.payload.images = uploadedUrls;
                     }
                   }
                 }
@@ -1371,6 +1395,9 @@ export async function buildAdminRouter(app) {
               after: [replaceKeyWithUrl],
               before: [async (request, context) => {
                 if (request.method === 'post' && request.payload) {
+                  const id = context.record.id();
+
+                  // 1. Handle Product Variations
                   const variations = request.payload.variations || [];
                   for (let i = 0; i < variations.length; i++) {
                     const uploadFile = variations[i].uploadImage;
@@ -1378,8 +1405,31 @@ export async function buildAdminRouter(app) {
                       console.log(`🎭 [Variation Upload] Processing variation ${i}...`);
                       const provider = new CloudinaryProvider();
                       const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
-                      const key = await provider.upload(uploadFile, `${context.record.id()}/${filename}`);
-                      request.payload[`variations.${i}.image`] = key;
+                      const result = await provider.upload(uploadFile, `${id}/${filename}`);
+                      // FIX: Map to result.secure_url, not the whole result object
+                      request.payload[`variations.${i}.image`] = result.secure_url;
+                    }
+                  }
+
+                  // 2. Handle Additional Gallery Images
+                  const galleryFiles = request.payload.uploadGallery;
+                  if (galleryFiles) {
+                    const galleryArray = Array.isArray(galleryFiles) ? galleryFiles : [galleryFiles];
+                    const uploadedUrls = [];
+                    const provider = new CloudinaryProvider();
+                    console.log(`📸 [Gallery Upload] Processing ${galleryArray.length} images...`);
+                    
+                    for (let i = 0; i < galleryArray.length; i++) {
+                      const file = galleryArray[i];
+                      if (file && file.size > 0) {
+                        const filename = `gallery_${i}_${sanitizeFilename(file.name)}`;
+                        const res = await provider.upload(file, `${id}/${filename}`);
+                        uploadedUrls.push(res.secure_url);
+                      }
+                    }
+                    if (uploadedUrls.length > 0) {
+                      // For edit, we replace the whole gallery with new uploads if provided
+                      request.payload.images = uploadedUrls;
                     }
                   }
                 }
@@ -1569,42 +1619,6 @@ export async function buildAdminRouter(app) {
             },
             validation: {
               mimeTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
-            },
-          }),
-          uploadFeature({
-            componentLoader,
-            provider: new CloudinaryProvider(),
-            multiple: true,
-            properties: {
-              key: 'images',
-              file: 'uploadGallery',
-              filePath: 'imagesFilePath',
-              filesToDelete: 'imagesFilesToDelete',
-              uploadPath: (record, filename) => {
-                const id = record.id() || `new_${Date.now()}`;
-                return `${id}/gallery_${sanitizeFilename(filename)}`;
-              },
-            },
-            validation: {
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
-            },
-          }),
-          uploadFeature({
-            componentLoader,
-            provider: new CloudinaryProvider(),
-            multiple: true,
-            properties: {
-              key: 'variationGallery',
-              file: 'uploadVariationGallery',
-              filePath: 'variationGalleryFilePath',
-              filesToDelete: 'variationGalleryFilesToDelete',
-              uploadPath: (record, filename) => {
-                const id = record.id() || `new_${Date.now()}`;
-                return `${id}/vars_${sanitizeFilename(filename)}`;
-              },
-            },
-            validation: {
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
             },
           }),
         ],
