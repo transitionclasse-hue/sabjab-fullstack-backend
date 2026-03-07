@@ -1335,6 +1335,7 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
+          perPage: 30, // Override default 10 to show more products
           listProperties: ["name", "price", "stock", "quantity", "isAvailable", "image"],
           editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "uploadVariationGallery", "images", "variationGallery", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
           showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "variationGallery", "video", "variations"],
@@ -2084,7 +2085,18 @@ export async function buildAdminRouter(app) {
       cookieName: "adminjs-session",
       cookiePassword: process.env.COOKIE_PASSWORD || "cookie-password",
     },
+    settings: {
+      perPage: 20,
+      maxPerPage: 500,
+    },
   });
+
+  // Audit Product counts
+  const productCount = await mongoose.models.Product.countDocuments();
+  console.log(`📊 [AdminJS Audit] Total Products in Database: ${productCount}`);
+  if (productCount > 20) {
+    console.log(`ℹ️ [AdminJS Audit] ${productCount} products found. Explicit 30 perPage set for 'Product' resource.`);
+  }
 
   if (process.env.NODE_ENV !== "production") {
     admin.watch();
