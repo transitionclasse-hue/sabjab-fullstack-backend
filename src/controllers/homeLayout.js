@@ -137,7 +137,19 @@ export const getHomeLayout = async (req, reply) => {
         const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
         let specialOccasion = null;
         if (config && config.value) {
-            specialOccasion = await Occasion.findById(config.value).select("name icon banner themeColor darkThemeColor isChoice").lean();
+            specialOccasion = await Occasion.findById(config.value)
+                .select("name icon banner themeColor darkThemeColor isChoice components products")
+                .populate({
+                    path: 'components',
+                    populate: [
+                        { path: 'products' },
+                        { path: 'categories' },
+                        { path: 'bigDeal' },
+                        { path: 'miniDeals' }
+                    ]
+                })
+                .populate("products")
+                .lean();
         }
 
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
