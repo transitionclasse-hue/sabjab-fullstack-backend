@@ -1316,36 +1316,35 @@ export async function buildAdminRouter(app) {
       const replaceKeyWithUrl = async (response, request, context) => {
         let changed = false;
         
-        // Handle Product Image
+        // 1. Handle Main Product Image
         if (productProvider.lastUploadedUrl && context.record && context.record.isValid()) {
-          console.log(`🔗 Syncing Cloudinary Image for Product: ${productProvider.lastUploadedUrl}`);
+          console.log(`🔗 Syncing Main Image for Product: ${productProvider.lastUploadedUrl}`);
           await context.record.update({ image: productProvider.lastUploadedUrl });
           productProvider.lastUploadedUrl = null;
           changed = true;
         }
 
-        // Handle Product Gallery (Array)
+        // 2. Handle Product Gallery (Array)
         const images = context.record?.get('images');
         if (Array.isArray(images) && images.length > 0) {
           const updatedImages = images.map(img => {
-            if (img && !img.startsWith('http') && !img.startsWith('data:')) {
-              // Convert key to full URL if it's just a key
+            if (img && typeof img === 'string' && !img.startsWith('http') && !img.startsWith('data:')) {
+              // Convert key to full URL
               return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/sabjab_admin/${img}`;
             }
             return img;
           });
           
-          // Only update if something changed
           if (JSON.stringify(images) !== JSON.stringify(updatedImages)) {
-            console.log(`🖼️ Syncing Gallery URLs for Product...`);
+            console.log(`🖼️ Syncing Gallery URLs for Product (${updatedImages.length} images)...`);
             await context.record.update({ images: updatedImages });
             changed = true;
           }
         }
 
-        // Handle Product Video
+        // 3. Handle Product Video
         if (productVideoProvider.lastUploadedUrl && context.record && context.record.isValid()) {
-          console.log(`🎥 Syncing Cloudinary Video for Product: ${productVideoProvider.lastUploadedUrl}`);
+          console.log(`🎥 Syncing Video for Product: ${productVideoProvider.lastUploadedUrl}`);
           await context.record.update({ video: productVideoProvider.lastUploadedUrl });
           productVideoProvider.lastUploadedUrl = null;
           changed = true;
@@ -1372,7 +1371,7 @@ export async function buildAdminRouter(app) {
                 if (request.method === 'post' && request.payload) {
                   const id = context.record?.id?.() || `new_${Date.now()}`;
 
-                  // 1. Handle Product Variations
+                  // 1. Handle Product Variations (Manual because of nested structure)
                   const variations = request.payload.variations || [];
                   for (let i = 0; i < variations.length; i++) {
                     const uploadFile = variations[i].uploadImage;
@@ -1381,33 +1380,10 @@ export async function buildAdminRouter(app) {
                       const provider = new CloudinaryProvider();
                       const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
                       const result = await provider.upload(uploadFile, `${id}/${filename}`);
-                      // FIX: Map to result.secure_url, not the whole result object
                       request.payload[`variations.${i}.image`] = result.secure_url;
                     }
                   }
-
-                  // 2. Handle Additional Gallery Images
-                  const galleryFiles = request.payload.uploadGallery;
-                  if (galleryFiles) {
-                    const galleryArray = Array.isArray(galleryFiles) ? galleryFiles : [galleryFiles];
-                    const uploadedUrls = [];
-                    const provider = new CloudinaryProvider();
-                    console.log(`📸 [Gallery Upload] Processing ${galleryArray.length} images...`);
-                    
-                    for (let i = 0; i < galleryArray.length; i++) {
-                      const file = galleryArray[i];
-                      if (file && file.size > 0) {
-                        const filename = `gallery_${i}_${sanitizeFilename(file.name)}`;
-                        const res = await provider.upload(file, `${id}/${filename}`);
-                        uploadedUrls.push(res.secure_url);
-                      }
-                    }
-                    if (uploadedUrls.length > 0) {
-                      request.payload.images = uploadedUrls;
-                      // Remove to prevent uploadFeature from processing again
-                      delete request.payload.uploadGallery;
-                    }
-                  }
+                  // Note: Gallery (uploadGallery) is handled by uploadFeature + replaceKeyWithUrl after-hook
                 }
                 return request;
               }]
@@ -1418,7 +1394,7 @@ export async function buildAdminRouter(app) {
                 if (request.method === 'post' && request.payload) {
                   const id = context.record.id();
 
-                  // 1. Handle Product Variations
+                  // 1. Handle Product Variations (Manual because of nested structure)
                   const variations = request.payload.variations || [];
                   for (let i = 0; i < variations.length; i++) {
                     const uploadFile = variations[i].uploadImage;
@@ -1427,34 +1403,10 @@ export async function buildAdminRouter(app) {
                       const provider = new CloudinaryProvider();
                       const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
                       const result = await provider.upload(uploadFile, `${id}/${filename}`);
-                      // FIX: Map to result.secure_url, not the whole result object
                       request.payload[`variations.${i}.image`] = result.secure_url;
                     }
                   }
-
-                  // 2. Handle Additional Gallery Images
-                  const galleryFiles = request.payload.uploadGallery;
-                  if (galleryFiles) {
-                    const galleryArray = Array.isArray(galleryFiles) ? galleryFiles : [galleryFiles];
-                    const uploadedUrls = [];
-                    const provider = new CloudinaryProvider();
-                    console.log(`📸 [Gallery Upload] Processing ${galleryArray.length} images...`);
-                    
-                    for (let i = 0; i < galleryArray.length; i++) {
-                      const file = galleryArray[i];
-                      if (file && file.size > 0) {
-                        const filename = `gallery_${i}_${sanitizeFilename(file.name)}`;
-                        const res = await provider.upload(file, `${id}/${filename}`);
-                        uploadedUrls.push(res.secure_url);
-                      }
-                    }
-                    if (uploadedUrls.length > 0) {
-                      // For edit, we replace the whole gallery with new uploads if provided
-                      request.payload.images = uploadedUrls;
-                      // Remove to prevent uploadFeature from processing again
-                      delete request.payload.uploadGallery;
-                    }
-                  }
+                  // Note: Gallery (uploadGallery) is handled by uploadFeature + replaceKeyWithUrl after-hook
                 }
                 return request;
               }]
@@ -1573,7 +1525,7 @@ export async function buildAdminRouter(app) {
             },
             images: {
               label: '📸 Additional Gallery Images',
-              type: 'mixed',
+              type: 'string',
               description: 'Array of additional image URLs. Click "Upload Gallery" below to add.',
               isVisible: { list: false, filter: false, show: true, edit: true },
               isArray: true,
