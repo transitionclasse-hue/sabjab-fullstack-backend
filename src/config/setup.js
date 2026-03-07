@@ -1324,6 +1324,25 @@ export async function buildAdminRouter(app) {
           changed = true;
         }
 
+        // Handle Product Gallery (Array)
+        const images = context.record?.get('images');
+        if (Array.isArray(images) && images.length > 0) {
+          const updatedImages = images.map(img => {
+            if (img && !img.startsWith('http') && !img.startsWith('data:')) {
+              // Convert key to full URL if it's just a key
+              return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/sabjab_admin/${img}`;
+            }
+            return img;
+          });
+          
+          // Only update if something changed
+          if (JSON.stringify(images) !== JSON.stringify(updatedImages)) {
+            console.log(`🖼️ Syncing Gallery URLs for Product...`);
+            await context.record.update({ images: updatedImages });
+            changed = true;
+          }
+        }
+
         // Handle Product Video
         if (productVideoProvider.lastUploadedUrl && context.record && context.record.isValid()) {
           console.log(`🎥 Syncing Cloudinary Video for Product: ${productVideoProvider.lastUploadedUrl}`);
@@ -1385,6 +1404,8 @@ export async function buildAdminRouter(app) {
                     }
                     if (uploadedUrls.length > 0) {
                       request.payload.images = uploadedUrls;
+                      // Remove to prevent uploadFeature from processing again
+                      delete request.payload.uploadGallery;
                     }
                   }
                 }
@@ -1430,6 +1451,8 @@ export async function buildAdminRouter(app) {
                     if (uploadedUrls.length > 0) {
                       // For edit, we replace the whole gallery with new uploads if provided
                       request.payload.images = uploadedUrls;
+                      // Remove to prevent uploadFeature from processing again
+                      delete request.payload.uploadGallery;
                     }
                   }
                 }
@@ -1619,6 +1642,24 @@ export async function buildAdminRouter(app) {
             },
             validation: {
               mimeTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
+            },
+          }),
+          uploadFeature({
+            componentLoader,
+            provider: new CloudinaryProvider(),
+            multiple: true,
+            properties: {
+              key: 'images',
+              file: 'uploadGallery',
+              filePath: 'imagesFilePath',
+              filesToDelete: 'imagesFilesToDelete',
+              uploadPath: (record, filename) => {
+                const id = record.id() || `new_${Date.now()}`;
+                return `${id}/gallery_${sanitizeFilename(filename)}`;
+              },
+            },
+            validation: {
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
             },
           }),
         ],
