@@ -4,8 +4,12 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
   image: { type: String }, // Primary Image
+  imageFilePath: { type: String }, // AdminJS metadata
+  imageFilesToDelete: { type: [String] }, // AdminJS metadata
   images: [{ type: String }], // Additional Images
   video: { type: String }, // Product Video
+  videoFilePath: { type: String }, // AdminJS metadata
+  videoFilesToDelete: { type: [String] }, // AdminJS metadata
   price: { type: Number, required: true },
   discountPrice: { type: Number },
   quantity: { type: String, required: true },
@@ -21,10 +25,6 @@ const productSchema = new mongoose.Schema({
   superCategory: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "SuperCategory",
-  },
-  stock: {
-    type: Number,
-    default: 0,
   },
   isAvailable: {
     type: Boolean,

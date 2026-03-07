@@ -39,6 +39,8 @@ const homeComponentSchema = new mongoose.Schema({
     videoUrl: { // NEW: URL for video (MINI_VIDEO)
         type: String,
     },
+    videoFilePath: { type: String }, // AdminJS metadata
+    videoFilesToDelete: { type: [String] }, // AdminJS metadata
     videoThumbnail: { // NEW: Optional thumbnail for video
         type: String,
     },
@@ -68,6 +70,8 @@ const homeComponentSchema = new mongoose.Schema({
     bannerImage: {
         type: String,
     },
+    bannerFilePath: { type: String }, // AdminJS metadata
+    bannerFilesToDelete: { type: [String] }, // AdminJS metadata
     carouselImages: [
         {
             type: String,

@@ -9,10 +9,14 @@ const occasionSchema = new mongoose.Schema({
         type: String,
         default: "https://via.placeholder.com/60"
     },
+    iconFilePath: { type: String }, // AdminJS metadata
+    iconFilesToDelete: { type: [String] }, // AdminJS metadata
     banner: {
         type: String,
         default: "https://via.placeholder.com/400x140"
     },
+    bannerFilePath: { type: String }, // AdminJS metadata
+    bannerFilesToDelete: { type: [String] }, // AdminJS metadata
     products: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Product"

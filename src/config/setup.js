@@ -1255,6 +1255,8 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'bannerImage',
               file: 'uploadBanner',
+              filePath: 'bannerFilePath',
+              filesToDelete: 'bannerFilesToDelete',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
                 return `${id}/banner_${sanitizeFilename(filename)}`;
@@ -1270,6 +1272,8 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'videoUrl',
               file: 'uploadVideo',
+              filePath: 'videoFilePath',
+              filesToDelete: 'videoFilesToDelete',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
                 return `${id}/video_${sanitizeFilename(filename)}`;
@@ -1444,6 +1448,8 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'image',
               file: 'uploadFile',
+              filePath: 'imageFilePath',
+              filesToDelete: 'imageFilesToDelete',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
                 return `${id}/${sanitizeFilename(filename)}`;
@@ -1459,6 +1465,8 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'video',
               file: 'uploadVideo',
+              filePath: 'videoFilePath',
+              filesToDelete: 'videoFilesToDelete',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
                 return `${id}/video_${sanitizeFilename(filename)}`;
