@@ -147,6 +147,36 @@ const Dashboard = () => {
                 </PremiumCard>
             </Box>
 
+            {/* Alphabetical Catalog Search */}
+            <Box mb="xxxl">
+                <Text color="#0f172a" fontSize="24px" fontWeight="800" mb="xl">Browse Catalog by Alphabet</Text>
+                <Box bg="white" p="xl" borderRadius="24px" border="1px solid #f1f5f9" boxShadow="0 4px 6px -1px rgba(0,0,0,0.05)">
+                    <Box display="flex" flexWrap="wrap" style={{ gap: '8px' }}>
+                        {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => (
+                            <Button 
+                                key={letter} 
+                                size="sm" 
+                                variant="light" 
+                                as="a" 
+                                href={`/admin/resources/Product?letter=${letter}`}
+                                style={{ minWidth: '42px', height: '42px', borderRadius: '12px' }}
+                            >
+                                {letter}
+                            </Button>
+                        ))}
+                        <Button 
+                            size="sm" 
+                            variant="primary" 
+                            as="a" 
+                            href="/admin/resources/Product"
+                            style={{ padding: '0 20px', height: '42px', borderRadius: '12px' }}
+                        >
+                            VIEW ALL
+                        </Button>
+                    </Box>
+                </Box>
+            </Box>
+
             {/* Quick Actions & Maintenance */}
             <Box display="grid" gridTemplateColumns={["1fr", "1fr", "2fr 1fr"]} gridGap="40px">
                 <Box>

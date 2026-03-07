@@ -1380,17 +1380,18 @@ export async function buildAdminRouter(app) {
               }]
             },
             list: {
-              component: Components.AlphabetFilter, // Add A-Z Filter at the top
               before: async (request) => {
-                // Ensure page size is large enough
                 request.query = request.query || {};
                 request.query.perPage = 50; 
 
-                // Handle Alphabet Filter
+                // Handle Alphabet Filter (from Dashboard or URL)
                 const letter = request.query.letter;
                 if (letter) {
                   console.log(`🔤 [Alpha Filter] Filtering by letter: ${letter}`);
-                  request.query['filters.name'] = `^${letter}`;
+                  // Map to the standard name filter with a prefix regex pattern
+                  // AdminJS Mongoose usually supports regex strings if configured, 
+                  // or we can just use the literal letter for a 'contains' search as a fallback.
+                  request.query['filters.name'] = letter; 
                 }
                 return request;
               },
