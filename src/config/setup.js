@@ -1090,7 +1090,10 @@ export async function buildAdminRouter(app) {
                 { value: "TRIPLE_SECTION_GRID", label: "Premium Triple Section Pager (Side-by-Side)" },
                 { value: "CATEGORY_GRID_FOUR_IMAGES", label: "🖼️ Category 2x2 Image Grid (New)" },
                 { value: "PRODUCT_GRID_3X2", label: "📦 Elegant 3x2 Product Grid (New)" },
-                { value: "MINI_VIDEO", label: "🎥 Floating Mini Video Promotion (New)" }
+                { value: "MINI_VIDEO", label: "🎥 Floating Mini Video Promotion (New)" },
+                { value: "AISLE_2X2_GRID", label: "🛍️ Aisle 2x2 Product Grid (New)" },
+                { value: "PROMOTION_PAGINATION", label: "🏷️ Promo with 4-Dots Pagination (New)" },
+                { value: "GROCERY_LIST_2X3", label: "📋 Grocery List 2x3 Category Grid (New)" }
               ],
             },
             sections: {
@@ -1103,7 +1106,7 @@ export async function buildAdminRouter(app) {
               helpText: "Appears below the main title. Type 'Dove' to search anytime!",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1112,7 +1115,7 @@ export async function buildAdminRouter(app) {
               helpText: "Text for the action button.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1141,7 +1144,7 @@ export async function buildAdminRouter(app) {
               helpText: "Pick the sub-categories or categories to display in this strip.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_GRID_FOUR_IMAGES"];
+                const visibleTypes = ["CATEGORY_STRIP", "CATEGORY_GRID_FOUR_IMAGES", "AISLE_2X2_GRID", "GROCERY_LIST_2X3"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1151,7 +1154,7 @@ export async function buildAdminRouter(app) {
               remote: true, // Enables full database search
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1632,14 +1635,14 @@ export async function buildAdminRouter(app) {
             icon: "Layout",
           },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["_id", "name", "themeColor", "themeEffect", "searchBarStyle", "topBarStyle", "showBanner", "isDefault", "isChoice", "isActive"],
+          listProperties: ["_id", "name", "isSpecialOccasion", "themeColor", "themeEffect", "searchBarStyle", "topBarStyle", "showBanner", "isDefault", "isChoice", "isActive"],
           editProperties: [
             "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor", "darkThemeColor",
             "searchPlaceholders",
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
-            "showBanner", "isDefault", "isChoice", "isActive", "order", "components"
+            "showBanner", "isSuperOccasion", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           showProperties: [
             "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor", "darkThemeColor",
@@ -1647,7 +1650,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
-            "showBanner", "isDefault", "isChoice", "isActive", "order", "components"
+            "showBanner", "isSuperOccasion", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           actions: {
             new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
@@ -1719,6 +1722,7 @@ export async function buildAdminRouter(app) {
             'ultraConfig.navInactiveTextDarkColor': { label: "Ultra: Nav Inactive Text (Dark)", helpText: "Text color for inactive tabs in dark mode" },
             'ultraConfig.addressColor': { label: "Ultra: Address Text (Light)", helpText: "Color for the home screen address text" },
             'ultraConfig.addressDarkColor': { label: "Ultra: Address Text (Dark)", helpText: "Color for the home screen address text in dark mode" },
+            isSpecialOccasion: { label: "💎 Is Special Occasion?", helpText: "If ON, this occasion appears in the special box next to search, and is REMOVED from main lists." },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default. The 'All' occasion is typically the default." },
             components: {

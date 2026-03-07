@@ -26,7 +26,10 @@ const homeComponentSchema = new mongoose.Schema({
             "TRIPLE_SECTION_GRID", // ✅ NEW: Side-by-side collections
             "CATEGORY_GRID_FOUR_IMAGES", // ✅ NEW: Grid of categories showing 4 product images each
             "PRODUCT_GRID_3X2", // ✅ NEW: 3 columns, 2 rows of products
-            "MINI_VIDEO" // ✅ NEW: Floating mini video promotion
+            "MINI_VIDEO", // ✅ NEW: Floating mini video promotion
+            "AISLE_2X2_GRID", // ✅ NEW: 2by2 style from design
+            "PROMOTION_PAGINATION", // ✅ NEW: 4 pagination promo style
+            "GROCERY_LIST_2X3" // ✅ NEW: 2by3 category list style
         ],
         required: true,
     },

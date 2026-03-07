@@ -133,8 +133,8 @@ export const getHomeLayout = async (req, reply) => {
         const storeStatusDoc = await StoreStatus.findOne({ key: "primary" }).lean();
         const storeStatus = storeStatusDoc ? buildStoreStatusResponse(storeStatusDoc) : { status: "open", statusLabel: "Open", mode: "schedule" };
 
-        // 6. Fetch Dynamic Special Occasion
-        let specialOccasion = await Occasion.findOne({ isSpecialOccasion: true, isActive: true })
+        // 6. Fetch Dynamic Special Occasions
+        const specialOccasions = await Occasion.find({ isSpecialOccasion: true, isActive: true })
             .select("name icon banner themeColor darkThemeColor isChoice components products")
             .populate({
                 path: 'components',
@@ -147,6 +147,17 @@ export const getHomeLayout = async (req, reply) => {
             })
             .populate("products")
             .lean();
+
+        let specialOccasion = null;
+        if (specialOccasions.length > 0) {
+            // Use the first one as primary data source but update display label
+            specialOccasion = { ...specialOccasions[0] };
+            if (specialOccasions.length === 1) {
+                specialOccasion.displayName = specialOccasions[0].name;
+            } else {
+                specialOccasion.displayName = "Wow";
+            }
+        }
 
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
             if (comp.type === "BENTO_GRID") {
@@ -181,7 +192,7 @@ export const getHomeLayout = async (req, reply) => {
                         return sec;
                     }));
                 }
-            } else if (comp.type === "CATEGORY_GRID_FOUR_IMAGES") {
+            } else if (comp.type === "CATEGORY_GRID_FOUR_IMAGES" || comp.type === "GROCERY_LIST_2X3") {
                 if (comp.categories?.length > 0) {
                     comp.resolvedCategories = await Promise.all(comp.categories.map(async (catModel) => {
                         // catModel is a populated Category or SubCategory object
@@ -234,7 +245,7 @@ export const getHomeLayout = async (req, reply) => {
                     ...(isApprovedProduct(comp.bigDeal) ? [comp.bigDeal] : []),
                     ...filterApprovedProducts(comp.miniDeals || [])
                 ];
-            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "MINI_VIDEO"].includes(comp.type)) {
+            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "MINI_VIDEO", "AISLE_2X2_GRID", "PROMOTION_PAGINATION"].includes(comp.type)) {
                 comp.resolvedProducts = filterApprovedProducts(comp.products || []);
             }
             return comp;
@@ -244,7 +255,8 @@ export const getHomeLayout = async (req, reply) => {
         const isChoicePage = shouldFilterChoice || variation?.isChoice === true || variation?.name?.toLowerCase() === 'choice';
         const occasions = await Occasion.find({
             isActive: true,
-            isChoice: isChoicePage ? true : { $ne: true }
+            isChoice: isChoicePage ? true : { $ne: true },
+            isSpecialOccasion: { $ne: true } // 🔥 EXCLUDE from main list
         }).select("-components").sort({ order: 1 }).lean();
 
         // 7. Fetch the baseline categories and products that the app needs initially
