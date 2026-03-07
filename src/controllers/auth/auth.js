@@ -1,4 +1,4 @@
-import { Customer, DeliveryPartner, Admin } from '../../models/user.js';
+import { Customer, DeliveryPartner, Admin, Seller } from '../../models/user.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -9,16 +9,19 @@ dotenv.config();
 ===================================================== */
 
 const generateTokens = (user) => {
+  // Provision for Manager/Seller to stay logged in longer
+  const isPrivileged = user.role === 'Admin' || user.role === 'Seller';
+  
   const accessToken = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: '1d' }
+    { expiresIn: isPrivileged ? '30d' : '1d' } // 30 days for managers
   );
 
   const refreshToken = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: isPrivileged ? '365d' : '7d' } // 1 year refresh for managers
   );
 
   return { accessToken, refreshToken };
@@ -417,10 +420,12 @@ export const refreshToken = async (req, reply) => {
     // Verify Refresh Token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-    // Find User (Customer or DeliveryPartner)
+    // Find User (Customer, DeliveryPartner, Admin, or Seller)
     const user =
       (await Customer.findById(decoded.userId)) ||
-      (await DeliveryPartner.findById(decoded.userId));
+      (await DeliveryPartner.findById(decoded.userId)) ||
+      (await Admin.findById(decoded.userId)) ||
+      (await Seller.findById(decoded.userId));
 
     if (!user) {
       return reply.status(403).send({ message: "Invalid refresh token" });
