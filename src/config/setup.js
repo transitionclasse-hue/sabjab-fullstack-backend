@@ -1336,8 +1336,8 @@ export async function buildAdminRouter(app) {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "price", "stock", "quantity", "isAvailable", "image"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "uploadVariationGallery", "images", "variationGallery", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "variationGallery", "video", "variations"],
           actions: {
             new: { after: [replaceKeyWithUrl] },
             edit: { after: [replaceKeyWithUrl] },
@@ -1427,10 +1427,28 @@ export async function buildAdminRouter(app) {
               description: 'URL of the variation specific image'
             },
             images: {
-              label: 'Additional Images URLs',
+              label: '📸 Additional Gallery Images',
               type: 'mixed',
-              description: 'Array of additional image URLs. Format as strings.',
+              description: 'Array of additional image URLs. Click "Upload Gallery" below to add.',
+              isVisible: { list: false, filter: false, show: true, edit: true },
               isArray: true,
+            },
+            uploadGallery: {
+              label: "🖼️ Upload to Gallery",
+              type: "file",
+              helpText: "Select multiple images for the product gallery.",
+            },
+            variationGallery: {
+              label: '🎨 Variation Assets Library',
+              type: 'mixed',
+              description: 'Upload all variation images here, then copy links to the variations below.',
+              isVisible: { list: false, filter: false, show: true, edit: true },
+              isArray: true,
+            },
+            uploadVariationGallery: {
+              label: "🎭 Upload Variation Assets",
+              type: "file",
+              helpText: "Select multiple images for variations. Use these links in the table below.",
             },
             video: {
               label: 'Product Video URL',
@@ -1490,6 +1508,42 @@ export async function buildAdminRouter(app) {
             },
             validation: {
               mimeTypes: ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
+            },
+          }),
+          uploadFeature({
+            componentLoader,
+            provider: new CloudinaryProvider(),
+            multiple: true,
+            properties: {
+              key: 'images',
+              file: 'uploadGallery',
+              filePath: 'imagesFilePath',
+              filesToDelete: 'imagesFilesToDelete',
+              uploadPath: (record, filename) => {
+                const id = record.id() || `new_${Date.now()}`;
+                return `${id}/gallery_${sanitizeFilename(filename)}`;
+              },
+            },
+            validation: {
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
+            },
+          }),
+          uploadFeature({
+            componentLoader,
+            provider: new CloudinaryProvider(),
+            multiple: true,
+            properties: {
+              key: 'variationGallery',
+              file: 'uploadVariationGallery',
+              filePath: 'variationGalleryFilePath',
+              filesToDelete: 'variationGalleryFilesToDelete',
+              uploadPath: (record, filename) => {
+                const id = record.id() || `new_${Date.now()}`;
+                return `${id}/vars_${sanitizeFilename(filename)}`;
+              },
+            },
+            validation: {
+              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'],
             },
           }),
         ],

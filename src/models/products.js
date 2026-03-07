@@ -6,10 +6,15 @@ const productSchema = new mongoose.Schema({
   image: { type: String }, // Primary Image
   imageFilePath: { type: String }, // AdminJS metadata
   imageFilesToDelete: { type: [String] }, // AdminJS metadata
-  images: [{ type: String }], // Additional Images
+  images: [{ type: String }], // Additional Images (Gallery)
+  imagesFilePath: { type: [String] }, // AdminJS metadata
+  imagesFilesToDelete: { type: [String] }, // AdminJS metadata
+  
+  variationGallery: [{ type: String }], // Temp storage for variation assets to copy links from
+  variationGalleryFilePath: { type: [String] }, // AdminJS metadata
+  variationGalleryFilesToDelete: { type: [String] }, // AdminJS metadata
+
   video: { type: String }, // Product Video
-  videoFilePath: { type: String }, // AdminJS metadata
-  videoFilesToDelete: { type: [String] }, // AdminJS metadata
   price: { type: Number, required: true },
   discountPrice: { type: Number },
   quantity: { type: String, required: true },
