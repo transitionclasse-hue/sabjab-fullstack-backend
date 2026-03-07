@@ -45,6 +45,7 @@ const Components = {
   AssignDriver: componentLoader.add('AssignDriverComponent', path.join(__dirname, '../components/AssignDriver.jsx')),
   OrderStatus: componentLoader.add('OrderStatusBadge', path.join(__dirname, '../components/OrderStatusBadge.jsx')),
   DriverStatus: componentLoader.add('DriverStatusBadge', path.join(__dirname, '../components/DriverStatusBadge.jsx')),
+  ImageThumbnail: componentLoader.add('ImageThumbnail', path.join(__dirname, '../components/ImageThumbnail.jsx')),
   ComponentGuide: componentLoader.add('ComponentGuide', path.join(__dirname, '../components/ComponentGuide.jsx')),
 };
 
@@ -128,6 +129,7 @@ const afterEditOrderHook = async (originalResponse, request, context, app) => {
 
   if (changed) {
     await dbOrder.save();
+    context.record.params.status = dbOrder.status; // Sync for AdminJS response
   }
 
   const populatedOrder = await hydrateOrderForTracking(orderId);
@@ -299,7 +301,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "Emergency Controls", icon: "ShieldAlert" },
+          navigation: { name: "System Config", icon: "Settings" },
           label: "Global Settings",
           listProperties: ["key", "value", "description"],
           editProperties: ["key", "value", "description"],
@@ -319,7 +321,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "App Settings", icon: "Settings" },
+          navigation: { name: "System Config", icon: "Settings" },
           label: "Profile Page Controls",
           listProperties: ["_id", "isActive", "isPreferencesVisible", "isActivityVisible"],
           editProperties: [
@@ -363,7 +365,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "User Management", icon: "Users" },
+          navigation: { name: "Users & Partners", icon: "Users" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "phone", "isActivated", "notificationsEnabled", "sensitiveMode"],
           actions: {
@@ -420,12 +422,12 @@ export async function buildAdminRouter(app) {
     }
 
 
-    const inventoryModels = ["SuperCategory", "Category", "SubCategory"];
+    const inventoryModels = ["SuperCategory"];
     if (inventoryModels.includes(model.modelName)) {
       return {
         resource: model,
         options: {
-          navigation: { name: "Inventory & Catalog", icon: "Archive" },
+          navigation: { name: "Inventory Catalog", icon: "Layers" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "isChoice", "createdAt"],
           editProperties: model.modelName === "SuperCategory"
@@ -919,6 +921,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
+          navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
           editProperties: ["name", "superCategory", "uploadImage", "isSensitive", "canEarnCoins"],
@@ -941,6 +944,10 @@ export async function buildAdminRouter(app) {
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
+              components: {
+                list: Components.ImageThumbnail,
+                show: Components.ImageThumbnail,
+              }
             },
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
@@ -984,6 +991,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
+          navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           // Show "SubCatName (CategoryName)" in reference dropdowns
           recordRepresentation: (record) => {
@@ -1028,6 +1036,10 @@ export async function buildAdminRouter(app) {
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
+              components: {
+                list: Components.ImageThumbnail,
+                show: Components.ImageThumbnail,
+              }
             },
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
@@ -1321,7 +1333,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "Inventory & Catalog", icon: "Archive" },
+          navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "price", "stock", "isAvailable", "isChoice", "isSensitive", "quantity", "superCategory", "category", "subCategory", "image"],
           editProperties: ["name", "description", "uploadFile", "uploadVideo", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
@@ -1433,6 +1445,10 @@ export async function buildAdminRouter(app) {
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
+              components: {
+                list: Components.ImageThumbnail,
+                show: Components.ImageThumbnail,
+              }
             },
             uploadFile: {
               label: "Click to Upload Image to Cloudinary",
@@ -1989,19 +2005,19 @@ export async function buildAdminRouter(app) {
       logo: "https://res.cloudinary.com/dkihsmzv8/image/upload/v1772798078/admin_branding/admin_logo_new.png",
       theme: {
         colors: {
-          primary100: "#22c55e", // Professional Emerald Green
-          primary80: "#16a34a",
-          primary60: "#15803d",
-          accent: "#1e293b",     // Deep Navy Accent
-          love: "#e11d48",       // Warning/Error Red
-          grey100: "#f9fafb",    // Page Background
+          primary100: "#10b981", // More vibrant Emerald
+          primary80: "#059669",
+          primary60: "#047857",
+          accent: "#0f172a",     // Slate-900 for serious business feel
+          love: "#fb7185",       // Rose Red
+          grey100: "#f8fafc",    // Slate-50 Page Background
           grey80: "#ffffff",     // Card background
-          grey60: "#d1d5db",     // Table header
-          grey40: "#e5e7eb",     // Borders
-          grey20: "#6b7280",     // Muted text
+          grey60: "#cbd5e1",     // Slate-300
+          grey40: "#e2e8f0",     // Borders
+          grey20: "#64748b",     // Muted text
           filterBg: "#ffffff",   // Filter panel
           white: "#ffffff",      // Pure white
-          black: "#111827",      // Deep Charcoal Text
+          black: "#020617",      // Deepest Slate
         },
       },
     },
