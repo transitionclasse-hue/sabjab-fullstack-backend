@@ -1642,7 +1642,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
-            "showBanner", "isSuperOccasion", "isDefault", "isChoice", "isActive", "order", "components"
+            "showBanner", "isSpecialOccasion", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           showProperties: [
             "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor", "darkThemeColor",
@@ -1650,7 +1650,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
-            "showBanner", "isSuperOccasion", "isDefault", "isChoice", "isActive", "order", "components"
+            "showBanner", "isSpecialOccasion", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           actions: {
             new: { after: [replaceOccasionIconWithUrl, replaceOccasionBannerWithUrl] },
