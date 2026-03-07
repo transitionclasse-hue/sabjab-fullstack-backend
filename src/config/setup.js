@@ -1439,7 +1439,7 @@ export async function buildAdminRouter(app) {
               isRequired: true,
             },
             description: {
-              type: "richtext",
+              type: "textarea",
               label: "Product Description",
             },
             price: {
