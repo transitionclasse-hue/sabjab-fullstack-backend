@@ -1316,22 +1316,11 @@ export async function buildAdminRouter(app) {
         }
 
         // 2. Handle Product Gallery (Array)
+        // We now rely on the frontend's resolveImageUrl to handle both keys and URLs.
+        // This avoids "baking in" potentially broken URLs (missing versions) into the database.
         const rawImages = context.record?.get('images');
         if (rawImages) {
-          const images = Array.isArray(rawImages) ? rawImages : [rawImages];
-          const updatedImages = images.map(img => {
-            if (img && typeof img === 'string' && !img.startsWith('http') && !img.startsWith('data:')) {
-              // Convert key to full URL
-              return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/sabjab_admin/${img}`;
-            }
-            return img;
-          }).filter(Boolean);
-          
-          if (updatedImages.length > 0 && JSON.stringify(images) !== JSON.stringify(updatedImages)) {
-            console.log(`🖼️ [Gallery Sync] Converting ${updatedImages.length} keys to full URLs...`);
-            await context.record.update({ images: updatedImages });
-            changed = true;
-          }
+           console.log(`🖼️ [Gallery Sync] Found ${Array.isArray(rawImages) ? rawImages.length : 1} items in gallery. Relying on frontend resolution.`);
         }
 
         // 3. Handle Product Video
