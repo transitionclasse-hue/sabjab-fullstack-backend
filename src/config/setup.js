@@ -1106,7 +1106,7 @@ export async function buildAdminRouter(app) {
               helpText: "Appears below the main title. Type 'Dove' to search anytime!",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3", "MINI_VIDEO"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1172,7 +1172,8 @@ export async function buildAdminRouter(app) {
               }
             },
             carouselImages: {
-              label: "Carousel URLs (Comma Separated)",
+              label: "Carousel Images (Array)",
+              isArray: true, // Critical Fix: Matches Mongoose [String]
               helpText: "Paste image URLs. Only for Slider type.",
               isVisible: (context) => Boolean(context.record?.params?.type === "IMAGE_CAROUSEL"),
             },
