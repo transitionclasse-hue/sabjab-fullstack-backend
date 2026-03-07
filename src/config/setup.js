@@ -923,7 +923,7 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
+          listProperties: ["name", "superCategory", "image"],
           editProperties: ["name", "superCategory", "uploadImage", "isSensitive", "canEarnCoins"],
           showProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
           actions: {
@@ -1335,7 +1335,7 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "isAvailable", "isChoice", "isSensitive", "quantity", "superCategory", "category", "subCategory", "image"],
+          listProperties: ["name", "price", "stock", "quantity", "isAvailable", "image"],
           editProperties: ["name", "description", "uploadFile", "uploadVideo", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
           showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
           actions: {

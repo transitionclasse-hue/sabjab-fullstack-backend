@@ -146,6 +146,34 @@ thead th {
   border-bottom: 2px solid var(--border-color) !important;
 }
 
+/* 3. COLUMN WIDTH REFINEMENTS */
+
+/* Ensure "Name" column in list is wide enough to avoid broken text */
+table th[data-property-name="name"],
+table td[data-property-name="name"] {
+  min-width: 280px !important;
+  max-width: 450px !important;
+  white-space: normal !important; /* Allow wrapping but not breaking mid-word if possible */
+  line-height: 1.5 !important;
+  font-weight: 600 !important;
+}
+
+/* Ensure Price and Stock columns are compact but readable */
+table th[data-property-name="price"],
+table td[data-property-name="price"],
+table th[data-property-name="stock"],
+table td[data-property-name="stock"] {
+  min-width: 80px !important;
+  text-align: center !important;
+}
+
+/* Ensure Image column is centered and compact */
+table th[data-property-name="image"],
+table td[data-property-name="image"] {
+  width: 80px !important;
+  text-align: center !important;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
