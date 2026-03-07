@@ -47,6 +47,7 @@ const Components = {
   DriverStatus: componentLoader.add('DriverStatusBadge', path.join(__dirname, '../components/DriverStatusBadge.jsx')),
   ImageThumbnail: componentLoader.add('ImageThumbnail', path.join(__dirname, '../components/ImageThumbnail.jsx')),
   ComponentGuide: componentLoader.add('ComponentGuide', path.join(__dirname, '../components/ComponentGuide.jsx')),
+  AlphabetFilter: componentLoader.add('AlphabetFilter', path.join(__dirname, '../components/AlphabetFilter.jsx')),
 };
 
 const hydrateOrderForTracking = async (orderId) => {
@@ -1335,7 +1336,6 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          perPage: 50, // Standardized to 50 to match global settings
           listProperties: ["name", "price", "stock", "quantity", "isAvailable", "image"],
           editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
           showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
@@ -1380,6 +1380,20 @@ export async function buildAdminRouter(app) {
               }]
             },
             list: {
+              component: Components.AlphabetFilter, // Add A-Z Filter at the top
+              before: async (request) => {
+                // Ensure page size is large enough
+                request.query = request.query || {};
+                request.query.perPage = 50; 
+
+                // Handle Alphabet Filter
+                const letter = request.query.letter;
+                if (letter) {
+                  console.log(`🔤 [Alpha Filter] Filtering by letter: ${letter}`);
+                  request.query['filters.name'] = `^${letter}`;
+                }
+                return request;
+              },
               after: async (response) => {
                 console.log(`📊 [Pagination Debug] Total Records: ${response.meta.total}, Current Page Records: ${response.records.length}`);
                 return response;
