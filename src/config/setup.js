@@ -45,7 +45,6 @@ const Components = {
   AssignDriver: componentLoader.add('AssignDriverComponent', path.join(__dirname, '../components/AssignDriver.jsx')),
   OrderStatus: componentLoader.add('OrderStatusBadge', path.join(__dirname, '../components/OrderStatusBadge.jsx')),
   DriverStatus: componentLoader.add('DriverStatusBadge', path.join(__dirname, '../components/DriverStatusBadge.jsx')),
-  ImageThumbnail: componentLoader.add('ImageThumbnail', path.join(__dirname, '../components/ImageThumbnail.jsx')),
   ComponentGuide: componentLoader.add('ComponentGuide', path.join(__dirname, '../components/ComponentGuide.jsx')),
 };
 
@@ -944,10 +943,6 @@ export async function buildAdminRouter(app) {
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
-              components: {
-                list: Components.ImageThumbnail,
-                show: Components.ImageThumbnail,
-              }
             },
             imageFilePath: { isVisible: false }, // AdminJS metadata
             imageFilesToDelete: { isVisible: false }, // AdminJS metadata
@@ -1040,10 +1035,6 @@ export async function buildAdminRouter(app) {
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
-              components: {
-                list: Components.ImageThumbnail,
-                show: Components.ImageThumbnail,
-              }
             },
             imageFilePath: { isVisible: false }, // AdminJS metadata
             imageFilesToDelete: { isVisible: false }, // AdminJS metadata
@@ -1550,10 +1541,6 @@ export async function buildAdminRouter(app) {
             image: {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
-              components: {
-                list: Components.ImageThumbnail,
-                show: Components.ImageThumbnail,
-              }
             },
             uploadFile: {
               label: "Click to Upload Image to Cloudinary",
