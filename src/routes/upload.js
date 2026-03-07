@@ -2,6 +2,8 @@ import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
 dotenv.config();
 
+import fastifyMultipart from '@fastify/multipart';
+
 // Ensure configuration is applied in this module too
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -10,6 +12,14 @@ cloudinary.config({
 });
 
 export const uploadRoutes = async (fastify, options) => {
+    // Register multipart locally to avoid conflicts with global AdminJS config
+    await fastify.register(fastifyMultipart, {
+        attachFieldsToBody: true,
+        limits: {
+            fileSize: 50 * 1024 * 1024, // 50MB
+        }
+    });
+
     fastify.post('/upload', async (request, reply) => {
         try {
             console.log("📦 Incoming Upload. Headers:", JSON.stringify(request.headers));
