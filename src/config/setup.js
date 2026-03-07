@@ -906,12 +906,12 @@ export async function buildAdminRouter(app) {
     }
 
     if (model.modelName === "Category") {
-      const categoryProvider = new CloudinaryProvider();
-      const replaceCategoryKeyWithUrl = async (response, request, context) => {
-        if (categoryProvider.lastUploadedUrl && context.record && context.record.isValid()) {
-          console.log('🔗 Replacing Category image key with full URL:', categoryProvider.lastUploadedUrl);
-          await context.record.update({ image: categoryProvider.lastUploadedUrl });
-          categoryProvider.lastUploadedUrl = null;
+      const catProvider = new CloudinaryProvider();
+      const replaceCatKeyWithUrl = async (response, request, context) => {
+        if (catProvider.lastUploadedUrl && context.record && context.record.isValid()) {
+          console.log('🔗 Replacing category image key with full URL:', catProvider.lastUploadedUrl);
+          await context.record.update({ image: catProvider.lastUploadedUrl });
+          catProvider.lastUploadedUrl = null;
           return { ...response, record: context.record.toJSON(context.currentAdmin) };
         }
         return response;
@@ -920,32 +920,16 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "Inventory Catalog", icon: "Archive" },
+          navigation: { name: "Inventory Catalog", icon: "Layers" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "superCategory", "image"],
-          editProperties: ["name", "superCategory", "uploadImage", "isSensitive", "canEarnCoins"],
-          showProperties: ["name", "superCategory", "image", "isSensitive", "canEarnCoins"],
+          listProperties: ["name", "isChoice", "image"],
+          editProperties: ["name", "image", "uploadImage", "isChoice", "isSensitive", "canEarnCoins"],
           actions: {
-            new: { after: [replaceCategoryKeyWithUrl] },
-            edit: { after: [replaceCategoryKeyWithUrl] },
+            new: { after: [replaceCatKeyWithUrl] },
+            edit: { after: [replaceCatKeyWithUrl] },
           },
           properties: {
-            name: {
-              label: "Category Name",
-              isRequired: true,
-            },
-            superCategory: {
-              label: "Super Category",
-              type: "reference",
-              reference: "SuperCategory",
-              isRequired: true,
-            },
-            image: {
-              isVisible: { list: true, filter: false, show: true, edit: false },
-              isRequired: false,
-            },
-            imageFilePath: { isVisible: false }, // AdminJS metadata
-            imageFilesToDelete: { isVisible: false }, // AdminJS metadata
+            image: { isVisible: { list: true, filter: false, show: true, edit: false } },
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
               type: "file",
@@ -956,20 +940,15 @@ export async function buildAdminRouter(app) {
         features: [
           uploadFeature({
             componentLoader,
-            provider: categoryProvider,
+            provider: catProvider,
             properties: {
               key: 'image',
               file: 'uploadImage',
               filePath: 'imageFilePath',
               filesToDelete: 'imageFilesToDelete',
-              uploadPath: (record, filename) => {
-                const id = record.id() || `new_${Date.now()}`;
-                return `${id}/${sanitizeFilename(filename)}`;
-              },
+              uploadPath: (record, filename) => `cat_${record.id() || Date.now()}/${sanitizeFilename(filename)}`,
             },
-            validation: {
-              mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'],
-            },
+            validation: { mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'] },
           }),
         ],
       };
@@ -979,7 +958,7 @@ export async function buildAdminRouter(app) {
       const subCatProvider = new CloudinaryProvider();
       const replaceSubCatKeyWithUrl = async (response, request, context) => {
         if (subCatProvider.lastUploadedUrl && context.record && context.record.isValid()) {
-          console.log('🔗 Replacing SubCategory image key with full URL:', subCatProvider.lastUploadedUrl);
+          console.log('🔗 Replacing sub-category image key with full URL:', subCatProvider.lastUploadedUrl);
           await context.record.update({ image: subCatProvider.lastUploadedUrl });
           subCatProvider.lastUploadedUrl = null;
           return { ...response, record: context.record.toJSON(context.currentAdmin) };
@@ -990,7 +969,7 @@ export async function buildAdminRouter(app) {
       return {
         resource: model,
         options: {
-          navigation: { name: "Inventory Catalog", icon: "Archive" },
+          navigation: { name: "Inventory Catalog", icon: "Layers" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           // Show "SubCatName (CategoryName)" in reference dropdowns
           recordRepresentation: (record) => {
@@ -999,27 +978,9 @@ export async function buildAdminRouter(app) {
           },
           listProperties: ["name", "category", "image"],
           editProperties: ["name", "category", "uploadImage"],
-          showProperties: ["name", "category", "image"],
           actions: {
             new: { after: [replaceSubCatKeyWithUrl] },
             edit: { after: [replaceSubCatKeyWithUrl] },
-            // Customize search to populate category for display in dropdowns
-            search: {
-              after: async (response) => {
-                if (response.records) {
-                  // The category should already be populated by AdminJS
-                  // Just update titles to include category name
-                  response.records = response.records.map(record => {
-                    const catName = record.populated?.category?.params?.name || '';
-                    if (catName) {
-                      record.title = `${record.title} (${catName})`;
-                    }
-                    return record;
-                  });
-                }
-                return response;
-              },
-            },
           },
           properties: {
             name: {
@@ -1036,8 +997,8 @@ export async function buildAdminRouter(app) {
               isVisible: { list: true, filter: false, show: true, edit: false },
               isRequired: false,
             },
-            imageFilePath: { isVisible: false }, // AdminJS metadata
-            imageFilesToDelete: { isVisible: false }, // AdminJS metadata
+            imageFilePath: { isVisible: false },
+            imageFilesToDelete: { isVisible: false },
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
               type: "file",
@@ -1054,10 +1015,7 @@ export async function buildAdminRouter(app) {
               file: 'uploadImage',
               filePath: 'imageFilePath',
               filesToDelete: 'imageFilesToDelete',
-              uploadPath: (record, filename) => {
-                const id = record.id() || `new_${Date.now()}`;
-                return `${id}/${sanitizeFilename(filename)}`;
-              },
+              uploadPath: (record, filename) => `subcat_${record.id() || Date.now()}/${sanitizeFilename(filename)}`,
             },
             validation: {
               mimeTypes: ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif', 'image/svg+xml'],
@@ -1420,7 +1378,7 @@ export async function buildAdminRouter(app) {
           },
           properties: {
             name: {
-              label: "Product Name (V-TEST)",
+              label: "Product Name",
               isRequired: true,
             },
             description: {

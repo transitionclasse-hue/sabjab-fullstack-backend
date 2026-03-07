@@ -58,27 +58,50 @@ const Dashboard = () => {
         totalOrders: 0,
         activeCustomers: 0,
         lowStockAlerts: 0,
-        pendingOrders: 0
+        pendingOrders: 0,
+        totalRevenue: 0
     });
+    const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchMetrics = async () => {
             try {
                 const api = new ApiClient();
-                const [ordersRes, pendingOrdersRes, customersRes, lowStockRes] = await Promise.all([
+                // We use the configured resource IDs. 
+                // Note: 'Order' might be registered multiple times, but AdminJS usually keeps the last one or the one with specific ID.
+                // In our setup, 'Order' is the primary one, and 'OrderAssignment' is the secondary.
+                
+                const [ordersRes, pendingOrdersRes, customersRes, lowStockRes, recentOrdersRes] = await Promise.all([
                     api.resourceAction({ resourceId: 'Order', actionName: 'list', params: { perPage: 1 } }),
                     api.resourceAction({ resourceId: 'Order', actionName: 'list', params: { 'filters.status': 'available', perPage: 1 } }),
                     api.resourceAction({ resourceId: 'Customer', actionName: 'list', params: { perPage: 1 } }),
-                    api.resourceAction({ resourceId: 'Product', actionName: 'list', params: { 'filters.stock~~lte': 10, perPage: 1 } })
+                    api.resourceAction({ resourceId: 'Product', actionName: 'list', params: { 'filters.stock~~lte': 10, perPage: 1 } }),
+                    api.resourceAction({ resourceId: 'Order', actionName: 'list', params: { perPage: 5, sortBy: 'createdAt', direction: 'desc' } })
                 ]);
 
+                // Helper to extract total from AdminJS response structure
+                const getTotal = (res) => {
+                    if (res?.data?.meta?.total !== undefined) return res.data.meta.total;
+                    if (res?.meta?.total !== undefined) return res.meta.total;
+                    return 0;
+                };
+
+                const getRecords = (res) => {
+                    if (res?.data?.records) return res.data.records;
+                    if (res?.records) return res.records;
+                    return [];
+                };
+
                 setStats({
-                    totalOrders: ordersRes?.data?.meta?.total || 0,
-                    pendingOrders: pendingOrdersRes?.data?.meta?.total || 0,
-                    activeCustomers: customersRes?.data?.meta?.total || 0,
-                    lowStockAlerts: lowStockRes?.data?.meta?.total || 0
+                    totalOrders: getTotal(ordersRes),
+                    pendingOrders: getTotal(pendingOrdersRes),
+                    activeCustomers: getTotal(customersRes),
+                    lowStockAlerts: getTotal(lowStockRes)
                 });
+
+                setRecentOrders(getRecords(recentOrdersRes));
+
             } catch (error) {
                 console.error("Dashboard fetch error:", error);
             } finally {
@@ -102,12 +125,12 @@ const Dashboard = () => {
             <Box mb="xxxl" display="flex" justifyContent="space-between" alignItems="flex-end">
                 <Box>
                     <Text color="#0f172a" fontSize="40px" fontWeight="900" letterSpacing="-0.02em">Store Insights</Text>
-                    <Text color="#64748b" mt="xs" fontSize="18px">Welcome back. Here's what's happening today at SabJab.</Text>
+                    <Text color="#64748b" mt="xs" fontSize="18px">Real-time performance from your SabJab database.</Text>
                 </Box>
                 <Box display={['none', 'block']}>
                    <Button variant="primary" as="a" href="/admin/resources/Product/actions/new">
                         <Icon icon="Plus" mr="sm" />
-                        Quick Add Product
+                        Add New Item
                    </Button>
                 </Box>
             </Box>
@@ -115,26 +138,26 @@ const Dashboard = () => {
             {/* Main Stats Grid */}
             <Box display="grid" gridTemplateColumns={["1fr", "1fr 1fr", "1fr 1fr 1fr 1fr"]} gridGap="32px" mb="xxxl">
                 <PremiumCard>
-                    <StatLabel>Live Success</StatLabel>
+                    <StatLabel>Growth Metrics</StatLabel>
                     <StatValue>{stats.totalOrders}</StatValue>
                     <Box mt="md" display="flex" alignItems="center">
-                        <Text color="#10b981" fontWeight="bold" variant="sm">Total Orders</Text>
+                        <Text color="#10b981" fontWeight="bold" variant="sm">Total Orders Placed</Text>
                     </Box>
                 </PremiumCard>
 
                 <PremiumCard>
-                    <StatLabel>Community</StatLabel>
+                    <StatLabel>Customer Base</StatLabel>
                     <StatValue>{stats.activeCustomers}</StatValue>
                     <Box mt="md" display="flex" alignItems="center">
-                        <Text color="#10b981" fontWeight="bold" variant="sm">Active Users</Text>
+                        <Text color="#3b82f6" fontWeight="bold" variant="sm">Registered Users</Text>
                     </Box>
                 </PremiumCard>
 
                 <PremiumCard borderLeft="4px solid #facc15">
-                    <StatLabel>Ops Queue</StatLabel>
+                    <StatLabel>Pending Ops</StatLabel>
                     <StatValue color={stats.pendingOrders > 0 ? "#854d0e" : "#10b981"}>{stats.pendingOrders}</StatValue>
                     <Box mt="md" display="flex" alignItems="center">
-                        <Text color="#854d0e" fontWeight="bold" variant="sm">Pending Orders</Text>
+                        <Text color="#854d0e" fontWeight="bold" variant="sm">Unassigned Orders</Text>
                     </Box>
                 </PremiumCard>
 
@@ -142,14 +165,14 @@ const Dashboard = () => {
                     <StatLabel>Inventory Help</StatLabel>
                     <StatValue color={stats.lowStockAlerts > 0 ? "#991b1b" : "#10b981"}>{stats.lowStockAlerts}</StatValue>
                     <Box mt="md" display="flex" alignItems="center">
-                        <Text color="#991b1b" fontWeight="bold" variant="sm">Stock Alerts</Text>
+                        <Text color="#991b1b" fontWeight="bold" variant="sm">Low Stock Alerts</Text>
                     </Box>
                 </PremiumCard>
             </Box>
 
             {/* Alphabetical Catalog Search */}
             <Box mb="xxxl">
-                <Text color="#0f172a" fontSize="24px" fontWeight="800" mb="xl">Browse Catalog by Alphabet</Text>
+                <Text color="#0f172a" fontSize="24px" fontWeight="800" mb="xl">Browse Products by Alphabet</Text>
                 <Box bg="white" p="xl" borderRadius="24px" border="1px solid #f1f5f9" boxShadow="0 4px 6px -1px rgba(0,0,0,0.05)">
                     <Box display="flex" flexWrap="wrap" style={{ gap: '8px' }}>
                         {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(letter => (
@@ -171,24 +194,63 @@ const Dashboard = () => {
                             href="/admin/resources/Product"
                             style={{ padding: '0 20px', height: '42px', borderRadius: '12px' }}
                         >
-                            VIEW ALL
+                            VIEW ALL PRODUCTS
                         </Button>
                     </Box>
                 </Box>
             </Box>
 
+            {/* Recent Orders Table */}
+            {recentOrders.length > 0 && (
+                <Box mb="xxxl">
+                    <Text color="#0f172a" fontSize="24px" fontWeight="800" mb="xl">Live Activity Feed</Text>
+                    <Box bg="white" p="xl" borderRadius="24px" border="1px solid #f1f5f9">
+                        <Table width="100%">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Order ID</TableCell>
+                                    <TableCell>Price</TableCell>
+                                    <TableCell>Status</TableCell>
+                                    <TableCell>Date</TableCell>
+                                    <TableCell></TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {recentOrders.map(order => (
+                                    <TableRow key={order.id}>
+                                        <TableCell><Text fontWeight="bold">{order.params.orderId || order.id}</Text></TableCell>
+                                        <TableCell>₹{order.params.totalPrice}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={order.params.status === 'delivered' ? 'success' : 'info'}>
+                                                {order.params.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>{new Date(order.params.createdAt).toLocaleDateString()}</TableCell>
+                                        <TableCell>
+                                            <Button size="sm" as="a" href={`/admin/resources/Order/records/${order.id}/show`}>
+                                                View
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Box>
+                </Box>
+            )}
+
             {/* Quick Actions & Maintenance */}
             <Box display="grid" gridTemplateColumns={["1fr", "1fr", "2fr 1fr"]} gridGap="40px">
                 <Box>
-                    <Text color="#0f172a" fontSize="24px" fontWeight="800" mb="xl">Quick Management Console</Text>
+                    <Text color="#0f172a" fontSize="24px" fontWeight="800" mb="xl">Resource Shortcuts</Text>
                     <Box display="grid" gridTemplateColumns={["1fr", "1fr 1fr"]} gridGap="16px">
                         <ActionButton as="a" href="/admin/resources/Order">
                             <Box bg="rgba(16, 185, 129, 0.1)" p="md" borderRadius="12px" mr="md">
                                 <Icon icon="ShoppingCart" color="#10b981" />
                             </Box>
                             <Box>
-                                <Text fontWeight="bold">Orders Console</Text>
-                                <Text variant="sm" color="#64748b">Manage live delivery queue</Text>
+                                <Text fontWeight="bold">Orders Queue</Text>
+                                <Text variant="sm" color="#64748b">Live fulfillment center</Text>
                             </Box>
                         </ActionButton>
                         
@@ -197,8 +259,8 @@ const Dashboard = () => {
                                 <Icon icon="Package" color="#3b82f6" />
                             </Box>
                             <Box>
-                                <Text fontWeight="bold">Catalog Manager</Text>
-                                <Text variant="sm" color="#64748b">Update items and stock</Text>
+                                <Text fontWeight="bold">Inventory Manager</Text>
+                                <Text variant="sm" color="#64748b">Update items and pricing</Text>
                             </Box>
                         </ActionButton>
 
@@ -207,18 +269,18 @@ const Dashboard = () => {
                                 <Icon icon="Tag" color="#f43f5e" />
                             </Box>
                             <Box>
-                                <Text fontWeight="bold">Marketing Hub</Text>
-                                <Text variant="sm" color="#64748b">Coupons and deals</Text>
+                                <Text fontWeight="bold">Campaign Hub</Text>
+                                <Text variant="sm" color="#64748b">Marketing & Discounts</Text>
                             </Box>
                         </ActionButton>
 
-                        <ActionButton as="a" href="/admin/resources/StoreStatus">
+                        <ActionButton as="a" href="/admin/resources/Customer">
                             <Box bg="rgba(107, 114, 128, 0.1)" p="md" borderRadius="12px" mr="md">
-                                <Icon icon="Settings" color="#6b7280" />
+                                <Icon icon="Users" color="#6b7280" />
                             </Box>
                             <Box>
-                                <Text fontWeight="bold">System Status</Text>
-                                <Text variant="sm" color="#64748b">Store timings & config</Text>
+                                <Text fontWeight="bold">User Directory</Text>
+                                <Text variant="sm" color="#64748b">Database of all users</Text>
                             </Box>
                         </ActionButton>
                     </Box>
@@ -226,12 +288,12 @@ const Dashboard = () => {
 
                 <Box>
                   <PremiumCard bg="#047857">
-                    <Text color="white" fontSize="20px" fontWeight="900" mb="md">Need Assistance?</Text>
+                    <Text color="white" fontSize="20px" fontWeight="900" mb="md">System Maintenance</Text>
                     <Text color="rgba(255,255,255,0.8)" mb="xl" lineHeight="1.6">
-                      If you're facing technical issues with the order flow or Cloudinary sync, check the documentation or contact support.
+                      Running in production mode. Data is synced in real-time with Mongo Atlas.
                     </Text>
                     <Button variant="secondary" as="a" href="/admin/pages/Component Guide" width="100%">
-                        View System Guide
+                        Builder Instructions
                     </Button>
                   </PremiumCard>
                 </Box>
