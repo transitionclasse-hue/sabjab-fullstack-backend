@@ -9,10 +9,6 @@ const productSchema = new mongoose.Schema({
   images: [{ type: String }], // Additional Images (Gallery)
   imagesFilePath: { type: [String] }, // AdminJS metadata
   imagesFilesToDelete: { type: [String] }, // AdminJS metadata
-  
-  variationGallery: [{ type: String }], // Temp storage for variation assets to copy links from
-  variationGalleryFilePath: { type: [String] }, // AdminJS metadata
-  variationGalleryFilesToDelete: { type: [String] }, // AdminJS metadata
 
   video: { type: String }, // Product Video
   price: { type: Number, required: true },

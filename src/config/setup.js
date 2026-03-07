@@ -1335,13 +1335,56 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          perPage: 30, // Override default 10 to show more products
+          perPage: 50, // Standardized to 50 to match global settings
           listProperties: ["name", "price", "stock", "quantity", "isAvailable", "image"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "uploadVariationGallery", "images", "variationGallery", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "variationGallery", "video", "variations"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
           actions: {
-            new: { after: [replaceKeyWithUrl] },
-            edit: { after: [replaceKeyWithUrl] },
+            new: { 
+              after: [replaceKeyWithUrl],
+              before: [async (request, context) => {
+                if (request.method === 'post' && request.payload) {
+                  const variations = request.payload.variations || [];
+                  for (let i = 0; i < variations.length; i++) {
+                    const uploadFile = variations[i].uploadImage;
+                    if (uploadFile && uploadFile.size > 0) {
+                      console.log(`🎭 [Variation Upload] Processing variation ${i}...`);
+                      const provider = new CloudinaryProvider();
+                      const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
+                      const id = context.record?.id?.() || `new_${Date.now()}`;
+                      const key = await provider.upload(uploadFile, `${id}/${filename}`);
+                      request.payload[`variations.${i}.image`] = key;
+                    }
+                  }
+                }
+                return request;
+              }]
+            },
+            edit: { 
+              after: [replaceKeyWithUrl],
+              before: [async (request, context) => {
+                if (request.method === 'post' && request.payload) {
+                  const variations = request.payload.variations || [];
+                  for (let i = 0; i < variations.length; i++) {
+                    const uploadFile = variations[i].uploadImage;
+                    if (uploadFile && uploadFile.size > 0) {
+                      console.log(`🎭 [Variation Upload] Processing variation ${i}...`);
+                      const provider = new CloudinaryProvider();
+                      const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
+                      const key = await provider.upload(uploadFile, `${context.record.id()}/${filename}`);
+                      request.payload[`variations.${i}.image`] = key;
+                    }
+                  }
+                }
+                return request;
+              }]
+            },
+            list: {
+              after: async (response) => {
+                console.log(`📊 [Pagination Debug] Total Records: ${response.meta.total}, Current Page Records: ${response.records.length}`);
+                return response;
+              }
+            }
           },
           properties: {
             name: {
@@ -1423,9 +1466,15 @@ export async function buildAdminRouter(app) {
               type: 'boolean'
             },
             'variations.image': {
-              label: 'Image URL (Variation)',
+              label: 'Image URL (Auto-filled)',
               type: 'string',
-              description: 'URL of the variation specific image'
+              description: 'URL of the variation specific image. Automatically filled if you upload below.',
+              isReadOnly: true
+            },
+            'variations.uploadImage': {
+              label: '📸 Upload Variation Image',
+              type: 'file',
+              helpText: 'Select an image for THIS variation.'
             },
             images: {
               label: '📸 Additional Gallery Images',
@@ -1438,18 +1487,6 @@ export async function buildAdminRouter(app) {
               label: "🖼️ Upload to Gallery",
               type: "file",
               helpText: "Select multiple images for the product gallery.",
-            },
-            variationGallery: {
-              label: '🎨 Variation Assets Library',
-              type: 'mixed',
-              description: 'Upload all variation images here, then copy links to the variations below.',
-              isVisible: { list: false, filter: false, show: true, edit: true },
-              isArray: true,
-            },
-            uploadVariationGallery: {
-              label: "🎭 Upload Variation Assets",
-              type: "file",
-              helpText: "Select multiple images for variations. Use these links in the table below.",
             },
             video: {
               label: 'Product Video URL',
@@ -2086,7 +2123,7 @@ export async function buildAdminRouter(app) {
       cookiePassword: process.env.COOKIE_PASSWORD || "cookie-password",
     },
     settings: {
-      perPage: 20,
+      perPage: 50,
       maxPerPage: 500,
     },
   });
