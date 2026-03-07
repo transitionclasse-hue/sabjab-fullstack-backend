@@ -47,7 +47,6 @@ const Components = {
   DriverStatus: componentLoader.add('DriverStatusBadge', path.join(__dirname, '../components/DriverStatusBadge.jsx')),
   ImageThumbnail: componentLoader.add('ImageThumbnail', path.join(__dirname, '../components/ImageThumbnail.jsx')),
   ComponentGuide: componentLoader.add('ComponentGuide', path.join(__dirname, '../components/ComponentGuide.jsx')),
-  AlphabetFilter: componentLoader.add('AlphabetFilter', path.join(__dirname, '../components/AlphabetFilter.jsx')),
 };
 
 const hydrateOrderForTracking = async (orderId) => {
@@ -950,6 +949,8 @@ export async function buildAdminRouter(app) {
                 show: Components.ImageThumbnail,
               }
             },
+            imageFilePath: { isVisible: false }, // AdminJS metadata
+            imageFilesToDelete: { isVisible: false }, // AdminJS metadata
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
               type: "file",
@@ -964,6 +965,8 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'image',
               file: 'uploadImage',
+              filePath: 'imageFilePath',
+              filesToDelete: 'imageFilesToDelete',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
                 return `${id}/${sanitizeFilename(filename)}`;
@@ -1042,6 +1045,8 @@ export async function buildAdminRouter(app) {
                 show: Components.ImageThumbnail,
               }
             },
+            imageFilePath: { isVisible: false }, // AdminJS metadata
+            imageFilesToDelete: { isVisible: false }, // AdminJS metadata
             uploadImage: {
               label: "Click to Upload Image to Cloudinary",
               type: "file",
@@ -1056,6 +1061,8 @@ export async function buildAdminRouter(app) {
             properties: {
               key: 'image',
               file: 'uploadImage',
+              filePath: 'imageFilePath',
+              filesToDelete: 'imageFilesToDelete',
               uploadPath: (record, filename) => {
                 const id = record.id() || `new_${Date.now()}`;
                 return `${id}/${sanitizeFilename(filename)}`;
@@ -1506,8 +1513,9 @@ export async function buildAdminRouter(app) {
             video: {
               label: 'Product Video URL',
               helpText: "Raw link (MP4/WebM) or use 'Upload Video' below.",
-              type: 'string'
             },
+            videoFilePath: { isVisible: false }, // AdminJS metadata
+            videoFilesToDelete: { isVisible: false }, // AdminJS metadata
             uploadVideo: {
               label: "📹 Upload Product Video",
               type: "file",

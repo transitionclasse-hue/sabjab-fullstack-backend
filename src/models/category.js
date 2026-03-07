@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 const categorySchema = new mongoose.Schema({
   name: { type: String, required: true },
   image: { type: String },
+  imageFilePath: { type: String }, // AdminJS metadata
+  imageFilesToDelete: { type: [String] }, // AdminJS metadata
   superCategory: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "SuperCategory",

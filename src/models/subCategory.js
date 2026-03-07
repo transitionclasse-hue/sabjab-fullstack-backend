@@ -7,8 +7,10 @@ const subCategorySchema = new mongoose.Schema({
     },
     image: {
         type: String,
-        required: true,
+        required: false, // Optional for AdminJS upload flow
     },
+    imageFilePath: { type: String }, // AdminJS metadata
+    imageFilesToDelete: { type: [String] }, // AdminJS metadata
     category: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Category",
