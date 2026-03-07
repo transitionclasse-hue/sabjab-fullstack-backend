@@ -1311,16 +1311,35 @@ export async function buildAdminRouter(app) {
                   const id = context.record?.id?.() || `new_${Date.now()}`;
 
                   // 1. Handle Product Variations (Manual because of nested structure)
+                  // Handle both array and flat (dot-notation) payloads
                   const variations = request.payload.variations || [];
-                  for (let i = 0; i < variations.length; i++) {
-                    const uploadFile = variations[i].uploadImage;
-                    if (uploadFile && uploadFile.size > 0) {
-                      console.log(`🎭 [Variation Upload] Processing variation ${i}...`);
-                      const provider = new CloudinaryProvider();
-                      const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
-                      const result = await provider.upload(uploadFile, `${id}/${filename}`);
-                      request.payload[`variations.${i}.image`] = result.secure_url;
-                    }
+                  
+                  // Scenario A: Array structure
+                  if (Array.isArray(variations)) {
+                      for (let i = 0; i < variations.length; i++) {
+                        const uploadFile = variations[i]?.uploadImage;
+                        if (uploadFile && uploadFile.size > 0) {
+                          console.log(`🎭 [Variation Upload][Array] Processing variation ${i}...`);
+                          const provider = new CloudinaryProvider();
+                          const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
+                          const result = await provider.upload(uploadFile, `${id}/${filename}`);
+                          request.payload[`variations.${i}.image`] = result.secure_url;
+                        }
+                      }
+                  }
+
+                  // Scenario B: Flat dot-notation structure (common in multipart)
+                  let idx = 0;
+                  while (request.payload[`variations.${idx}.uploadImage`]) {
+                      const uploadFile = request.payload[`variations.${idx}.uploadImage`];
+                      if (uploadFile && uploadFile.size > 0) {
+                         console.log(`🎭 [Variation Upload][Flat] Processing variation ${idx}...`);
+                         const provider = new CloudinaryProvider();
+                         const filename = `var_${idx}_${sanitizeFilename(uploadFile.name)}`;
+                         const result = await provider.upload(uploadFile, `${id}/${filename}`);
+                         request.payload[`variations.${idx}.image`] = result.secure_url;
+                      }
+                      idx++;
                   }
                   // Note: Gallery (uploadGallery) is handled by uploadFeature + replaceKeyWithUrl after-hook
                 }
@@ -1335,15 +1354,33 @@ export async function buildAdminRouter(app) {
 
                   // 1. Handle Product Variations (Manual because of nested structure)
                   const variations = request.payload.variations || [];
-                  for (let i = 0; i < variations.length; i++) {
-                    const uploadFile = variations[i].uploadImage;
-                    if (uploadFile && uploadFile.size > 0) {
-                      console.log(`🎭 [Variation Upload] Processing variation ${i}...`);
-                      const provider = new CloudinaryProvider();
-                      const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
-                      const result = await provider.upload(uploadFile, `${id}/${filename}`);
-                      request.payload[`variations.${i}.image`] = result.secure_url;
-                    }
+                  
+                  // Scenario A: Array structure
+                  if (Array.isArray(variations)) {
+                      for (let i = 0; i < variations.length; i++) {
+                        const uploadFile = variations[i]?.uploadImage;
+                        if (uploadFile && uploadFile.size > 0) {
+                          console.log(`🎭 [Variation Upload][Array] Processing variation ${i}...`);
+                          const provider = new CloudinaryProvider();
+                          const filename = `var_${i}_${sanitizeFilename(uploadFile.name)}`;
+                          const result = await provider.upload(uploadFile, `${id}/${filename}`);
+                          request.payload[`variations.${i}.image`] = result.secure_url;
+                        }
+                      }
+                  }
+
+                  // Scenario B: Flat dot-notation structure
+                  let idx = 0;
+                  while (request.payload[`variations.${idx}.uploadImage`]) {
+                      const uploadFile = request.payload[`variations.${idx}.uploadImage`];
+                      if (uploadFile && uploadFile.size > 0) {
+                         console.log(`🎭 [Variation Upload][Flat] Processing variation ${idx}...`);
+                         const provider = new CloudinaryProvider();
+                         const filename = `var_${idx}_${sanitizeFilename(uploadFile.name)}`;
+                         const result = await provider.upload(uploadFile, `${id}/${filename}`);
+                         request.payload[`variations.${idx}.image`] = result.secure_url;
+                      }
+                      idx++;
                   }
                   // Note: Gallery (uploadGallery) is handled by uploadFeature + replaceKeyWithUrl after-hook
                 }
