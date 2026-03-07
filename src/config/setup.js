@@ -1343,8 +1343,8 @@ export async function buildAdminRouter(app) {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["name", "price", "stock", "quantity", "isAvailable", "image"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
           actions: {
             new: { 
               after: [replaceKeyWithUrl],
@@ -1443,6 +1443,11 @@ export async function buildAdminRouter(app) {
               label: "Stock Quantity",
               type: "number",
               helpText: "Current inventory count for this product.",
+            },
+            userStockLimit: {
+              label: "Max Quantity per User",
+              type: "number",
+              helpText: "Maximum number of items a single user can buy (useful for sales). Leave empty for no limit.",
             },
             isAvailable: {
               label: "Is Available?",

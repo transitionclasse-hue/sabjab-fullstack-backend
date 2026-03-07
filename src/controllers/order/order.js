@@ -118,6 +118,15 @@ export const createOrder = async (req, reply) => {
             }
 
             const requestedCount = item.qty || item.quantity || item.count || 1;
+
+            // NEW: User Stock Limit per Product check
+            if (product.userStockLimit && requestedCount > product.userStockLimit) {
+                return reply.status(400).send({ 
+                    message: `Limit exceeded: You can buy maximum ${product.userStockLimit} units of ${product.name}`,
+                    limitExceeded: true
+                });
+            }
+
             const variationId = item.variationId || item.variation?._id || item.variation?.id;
 
             let price = product.price;

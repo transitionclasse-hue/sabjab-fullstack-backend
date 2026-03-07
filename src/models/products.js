@@ -43,6 +43,7 @@ const productSchema = new mongoose.Schema({
   ],
   isSensitive: { type: Boolean, default: false },
   isChoice: { type: Boolean, default: false },
+  userStockLimit: { type: Number, default: null },
 
   // Seller System Fields
   isApproved: { type: Boolean, default: true }, // Defaults to true for Admin created products. Sellers will explicitly create with false
