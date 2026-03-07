@@ -282,7 +282,7 @@ export const getHomeLayout = async (req, reply) => {
             ? occasions.filter(o => String(o._id) !== String(specialOccasion._id))
             : occasions;
         const effectiveSpecialOccasion =
-            shouldFilterChoice && specialOccasion?.isChoice !== true ? null : specialOccasion;
+            shouldFilterChoice && specialOccasion?.isChoice !== true ? null : (specialOccasion ? { ...specialOccasion, name: "Women's Day" } : null);
 
         return reply.send({
             variation: variation ? {
