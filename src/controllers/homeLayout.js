@@ -229,15 +229,8 @@ export const getHomeLayout = async (req, reply) => {
                 }
             } else if (comp.type === "CATEGORY_STRIP") {
                 comp.resolvedCategories = comp.categories || [];
-                // Filter out specialOccasion from this specific strip if it matches
-                if (specialOccasion) {
-                    comp.resolvedCategories = comp.resolvedCategories.filter(c => String(c._id || c) !== String(specialOccasion._id));
-                }
             } else if (comp.type === "CATEGORY_CLUSTERS") {
                 // Also filter from clusters if needed (categories live in clusters)
-                if (specialOccasion && comp.categories) {
-                    comp.categories = comp.categories.filter(c => String(c._id || c) !== String(specialOccasion._id));
-                }
             } else if (comp.type === "FEATURED_DEALS") {
                 // Featured deals already populated bigDeal and miniDeals, 
                 // but we'll also put them in resolvedProducts just in case for generic scroller reuse
@@ -278,9 +271,7 @@ export const getHomeLayout = async (req, reply) => {
         ]);
 
         // 8. Build unified response
-        const filteredOccasions = specialOccasion
-            ? occasions.filter(o => String(o._id) !== String(specialOccasion._id))
-            : occasions;
+        const filteredOccasions = occasions;
         const effectiveSpecialOccasion =
             shouldFilterChoice && specialOccasion?.isChoice !== true ? null : (specialOccasion ? { ...specialOccasion, name: "Women's Day" } : null);
 
