@@ -1410,6 +1410,10 @@ export async function buildAdminRouter(app) {
 
                 // Handle Alphabet Filter (from Dashboard or URL)
                 const letter = request.query.letter;
+                
+                // Set default perPage to 100 to ensure more products are visible at once
+                request.query.perPage = request.query.perPage || 100;
+                
                 if (letter) {
                   console.log(`🔤 [Alpha Filter] Filtering by letter: ${letter}`);
                   // Map to the standard name filter with a prefix regex pattern
