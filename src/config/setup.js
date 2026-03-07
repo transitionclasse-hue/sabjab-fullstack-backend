@@ -1325,18 +1325,19 @@ export async function buildAdminRouter(app) {
         }
 
         // 2. Handle Product Gallery (Array)
-        const images = context.record?.get('images');
-        if (Array.isArray(images) && images.length > 0) {
+        const rawImages = context.record?.get('images');
+        if (rawImages) {
+          const images = Array.isArray(rawImages) ? rawImages : [rawImages];
           const updatedImages = images.map(img => {
             if (img && typeof img === 'string' && !img.startsWith('http') && !img.startsWith('data:')) {
               // Convert key to full URL
               return `https://res.cloudinary.com/${process.env.CLOUDINARY_CLOUD_NAME}/image/upload/sabjab_admin/${img}`;
             }
             return img;
-          });
+          }).filter(Boolean);
           
-          if (JSON.stringify(images) !== JSON.stringify(updatedImages)) {
-            console.log(`🖼️ Syncing Gallery URLs for Product (${updatedImages.length} images)...`);
+          if (updatedImages.length > 0 && JSON.stringify(images) !== JSON.stringify(updatedImages)) {
+            console.log(`🖼️ [Gallery Sync] Converting ${updatedImages.length} keys to full URLs...`);
             await context.record.update({ images: updatedImages });
             changed = true;
           }
