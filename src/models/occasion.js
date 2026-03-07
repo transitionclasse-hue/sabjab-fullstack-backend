@@ -52,6 +52,10 @@ const occasionSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    isSpecialOccasion: {
+        type: Boolean,
+        default: false
+    },
     nameAlignment: { // New: Controls name position in UI
         type: String,
         enum: ["left", "right"],

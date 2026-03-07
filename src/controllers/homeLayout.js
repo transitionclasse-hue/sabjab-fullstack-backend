@@ -133,24 +133,20 @@ export const getHomeLayout = async (req, reply) => {
         const storeStatusDoc = await StoreStatus.findOne({ key: "primary" }).lean();
         const storeStatus = storeStatusDoc ? buildStoreStatusResponse(storeStatusDoc) : { status: "open", statusLabel: "Open", mode: "schedule" };
 
-        // 6. Fetch Global Special Occasion
-        const config = await GlobalConfig.findOne({ key: "header_special_occasion" }).lean();
-        let specialOccasion = null;
-        if (config && config.value) {
-            specialOccasion = await Occasion.findById(config.value)
-                .select("name icon banner themeColor darkThemeColor isChoice components products")
-                .populate({
-                    path: 'components',
-                    populate: [
-                        { path: 'products' },
-                        { path: 'categories' },
-                        { path: 'bigDeal' },
-                        { path: 'miniDeals' }
-                    ]
-                })
-                .populate("products")
-                .lean();
-        }
+        // 6. Fetch Dynamic Special Occasion
+        let specialOccasion = await Occasion.findOne({ isSpecialOccasion: true, isActive: true })
+            .select("name icon banner themeColor darkThemeColor isChoice components products")
+            .populate({
+                path: 'components',
+                populate: [
+                    { path: 'products' },
+                    { path: 'categories' },
+                    { path: 'bigDeal' },
+                    { path: 'miniDeals' }
+                ]
+            })
+            .populate("products")
+            .lean();
 
         const hydratedComponents = await Promise.all(components.map(async (comp) => {
             if (comp.type === "BENTO_GRID") {
@@ -273,7 +269,7 @@ export const getHomeLayout = async (req, reply) => {
         // 8. Build unified response
         const filteredOccasions = occasions;
         const effectiveSpecialOccasion =
-            shouldFilterChoice && specialOccasion?.isChoice !== true ? null : (specialOccasion ? { ...specialOccasion, name: "Women's Day" } : null);
+            shouldFilterChoice && specialOccasion?.isChoice !== true ? null : specialOccasion;
 
         return reply.send({
             variation: variation ? {
