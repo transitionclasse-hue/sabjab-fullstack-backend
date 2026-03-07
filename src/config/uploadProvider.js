@@ -18,6 +18,7 @@ cloudinary.config({
 export class CloudinaryProvider extends BaseProvider {
     constructor() {
         super('cloudinary');
+        this.uploadedUrls = {}; // New: Track all uploaded URLs for the after-hook
     }
 
     /**
@@ -55,6 +56,7 @@ export class CloudinaryProvider extends BaseProvider {
                     console.log('✅ Cloudinary Upload Success:', result.secure_url);
                     // Store the last uploaded URL so the after-hook can use it
                     this.lastUploadedUrl = result.secure_url;
+                    this.uploadedUrls[key] = result.secure_url; // track per key
                     resolve(result);
                 }
             );
