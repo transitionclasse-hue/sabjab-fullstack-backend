@@ -19,7 +19,18 @@ export const getOccasionById = async (req, reply) => {
 
         // Fetch the occasion by ID and fully populate the products array
         // so the frontend OccasionScreen has everything needed to render the list.
-        const occasion = await Occasion.findById(id).populate("products");
+        const occasion = await Occasion.findById(id)
+            .populate("products")
+            .populate({
+                path: 'components',
+                populate: [
+                    { path: 'products' },
+                    { path: 'categories' },
+                    { path: 'bigDeal' },
+                    { path: 'miniDeals' },
+                    { path: 'sections.products' }
+                ]
+            });
 
         if (!occasion) {
             return reply.status(404).send({ message: "Occasion not found" });
