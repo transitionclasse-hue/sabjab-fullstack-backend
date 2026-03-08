@@ -1336,9 +1336,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "quantity", "isAvailable", "image"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
+          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
+          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice"],
           actions: {
             new: { 
               after: [replaceKeyWithUrl],
