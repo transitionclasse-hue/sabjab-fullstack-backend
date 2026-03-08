@@ -114,7 +114,7 @@ export const getAllProducts = async (req, reply) => {
         const products = await Product.find(query)
             .select(isManagerCatalogRequest(req) ? "" : "-costPrice")
             .sort({ createdAt: -1 })
-            .populate("category subCategory")
+            .populate("category subCategory superCategory")
             .exec();
         return reply.send({ success: true, products });
     } catch (error) {
