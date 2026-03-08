@@ -63,7 +63,12 @@ export const uploadRoutes = async (fastify, options) => {
             }
 
             console.log("📤 Sending to Cloudinary. Size:", buffer.length);
-            const base64File = `data:${data.mimetype || 'image/jpeg'};base64,${buffer.toString('base64')}`;
+            
+            let mimetype = data.mimetype || 'image/jpeg';
+            if (mimetype === 'image') mimetype = 'image/jpeg';
+            if (mimetype === 'video') mimetype = 'video/mp4';
+
+            const base64File = `data:${mimetype};base64,${buffer.toString('base64')}`;
 
             const result = await cloudinary.uploader.upload(base64File, {
                 folder: 'sabjab_manager',
