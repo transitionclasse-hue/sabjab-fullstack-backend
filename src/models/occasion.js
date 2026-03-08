@@ -78,8 +78,11 @@ const occasionSchema = new mongoose.Schema({
     },
     ultraConfig: { // Deep customization for any Occasion
         topGradientColor: { type: String, default: "" },
+        topGradientDarkColor: { type: String, default: "" }, // New: Dark version
         middleGradientColor: { type: String, default: "" },
+        middleGradientDarkColor: { type: String, default: "" }, // New: Dark version
         bottomGradientColor: { type: String, default: "" },
+        bottomGradientDarkColor: { type: String, default: "" }, // New: Dark version
         gradientStops: { type: String, default: "0,0.5,1" },
         titleFontSize: { type: Number, default: 24 },
         borderRadiusGlobal: { type: Number, default: 16 },

@@ -1669,7 +1669,9 @@ export async function buildAdminRouter(app) {
           editProperties: [
             "name", "nameAlignment", "uploadIcon", "uploadBanner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor", "darkThemeColor",
             "searchPlaceholders",
-            "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
+            "ultraConfig.topGradientColor", "ultraConfig.topGradientDarkColor",
+            "ultraConfig.middleGradientColor", "ultraConfig.middleGradientDarkColor",
+            "ultraConfig.bottomGradientColor", "ultraConfig.bottomGradientDarkColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
             "showBanner", "isSpecialOccasion", "isDefault", "isChoice", "isActive", "order", "components"
@@ -1677,7 +1679,9 @@ export async function buildAdminRouter(app) {
           showProperties: [
             "name", "nameAlignment", "icon", "banner", "searchBarStyle", "topBarStyle", "themeEffect", "themeColor", "darkThemeColor",
             "searchPlaceholders",
-            "ultraConfig.topGradientColor", "ultraConfig.middleGradientColor", "ultraConfig.bottomGradientColor",
+            "ultraConfig.topGradientColor", "ultraConfig.topGradientDarkColor",
+            "ultraConfig.middleGradientColor", "ultraConfig.middleGradientDarkColor",
+            "ultraConfig.bottomGradientColor", "ultraConfig.bottomGradientDarkColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
             "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
             "showBanner", "isSpecialOccasion", "isDefault", "isChoice", "isActive", "order", "components"
@@ -1733,9 +1737,12 @@ export async function buildAdminRouter(app) {
             themeColor: { label: "Theme Accent Color (HEX)", helpText: "Hex code for the occasion theme (e.g. #FF5733)" },
             darkThemeColor: { label: "Dark Theme Accent Color (HEX)", helpText: "Explicit accent color for dark modes" },
             isChoice: { label: "✨ Choice Category?", helpText: "If ON, this category will appear in Choice Section Strip." },
-            'ultraConfig.topGradientColor': { label: "Ultra: Top Gradient Color", helpText: "Upper background color. Use 8-digit hex for opacity (e.g. #FF573320)" },
-            'ultraConfig.middleGradientColor': { label: "Ultra: Middle Gradient Color", helpText: "Optional: Mid-point color (e.g. #f0f0f0)" },
-            'ultraConfig.bottomGradientColor': { label: "Ultra: Bottom Gradient Color", helpText: "Lower background color (e.g. #FFFFFF)" },
+            'ultraConfig.topGradientColor': { label: "Ultra: Top Gradient (Light)", helpText: "Upper background color for light mode. Use 8-digit hex for opacity (#FF573320)" },
+            'ultraConfig.topGradientDarkColor': { label: "Ultra: Top Gradient (Dark)", helpText: "Upper background color for dark mode." },
+            'ultraConfig.middleGradientColor': { label: "Ultra: Middle Gradient (Light)", helpText: "Optional: Mid-point color for light mode." },
+            'ultraConfig.middleGradientDarkColor': { label: "Ultra: Middle Gradient (Dark)", helpText: "Optional: Mid-point color for dark mode." },
+            'ultraConfig.bottomGradientColor': { label: "Ultra: Bottom Gradient (Light)", helpText: "Lower background color for light mode." },
+            'ultraConfig.bottomGradientDarkColor': { label: "Ultra: Bottom Gradient (Dark)", helpText: "Lower background color for dark mode." },
             'ultraConfig.gradientStops': { label: "Ultra: Gradient Stops", helpText: "Comma separated stops (e.g. 0,0.5,1)" },
             'ultraConfig.titleFontSize': { label: "Ultra: Title Font Size", helpText: "Font size for section headers (default 24)" },
             'ultraConfig.borderRadiusGlobal': { label: "Ultra: Border Radius", helpText: "Global curvature for cards and boxes (default 16)" },
