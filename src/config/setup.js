@@ -1336,10 +1336,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "variations"],
-          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice"],
+          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image", "tags"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
+          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice", "tags"],
           actions: {
             new: { 
               after: [replaceKeyWithUrl],
@@ -1509,6 +1509,11 @@ export async function buildAdminRouter(app) {
               components: {
                 edit: Components.FilteredSubCategory,
               },
+            },
+            tags: {
+              label: "Search Tags / Keywords",
+              description: "Hidden from customers. Used to improve search (e.g., 'alu' for Potato). Comma-separated list.",
+              isArray: true,
             },
             variations: {
               label: "Product Variations / Swatches",

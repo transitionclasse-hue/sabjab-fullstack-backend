@@ -77,7 +77,8 @@ export const searchProducts = async (req, reply) => {
                 {
                     $or: [
                         { name: { $regex: searchTerm, $options: "i" } },
-                        { description: { $regex: searchTerm, $options: "i" } }
+                        { description: { $regex: searchTerm, $options: "i" } },
+                        { tags: { $in: [new RegExp(searchTerm, "i")] } }
                     ]
                 }
             ]

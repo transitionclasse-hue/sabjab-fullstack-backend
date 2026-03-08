@@ -56,7 +56,8 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Seller",
     default: null
-  }
+  },
+  tags: [{ type: String }], // Search keywords (hidden from consumers)
 });
 
 // Pre-save hook to convert category string to ObjectId
