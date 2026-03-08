@@ -8,7 +8,7 @@ export const getAllSuperCategories = async (req, reply) => {
         const isManager = req.url.includes('/manager');
         const superCategories = await SuperCategory.find({
             ...(shouldFilterChoice ? { isChoice: true } : {}),
-            ...(!isManager ? { isAvailable: true } : {})
+            ...(!isManager ? { isAvailable: { $ne: false } } : {})
         }).sort({ order: 1 });
         return reply.send(superCategories);
     } catch (error) {

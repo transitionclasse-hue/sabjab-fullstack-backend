@@ -14,7 +14,7 @@ export const getCategoriesBySuperCategoryId = async (req, reply) => {
 
         const categories = await Category.find({
             superCategory: superCategoryId,
-            ...(!isManager ? { isAvailable: true } : {}),
+            ...(!isManager ? { isAvailable: { $ne: false } } : {}),
             ...sensitiveFilter,
             ...(shouldFilterChoice ? { isChoice: true } : {}),
         }).exec();
@@ -31,10 +31,11 @@ export const getCategoriesBySuperCategoryId = async (req, reply) => {
 // MANAGER — returns all categories (no sensitive filter)
 export const getAllCategories = async (req, reply) => {
     try {
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
         const isManager = req.url.includes('/manager');
         const categories = await Category.find({
             ...(shouldFilterChoice ? { isChoice: true } : {}),
-            ...(!isManager ? { isAvailable: true } : {})
+            ...(!isManager ? { isAvailable: { $ne: false } } : {})
         })
             .sort({ createdAt: -1 })
             .populate("superCategory");

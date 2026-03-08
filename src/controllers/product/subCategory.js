@@ -10,7 +10,7 @@ export const getSubCategoriesByCategoryId = async (req, reply) => {
         // Find all subcategories linked to this parent category
         const subCategories = await SubCategory.find({
             category: categoryId,
-            ...(!isManager ? { isAvailable: true } : {}),
+            ...(!isManager ? { isAvailable: { $ne: false } } : {}),
             ...(shouldFilterChoice ? { isChoice: true } : {}),
         }).exec();
 
@@ -74,7 +74,7 @@ export const getAllSubCategories = async (req, reply) => {
         const isManager = req.url.includes('/manager');
         const subCategories = await SubCategory.find({
             ...(shouldFilterChoice ? { isChoice: true } : {}),
-            ...(!isManager ? { isAvailable: true } : {})
+            ...(!isManager ? { isAvailable: { $ne: false } } : {})
         })
             .sort({ createdAt: -1 })
             .exec();
