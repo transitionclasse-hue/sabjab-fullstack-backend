@@ -8,11 +8,13 @@ export const getCategoriesBySuperCategoryId = async (req, reply) => {
     try {
         const { superCategoryId } = req.params;
         const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
+        const isManager = req.url.includes('/manager');
         const hideSensitive = await getSafeSensitiveMode(req);
         const sensitiveFilter = hideSensitive ? { isSensitive: { $ne: true } } : {};
 
         const categories = await Category.find({
             superCategory: superCategoryId,
+            ...(!isManager ? { isAvailable: true } : {}),
             ...sensitiveFilter,
             ...(shouldFilterChoice ? { isChoice: true } : {}),
         }).exec();
@@ -29,8 +31,11 @@ export const getCategoriesBySuperCategoryId = async (req, reply) => {
 // MANAGER — returns all categories (no sensitive filter)
 export const getAllCategories = async (req, reply) => {
     try {
-        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
-        const categories = await Category.find(shouldFilterChoice ? { isChoice: true } : {})
+        const isManager = req.url.includes('/manager');
+        const categories = await Category.find({
+            ...(shouldFilterChoice ? { isChoice: true } : {}),
+            ...(!isManager ? { isAvailable: true } : {})
+        })
             .sort({ createdAt: -1 })
             .populate("superCategory");
         return reply.send(categories);
@@ -41,8 +46,8 @@ export const getAllCategories = async (req, reply) => {
 
 export const createCategory = async (req, reply) => {
     try {
-        const { name, image, superCategory, isSensitive } = req.body;
-        const newCategory = new Category({ name, image, superCategory, isSensitive });
+        const { name, image, superCategory, isSensitive, isAvailable, isChoice, canEarnCoins } = req.body;
+        const newCategory = new Category({ name, image, superCategory, isSensitive, isAvailable, isChoice, canEarnCoins });
         await newCategory.save();
         return reply.status(201).send(newCategory);
     } catch (error) {
@@ -53,10 +58,10 @@ export const createCategory = async (req, reply) => {
 export const updateCategory = async (req, reply) => {
     try {
         const { id } = req.params;
-        const { name, image, superCategory, isSensitive } = req.body;
+        const { name, image, superCategory, isSensitive, isAvailable, isChoice, canEarnCoins } = req.body;
         const updatedCategory = await Category.findByIdAndUpdate(
             id,
-            { name, image, superCategory, isSensitive },
+            { name, image, superCategory, isSensitive, isAvailable, isChoice, canEarnCoins },
             { new: true, runValidators: true }
         );
         if (!updatedCategory) {

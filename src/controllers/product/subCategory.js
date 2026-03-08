@@ -5,11 +5,12 @@ const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(valu
 export const getSubCategoriesByCategoryId = async (req, reply) => {
     try {
         const { categoryId } = req.params;
-        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
+        const isManager = req.url.includes('/manager');
 
         // Find all subcategories linked to this parent category
         const subCategories = await SubCategory.find({
             category: categoryId,
+            ...(!isManager ? { isAvailable: true } : {}),
             ...(shouldFilterChoice ? { isChoice: true } : {}),
         }).exec();
 
@@ -27,8 +28,8 @@ export const getSubCategoriesByCategoryId = async (req, reply) => {
 
 export const createSubCategory = async (req, reply) => {
     try {
-        const { name, image, category } = req.body;
-        const newSubCategory = new SubCategory({ name, image, category });
+        const { name, image, category, isAvailable, isChoice } = req.body;
+        const newSubCategory = new SubCategory({ name, image, category, isAvailable, isChoice });
         await newSubCategory.save();
         return reply.status(201).send(newSubCategory);
     } catch (error) {
@@ -39,10 +40,10 @@ export const createSubCategory = async (req, reply) => {
 export const updateSubCategory = async (req, reply) => {
     try {
         const { id } = req.params;
-        const { name, image, category } = req.body;
+        const { name, image, category, isAvailable, isChoice } = req.body;
         const updatedSubCategory = await SubCategory.findByIdAndUpdate(
             id,
-            { name, image, category },
+            { name, image, category, isAvailable, isChoice },
             { new: true, runValidators: true }
         );
         if (!updatedSubCategory) {
@@ -70,7 +71,11 @@ export const deleteSubCategory = async (req, reply) => {
 export const getAllSubCategories = async (req, reply) => {
     try {
         const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
-        const subCategories = await SubCategory.find(shouldFilterChoice ? { isChoice: true } : {})
+        const isManager = req.url.includes('/manager');
+        const subCategories = await SubCategory.find({
+            ...(shouldFilterChoice ? { isChoice: true } : {}),
+            ...(!isManager ? { isAvailable: true } : {})
+        })
             .sort({ createdAt: -1 })
             .exec();
         return reply.send({

@@ -5,7 +5,11 @@ const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(valu
 export const getAllSuperCategories = async (req, reply) => {
     try {
         const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
-        const superCategories = await SuperCategory.find(shouldFilterChoice ? { isChoice: true } : {}).sort({ order: 1 });
+        const isManager = req.url.includes('/manager');
+        const superCategories = await SuperCategory.find({
+            ...(shouldFilterChoice ? { isChoice: true } : {}),
+            ...(!isManager ? { isAvailable: true } : {})
+        }).sort({ order: 1 });
         return reply.send(superCategories);
     } catch (error) {
         return reply.status(500).send({ message: "An error occurred fetching supercategories", error });
@@ -13,8 +17,8 @@ export const getAllSuperCategories = async (req, reply) => {
 };
 export const createSuperCategory = async (req, reply) => {
     try {
-        const { name, order } = req.body;
-        const newSuperCategory = new SuperCategory({ name, order });
+        const { name, order, isChoice, isAvailable } = req.body;
+        const newSuperCategory = new SuperCategory({ name, order, isChoice, isAvailable });
         await newSuperCategory.save();
         return reply.status(201).send(newSuperCategory);
     } catch (error) {
@@ -25,10 +29,10 @@ export const createSuperCategory = async (req, reply) => {
 export const updateSuperCategory = async (req, reply) => {
     try {
         const { id } = req.params;
-        const { name, order } = req.body;
+        const { name, order, isChoice, isAvailable } = req.body;
         const updatedSuperCategory = await SuperCategory.findByIdAndUpdate(
             id,
-            { name, order },
+            { name, order, isChoice, isAvailable },
             { new: true, runValidators: true }
         );
         if (!updatedSuperCategory) {

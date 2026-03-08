@@ -428,10 +428,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Layers" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "isChoice", "createdAt"],
+          listProperties: ["name", "isChoice", "isAvailable", "createdAt"],
           editProperties: model.modelName === "SuperCategory"
-            ? ["name", "order", "isChoice"]
-            : ["name", "image", "isChoice", "isSensitive", "canEarnCoins"],
+            ? ["name", "order", "isChoice", "isAvailable"]
+            : ["name", "image", "isChoice", "isSensitive", "isAvailable", "canEarnCoins"],
         },
       };
     }
@@ -922,8 +922,8 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Layers" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "isChoice", "image"],
-          editProperties: ["name", "image", "uploadImage", "isChoice", "isSensitive", "canEarnCoins"],
+          listProperties: ["name", "isChoice", "isAvailable", "image"],
+          editProperties: ["name", "image", "uploadImage", "isChoice", "isSensitive", "isAvailable", "canEarnCoins"],
           actions: {
             new: { after: [replaceCatKeyWithUrl] },
             edit: { after: [replaceCatKeyWithUrl] },
@@ -976,8 +976,8 @@ export async function buildAdminRouter(app) {
             const catName = record.populated?.category?.params?.name || '';
             return catName ? `${record.params.name} (${catName})` : record.params.name;
           },
-          listProperties: ["name", "category", "image"],
-          editProperties: ["name", "category", "uploadImage"],
+          listProperties: ["name", "category", "isAvailable", "image"],
+          editProperties: ["name", "category", "isAvailable", "uploadImage"],
           actions: {
             new: { after: [replaceSubCatKeyWithUrl] },
             edit: { after: [replaceSubCatKeyWithUrl] },
