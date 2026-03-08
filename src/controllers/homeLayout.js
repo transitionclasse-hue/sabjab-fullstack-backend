@@ -298,7 +298,10 @@ export const getHomeLayout = async (req, reply) => {
                 banner: variation.banner,
                 icon: variation.icon,
                 searchPlaceholders: variation.searchPlaceholders || [],
-                ultraConfig: variation.ultraConfig || {}
+                ultraConfig: {
+                    ...variation.ultraConfig || {},
+                    showOccasionStrip: variation.ultraConfig?.showOccasionStrip !== false // Default to true if missing
+                }
             } : null,
             layout: hydratedComponents || [],
             customCategories: filteredOccasions || [],

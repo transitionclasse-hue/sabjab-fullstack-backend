@@ -99,6 +99,7 @@ const occasionSchema = new mongoose.Schema({
         navInactiveTextDarkColor: { type: String, default: "" }, // New: Inactive text color in dark mode
         addressColor: { type: String, default: "" }, // New: Color for the address/location text
         addressDarkColor: { type: String, default: "" }, // New: Color for the address/location text in dark mode
+        showOccasionStrip: { type: Boolean, default: true }, // NEW: Global toggle for occasion strip
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,

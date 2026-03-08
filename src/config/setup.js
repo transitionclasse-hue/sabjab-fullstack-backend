@@ -1684,7 +1684,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.middleGradientColor", "ultraConfig.middleGradientDarkColor",
             "ultraConfig.bottomGradientColor", "ultraConfig.bottomGradientDarkColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
-            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor", "ultraConfig.showOccasionStrip",
             "showBanner", "isSpecialOccasion", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           showProperties: [
@@ -1694,7 +1694,7 @@ export async function buildAdminRouter(app) {
             "ultraConfig.middleGradientColor", "ultraConfig.middleGradientDarkColor",
             "ultraConfig.bottomGradientColor", "ultraConfig.bottomGradientDarkColor",
             "ultraConfig.gradientStops", "ultraConfig.titleFontSize", "ultraConfig.borderRadiusGlobal",
-            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor",
+            "ultraConfig.hideTopBar", "ultraConfig.topBarColor", "ultraConfig.topBarDarkColor", "ultraConfig.etaBgColor", "ultraConfig.etaBgDarkColor", "ultraConfig.etaTextColor", "ultraConfig.etaTextDarkColor", "ultraConfig.navActiveTextColor", "ultraConfig.navActiveTextDarkColor", "ultraConfig.navInactiveTextColor", "ultraConfig.navInactiveTextDarkColor", "ultraConfig.addressColor", "ultraConfig.addressDarkColor", "ultraConfig.showOccasionStrip",
             "showBanner", "isSpecialOccasion", "isDefault", "isChoice", "isActive", "order", "components"
           ],
           actions: {
@@ -1770,6 +1770,7 @@ export async function buildAdminRouter(app) {
             'ultraConfig.navInactiveTextDarkColor': { label: "Ultra: Nav Inactive Text (Dark)", helpText: "Text color for inactive tabs in dark mode" },
             'ultraConfig.addressColor': { label: "Ultra: Address Text (Light)", helpText: "Color for the home screen address text" },
             'ultraConfig.addressDarkColor': { label: "Ultra: Address Text (Dark)", helpText: "Color for the home screen address text in dark mode" },
+            'ultraConfig.showOccasionStrip': { label: "Ultra: Show Occasion Selection Strip?", helpText: "If OFF, the horizontal occasion icons strip is hidden from Home Screen (leaves no space)." },
             isSpecialOccasion: { label: "💎 Is Special Occasion?", helpText: "If ON, this occasion appears in the special box next to search, and is REMOVED from main lists." },
             showBanner: { label: "Show Occasion Banner?" },
             isDefault: { label: "Is Default Variation?", helpText: "Only one should be default. The 'All' occasion is typically the default." },
