@@ -11,6 +11,7 @@ const productSchema = new mongoose.Schema({
   imagesFilesToDelete: { type: [String] }, // AdminJS metadata
 
   video: { type: String }, // Product Video
+  videoThumbnail: { type: String }, // NEW: Thumbnail for product video
   price: { type: Number, required: true },
   discountPrice: { type: Number },
   quantity: { type: String, required: true },
@@ -30,6 +31,10 @@ const productSchema = new mongoose.Schema({
   isAvailable: {
     type: Boolean,
     default: true,
+  },
+  stock: {
+    type: Number,
+    default: 0,
   },
   variations: [
     {
