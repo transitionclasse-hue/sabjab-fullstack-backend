@@ -14,6 +14,7 @@ const productSchema = new mongoose.Schema({
   videoThumbnail: { type: String }, // NEW: Thumbnail for product video
   price: { type: Number, required: true },
   discountPrice: { type: Number },
+  costPrice: { type: Number }, // Private Purchase/Cost Price
   quantity: { type: String, required: true },
   category: {
     type: mongoose.Schema.Types.ObjectId,

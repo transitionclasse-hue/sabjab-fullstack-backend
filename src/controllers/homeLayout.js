@@ -275,7 +275,7 @@ export const getHomeLayout = async (req, reply) => {
                         ]
                     }
                 ]
-            }).lean()
+            }).select("-costPrice").lean()
         ]);
 
         // 8. Build unified response

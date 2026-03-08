@@ -1463,6 +1463,11 @@ export async function buildAdminRouter(app) {
               label: "Sale Price (₹) - Overrides MRP if Set",
               type: "number",
             },
+            costPrice: {
+              label: "Purchase / Cost Price (CP) (₹)",
+              type: "number",
+              helpText: "Private field: ONLY visible to Admin/Manager. Never shown to customers.",
+            },
             quantity: {
               label: "Quantity / Weight (e.g. 80gm, 1kg)",
               isRequired: true,

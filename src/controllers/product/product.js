@@ -48,7 +48,7 @@ export const getProductsByCategoryId = async (req, reply) => {
             $and: [liveVisibilityFilter, categoryFilter],
         };
 
-        const products = await Product.find(query).exec();
+        const products = await Product.find(query).select("-costPrice").exec();
         return reply.send(products);
     } catch (error) {
         return reply.status(500).send({ message: "An error occurred", error });
@@ -81,7 +81,7 @@ export const searchProducts = async (req, reply) => {
                     ]
                 }
             ]
-        }).exec();
+        }).select("-costPrice").exec();
 
         return reply.send(products);
     } catch (error) {
@@ -112,6 +112,7 @@ export const getAllProducts = async (req, reply) => {
         }
 
         const products = await Product.find(query)
+            .select(isManagerCatalogRequest(req) ? "" : "-costPrice")
             .sort({ createdAt: -1 })
             .populate("category subCategory")
             .exec();
@@ -129,7 +130,7 @@ export const getProductById = async (req, reply) => {
             _id: req.params.id,
             isApproved: true,
             $and: [liveVisibilityFilter],
-        }).exec();
+        }).select("-costPrice").exec();
         if (!product) {
             return reply.code(404).send({ message: "Product not found" });
         }
