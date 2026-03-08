@@ -74,8 +74,14 @@ export const getNearestBranch = async (req, reply) => {
     }
 
     // Fix bug where distance > 100 was reset to 5
+    // Fix bug where distance > 100 was reset to 5
     const actualDistanceKm = minDistance !== null && minDistance >= 0 ? minDistance : 9999;
-    const etaMinutes = clamp(Math.ceil(actualDistanceKm * 3) + 5, 5, 180);
+    
+    // Dynamic ETA Calculation
+    const prepTime = nearest.prepTime || 5;
+    const vehicleSpeed = nearest.vehicleSpeed || 20;
+    const travelTimeMinutes = (actualDistanceKm / vehicleSpeed) * 60;
+    const etaMinutes = clamp(Math.ceil(travelTimeMinutes + prepTime), 5, 180);
 
     // Check delivery eligibility (Geofencing)
     const deliveryRadius = nearest.deliveryRadius || 2.5;

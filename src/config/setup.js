@@ -1831,6 +1831,30 @@ export async function buildAdminRouter(app) {
       };
     }
 
+    if (model.modelName === "Branch") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "System Config", icon: "Settings" },
+          listProperties: ["name", "address", "deliveryRadius", "prepTime", "vehicleSpeed"],
+          editProperties: ["name", "address", "location", "deliveryRadius", "servicedPincodes", "prepTime", "vehicleSpeed"],
+          properties: {
+            prepTime: {
+              label: "Preparation Time (Mins)",
+              description: "Base time added to every order for packaging/prep.",
+            },
+            vehicleSpeed: {
+              label: "Vehicle Speed (KM/HR)",
+              description: "Average speed of delivery vehicle (used for Distance/Speed calculation).",
+            },
+            deliveryRadius: {
+              label: "Delivery Radius (KM)",
+            }
+          }
+        },
+      };
+    }
+
     if (model.modelName === "DeliveryPartner") {
       return {
         resource: model,
