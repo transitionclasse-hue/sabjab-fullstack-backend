@@ -5,6 +5,7 @@ const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(valu
 export const getSubCategoriesByCategoryId = async (req, reply) => {
     try {
         const { categoryId } = req.params;
+        const shouldFilterChoice = isChoiceOnlyRequest(req.query?.choiceOnly);
         const isManager = req.url.includes('/manager');
 
         // Find all subcategories linked to this parent category
