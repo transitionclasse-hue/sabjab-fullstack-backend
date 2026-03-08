@@ -34,7 +34,6 @@ const productSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
-    default: 0,
   },
   variations: [
     {
@@ -82,6 +81,12 @@ productSchema.pre('save', function (next) {
       return next(new Error('Invalid superCategory ID format'));
     }
   }
+
+  // Calculate total stock from variations if they exist
+  if (this.variations && this.variations.length > 0) {
+    this.stock = this.variations.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+  }
+
   next();
 });
 
@@ -109,6 +114,12 @@ productSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], function (nex
       return next(new Error('Invalid superCategory ID format'));
     }
   }
+
+  // Calculate total stock from variations if they are being updated
+  if (update.variations && Array.isArray(update.variations) && update.variations.length > 0) {
+    update.stock = update.variations.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
+  }
+
   next();
 });
 
