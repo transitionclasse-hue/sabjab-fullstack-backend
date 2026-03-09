@@ -7,7 +7,7 @@ export const getSupportConfig = async (req, reply) => {
 
         // Default fallback if not set in DB
         const defaultValue = {
-            phone: "+911234567890",
+            phone: "+919993696297",
             email: "support@sabjab.com"
         };
 
