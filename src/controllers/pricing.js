@@ -17,6 +17,10 @@ const DEFAULT_PRICING_CONFIG = {
   lateNightEndTime: "05:00",
   lateNightFee: 0,
   defaultDriverEarning: 30,
+  defaultDriverCodLimit: 2000,
+  rewardCoinsEnabled: true,
+  rewardCoinsPercentage: 1,
+  minAmountForCoins: 1,
   customFees: [],
   cartBarColor: "#1A1A1A",
   etaColor: "#1A1A1A",
@@ -245,6 +249,10 @@ export const updatePricingConfig = async (req, reply) => {
       lateNightEndTime: String(body.lateNightEndTime || "05:00"),
       lateNightFee: Math.max(0, toNumber(body.lateNightFee, 0)),
       defaultDriverEarning: Math.max(0, toNumber(body.defaultDriverEarning, 30)),
+      defaultDriverCodLimit: Math.max(0, toNumber(body.defaultDriverCodLimit, 2000)),
+      rewardCoinsEnabled: body.rewardCoinsEnabled !== undefined ? Boolean(body.rewardCoinsEnabled) : true,
+      rewardCoinsPercentage: Math.max(0, toNumber(body.rewardCoinsPercentage, 1)),
+      minAmountForCoins: Math.max(0, toNumber(body.minAmountForCoins, 1)),
       customFees: sanitizeCustomFees(body.customFees),
       cartBarColor: String(body.cartBarColor || "#1A1A1A").trim(),
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
@@ -252,15 +260,17 @@ export const updatePricingConfig = async (req, reply) => {
 
     const config = await PricingConfig.findOneAndUpdate(
       { key: "primary" },
-      { $setOnInsert: DEFAULT_PRICING_CONFIG, $set: update },
-      { upsert: true, new: true }
+      { $set: update },
+      { upsert: true, new: true, runValidators: true }
     );
 
     return reply.send(config);
   } catch (error) {
+    console.error("❌ PRICE CONFIG UPDATE ERROR:", error);
     return reply.status(500).send({
       message: "Failed to update pricing config",
       error: error.message,
     });
   }
 };
+
