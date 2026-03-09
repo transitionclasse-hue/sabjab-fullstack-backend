@@ -50,6 +50,7 @@ const productSchema = new mongoose.Schema({
   isChoice: { type: Boolean, default: false },
   userStockLimit: { type: Number, default: null },
   deliveryDays: { type: Number, default: 0 },
+  returnWindow: { type: Number, default: 0 }, // Duration in hours
 
   // Seller System Fields
   isApproved: { type: Boolean, default: true }, // Defaults to true for Admin created products. Sellers will explicitly create with false

@@ -75,6 +75,15 @@ const orderSchema = new mongoose.Schema({
   },
 
   assignedAt: { type: Date },
+  deliveredAt: { type: Date },
+  returnWindow: { type: Number, default: 0 },
+  returnExpiresAt: { type: Date },
+  returnStatus: {
+    type: String,
+    enum: ["none", "requested", "approved", "rejected", "completed"],
+    default: "none",
+  },
+  returnReason: { type: String },
 
   totalPrice: { type: Number, required: true },
   couponCode: { type: String, uppercase: true, trim: true },

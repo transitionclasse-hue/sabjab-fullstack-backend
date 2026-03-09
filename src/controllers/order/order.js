@@ -236,6 +236,10 @@ export const createOrder = async (req, reply) => {
         }
         // -------------------------
 
+        // --- RETURN WINDOW CALCULATION ---
+        const orderReturnWindow = Math.max(...stockUpdates.map(u => u.product.returnWindow || 0), 0);
+        // ---------------------------------
+
         const newOrder = new Order({
             customer: userId,
             items: items.map((item) => ({
@@ -249,6 +253,7 @@ export const createOrder = async (req, reply) => {
             paymentMethod: paymentMethod || "COD",
             couponCode: validatedCouponCode,
             discountAmount: discountAmount,
+            returnWindow: orderReturnWindow, // SNAPSHOT the return window
             customerInfo: {
                 name: deliveryAddress?.recipientName || customerData.name || "Customer",
                 phone: deliveryAddress?.recipientPhone || customerData.phone || "No Phone",
@@ -466,6 +471,10 @@ export const updateOrderStatus = async (req, reply) => {
         if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
             console.log(`[StatusUpdate] BUSINESS LOGIC: Processing delivery for ${orderId}`);
             order.deliveredAt = new Date();
+            // Calculate return expiry
+            if (order.returnWindow > 0) {
+                order.returnExpiresAt = new Date(order.deliveredAt.getTime() + (order.returnWindow * 3600000));
+            }
 
             try {
                 // Driver Earning Logic - Update BEFORE creating transaction
@@ -920,5 +929,52 @@ export const getCustomerSavings = async (req, reply) => {
     } catch (error) {
         console.error("getCustomerSavings error:", error);
         return reply.status(500).send({ message: "Failed to calculate savings", error: error.message });
+    }
+};
+
+export const requestOrderReturn = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { reason } = req.body;
+        const { userId } = req.user;
+
+        const order = await Order.findById(orderId);
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found" });
+        }
+
+        if (order.customer.toString() !== userId) {
+            return reply.status(403).send({ message: "Unauthorized. You did not place this order." });
+        }
+
+        if (order.status !== ORDER_STATUS.DELIVERED) {
+            return reply.status(400).send({ message: "Only delivered orders can be returned." });
+        }
+
+        if (order.returnStatus !== "none") {
+            return reply.status(400).send({ message: `Return already ${order.returnStatus}.` });
+        }
+
+        if (!order.returnExpiresAt || new Date() > order.returnExpiresAt) {
+            return reply.status(400).send({ message: "Return window has expired." });
+        }
+
+        order.returnStatus = "requested";
+        order.returnReason = reason || "No reason provided";
+        await order.save();
+
+        // Notify Admin
+        if (req.server.io) {
+            req.server.io.emit("admin:return-requested", {
+                orderId: String(order._id),
+                orderNumber: order.orderId,
+                reason: order.returnReason
+            });
+        }
+
+        return reply.send({ success: true, message: "Return request submitted successfully.", order });
+    } catch (error) {
+        console.error("Request Return Error:", error);
+        return reply.status(500).send({ message: "Failed to request return", error: error.message });
     }
 };

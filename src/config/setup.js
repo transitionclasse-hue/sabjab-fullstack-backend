@@ -1336,10 +1336,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image", "deliveryDays", "tags"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
-          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice", "deliveryDays", "tags"],
+          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image", "deliveryDays", "returnWindow", "tags"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
+          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice", "deliveryDays", "returnWindow", "tags"],
           actions: {
             new: { 
               after: [replaceKeyWithUrl],
@@ -1497,6 +1497,11 @@ export async function buildAdminRouter(app) {
               label: "📦 Delivery Days (Choice Only)",
               type: "number",
               helpText: "Sets the number of days for delivery (e.g., 5). Calculated as 'Delivery by [CurrentDate + X]'. Only shows if Choice is TRUE.",
+            },
+            returnWindow: {
+              label: "🔙 Return Window (Hours)",
+              type: "number",
+              helpText: "Number of hours after delivery during which a return can be requested. Set to 0 for no return.",
             },
             superCategory: {
               label: "Super Category",
@@ -1920,8 +1925,9 @@ export async function buildAdminRouter(app) {
           sortBy: 'createdAt',
           direction: 'desc'
         },
-        listProperties: ["orderId", "customer", "deliveryPartner", "status", "totalPrice", "createdAt"],
-        filterProperties: ["orderId", "status", "deliveryPartner", "paymentStatus", "createdAt"],
+        listProperties: ["orderId", "customer", "deliveryPartner", "status", "returnStatus", "totalPrice", "createdAt"],
+        filterProperties: ["orderId", "status", "returnStatus", "deliveryPartner", "paymentStatus", "createdAt"],
+        showProperties: ["orderId", "customer", "deliveryPartner", "status", "totalPrice", "paymentMethod", "paymentStatus", "deliveredAt", "returnWindow", "returnExpiresAt", "returnStatus", "returnReason", "createdAt", "updatedAt", "items"],
         properties: {
           deliveryPartner: {
             label: "Delivery Partner",
@@ -1950,6 +1956,28 @@ export async function buildAdminRouter(app) {
               { value: "Paid", label: "💰 Paid" },
               { value: "Refunded", label: "↩️ Refunded" },
             ]
+          },
+          returnStatus: {
+            label: "Return Status",
+            availableValues: [
+              { value: "none", label: "⚪ No Return" },
+              { value: "requested", label: "🟡 Return Requested" },
+              { value: "approved", label: "🟢 Return Approved" },
+              { value: "rejected", label: "🔴 Return Rejected" },
+              { value: "completed", label: "✅ Return Completed" },
+            ]
+          },
+          returnWindow: {
+            label: "Return Window (Hrs)",
+            type: "number"
+          },
+          returnExpiresAt: {
+            label: "Return Expiry",
+            type: "datetime"
+          },
+          deliveredAt: {
+            label: "Delivered At",
+            type: "datetime"
           }
         },
         actions: {
