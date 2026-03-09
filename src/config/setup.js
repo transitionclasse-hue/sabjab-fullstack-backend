@@ -1336,10 +1336,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image", "tags"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
-          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice", "tags"],
+          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image", "deliveryDays", "tags"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
+          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice", "deliveryDays", "tags"],
           actions: {
             new: { 
               after: [replaceKeyWithUrl],
@@ -1492,6 +1492,11 @@ export async function buildAdminRouter(app) {
               label: "✨ Choice Platform Product?",
               type: "boolean",
               helpText: "If TRUE, product gets a premium 'Choice' badge in UI.",
+            },
+            deliveryDays: {
+              label: "📦 Delivery Days (Choice Only)",
+              type: "number",
+              helpText: "Sets the number of days for delivery (e.g., 5). Calculated as 'Delivery by [CurrentDate + X]'. Only shows if Choice is TRUE.",
             },
             superCategory: {
               label: "Super Category",
