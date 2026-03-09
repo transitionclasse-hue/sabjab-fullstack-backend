@@ -42,6 +42,14 @@ const orderSchema = new mongoose.Schema({
         price: { type: Number },
         discountPrice: { type: Number },
       },
+      returnWindow: { type: Number, default: 0 },
+      returnExpiresAt: { type: Date },
+      returnStatus: {
+        type: String,
+        enum: ["none", "requested", "approved", "rejected", "completed"],
+        default: "none",
+      },
+      returnReason: { type: String },
     },
   ],
 

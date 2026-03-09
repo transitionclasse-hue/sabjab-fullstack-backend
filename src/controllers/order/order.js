@@ -242,11 +242,12 @@ export const createOrder = async (req, reply) => {
 
         const newOrder = new Order({
             customer: userId,
-            items: items.map((item) => ({
+            items: items.map((item, idx) => ({
                 id: item._id || item.id,
                 item: item._id || item.id,
                 count: item.qty || item.quantity || item.count || 1,
-                variation: item.variationData // NEW: Save selected variation details
+                variation: item.variationData,
+                returnWindow: stockUpdates[idx].product.returnWindow || 0 // SNAPSHOT the return window
             })),
             branch: resolvedBranchId,
             totalPrice: Number(totalAmount),
@@ -471,7 +472,16 @@ export const updateOrderStatus = async (req, reply) => {
         if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
             console.log(`[StatusUpdate] BUSINESS LOGIC: Processing delivery for ${orderId}`);
             order.deliveredAt = new Date();
-            // Calculate return expiry
+            // Calculate return expiry for each item
+            if (order.items && order.items.length > 0) {
+                order.items.forEach(item => {
+                    if (item.returnWindow > 0) {
+                        item.returnExpiresAt = new Date(order.deliveredAt.getTime() + (item.returnWindow * 3600000));
+                    }
+                });
+            }
+
+            // Keep legacy top-level expiry for backward compatibility
             if (order.returnWindow > 0) {
                 order.returnExpiresAt = new Date(order.deliveredAt.getTime() + (order.returnWindow * 3600000));
             }
@@ -935,7 +945,7 @@ export const getCustomerSavings = async (req, reply) => {
 export const requestOrderReturn = async (req, reply) => {
     try {
         const { orderId } = req.params;
-        const { reason } = req.body;
+        const { itemId, reason } = req.body;
         const { userId } = req.user;
 
         const order = await Order.findById(orderId);
@@ -951,16 +961,36 @@ export const requestOrderReturn = async (req, reply) => {
             return reply.status(400).send({ message: "Only delivered orders can be returned." });
         }
 
-        if (order.returnStatus !== "none") {
-            return reply.status(400).send({ message: `Return already ${order.returnStatus}.` });
-        }
+        if (itemId) {
+            // Item-level return
+            const item = order.items.id(itemId);
+            if (!item) {
+                return reply.status(404).send({ message: "Item not found in order." });
+            }
 
-        if (!order.returnExpiresAt || new Date() > order.returnExpiresAt) {
-            return reply.status(400).send({ message: "Return window has expired." });
-        }
+            if (item.returnStatus !== "none") {
+                return reply.status(400).send({ message: `Item return already ${item.returnStatus}.` });
+            }
 
-        order.returnStatus = "requested";
-        order.returnReason = reason || "No reason provided";
+            if (!item.returnExpiresAt || new Date() > item.returnExpiresAt) {
+                return reply.status(400).send({ message: "Item return window has expired." });
+            }
+
+            item.returnStatus = "requested";
+            item.returnReason = reason || "No reason provided";
+        } else {
+            // Legacy Order-level return
+            if (order.returnStatus !== "none") {
+                return reply.status(400).send({ message: `Order return already ${order.returnStatus}.` });
+            }
+
+            if (!order.returnExpiresAt || new Date() > order.returnExpiresAt) {
+                return reply.status(400).send({ message: "Order return window has expired." });
+            }
+
+            order.returnStatus = "requested";
+            order.returnReason = reason || "No reason provided";
+        }
         await order.save();
 
         // Notify Admin

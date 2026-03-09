@@ -1978,7 +1978,20 @@ export async function buildAdminRouter(app) {
           deliveredAt: {
             label: "Delivered At",
             type: "datetime"
-          }
+          },
+          "items.returnStatus": {
+            label: "Item Return Status",
+            availableValues: [
+              { value: "none", label: "⚪ No Return" },
+              { value: "requested", label: "🟡 Return Requested" },
+              { value: "approved", label: "🟢 Return Approved" },
+              { value: "rejected", label: "🔴 Return Rejected" },
+              { value: "completed", label: "✅ Return Completed" },
+            ]
+          },
+          "items.returnWindow": { label: "Item Return Window", type: "number" },
+          "items.returnExpiresAt": { label: "Item Return Expiry", type: "datetime" },
+          "items.returnReason": { label: "Item Return Reason", type: "string" }
         },
         actions: {
           assignDriver: {
