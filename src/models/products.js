@@ -50,6 +50,8 @@ const productSchema = new mongoose.Schema({
   isChoice: { type: Boolean, default: false },
   userStockLimit: { type: Number, default: null },
   deliveryDays: { type: Number, default: 0 },
+  shippingCost: { type: Number, default: 0, min: 0 }, // Seller logistics cost
+  rtoCost: { type: Number, default: 0, min: 0 },      // Return to Origin cost
   returnWindow: { type: Number, default: 0 }, // Duration in hours
 
   // Seller System Fields

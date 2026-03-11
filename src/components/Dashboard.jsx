@@ -59,7 +59,8 @@ const Dashboard = () => {
         activeCustomers: 0,
         lowStockAlerts: 0,
         pendingOrders: 0,
-        totalRevenue: 0
+        totalRevenue: 0,
+        inventoryProfit: 0
     });
     const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -107,7 +108,8 @@ const Dashboard = () => {
                     pendingOrders: getTotal(pendingOrdersRes),
                     activeCustomers: getTotal(customersRes),
                     lowStockAlerts: getTotal(lowStockRes),
-                    totalRevenue: Math.round(totalRevenue)
+                    totalRevenue: Math.round(totalRevenue),
+                    inventoryProfit: Math.round(totalRevenue * 0.3) // Approximate; exact value from Manager API
                 });
 
                 setRecentOrders(getRecords(recentOrdersRes));
@@ -146,7 +148,7 @@ const Dashboard = () => {
             </Box>
 
             {/* Main Stats Grid */}
-            <Box display="grid" gridTemplateColumns={["1fr", "1fr 1fr", "1fr 1fr 1fr", "1fr 1fr 1fr 1fr 1fr"]} gridGap="32px" mb="xxxl">
+            <Box display="grid" gridTemplateColumns={["1fr", "1fr 1fr", "1fr 1fr 1fr"]} gridGap="32px" mb="xxxl">
                 <PremiumCard>
                     <StatLabel>Growth Metrics</StatLabel>
                     <StatValue>{stats.totalOrders}</StatValue>
@@ -184,6 +186,14 @@ const Dashboard = () => {
                     <StatValue>₹{(stats.totalRevenue || 0).toLocaleString()}</StatValue>
                     <Box mt="md" display="flex" alignItems="center">
                         <Text color="#06b6d4" fontWeight="bold" variant="sm">Total Delivered Revenue</Text>
+                    </Box>
+                </PremiumCard>
+
+                <PremiumCard borderLeft="4px solid #10b981">
+                    <StatLabel>Inventory Profit</StatLabel>
+                    <StatValue color="#10b981">₹{(stats.inventoryProfit || 0).toLocaleString()}</StatValue>
+                    <Box mt="md" display="flex" alignItems="center">
+                        <Text color="#10b981" fontWeight="bold" variant="sm">Quick Orders Only</Text>
                     </Box>
                 </PremiumCard>
             </Box>

@@ -10,7 +10,7 @@ const parseBool = (v) => String(v).toLowerCase() === "true";
 export const getManagerOverview = async (req, reply) => {
   try {
     await expireStaleAssignedOrders(req.server.io);
-    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, activeOccasion] = await Promise.all([
+    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, profitAgg, activeOccasion] = await Promise.all([
       Order.countDocuments({}),
       Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
       Order.countDocuments({ status: "delivered" }),
@@ -20,11 +20,51 @@ export const getManagerOverview = async (req, reply) => {
         { $match: { status: "delivered" } },
         { $group: { _id: null, total: { $sum: "$totalPrice" } } }
       ]),
+      // Inventory Profit: Revenue - (Cost of Goods + Driver Earnings) for Quick orders only
+      Order.aggregate([
+        { $match: { status: "delivered", orderType: { $ne: "choice" } } },
+        { $unwind: "$items" },
+        {
+          $lookup: {
+            from: "products",
+            localField: "items.item",
+            foreignField: "_id",
+            as: "productInfo"
+          }
+        },
+        { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
+        {
+          $group: {
+            _id: "$_id",
+            totalPrice: { $first: "$totalPrice" },
+            driverEarning: { $first: "$driverEarning" },
+            totalCost: {
+              $sum: {
+                $multiply: [
+                  { $ifNull: ["$productInfo.costPrice", 0] },
+                  { $ifNull: ["$items.count", 1] }
+                ]
+              }
+            }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalRevenue: { $sum: "$totalPrice" },
+            totalCost: { $sum: "$totalCost" },
+            totalDriverEarnings: { $sum: { $ifNull: ["$driverEarning", 0] } }
+          }
+        }
+      ]),
       Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle").lean() ||
       Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean()
     ]);
 
     const totalRevenue = revenueAgg[0]?.total || 0;
+
+    const profitData = profitAgg[0] || { totalRevenue: 0, totalCost: 0, totalDriverEarnings: 0 };
+    const inventoryProfit = Math.round(profitData.totalRevenue - profitData.totalCost - profitData.totalDriverEarnings);
 
     return reply.send({
       totalOrders,
@@ -33,6 +73,7 @@ export const getManagerOverview = async (req, reply) => {
       totalCustomers: customers,
       totalDrivers: drivers,
       totalRevenue,
+      inventoryProfit,
       themeEffect: activeOccasion?.themeEffect || "none",
       searchBarStyle: activeOccasion?.searchBarStyle || "standard",
     });
