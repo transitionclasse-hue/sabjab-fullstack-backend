@@ -38,6 +38,8 @@ import {
   getSafeModeConfig,
   updateSafeModeConfig,
   deleteManagerDriver,
+  createManagerDriver,
+  updateManagerDriver,
   getOrderMaskingConfig,
   updateOrderMaskingConfig,
   getHighValueOrderConfig,
