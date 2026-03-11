@@ -1357,3 +1357,43 @@ export const updateOrderMaskingConfig = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to update order masking config", error: error.message });
   }
 };
+
+export const getHighValueOrderConfig = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "high_value_order_config" });
+    if (!config) {
+      return reply.send({
+        success: true,
+        data: {
+          enabled: true,
+          threshold: 1000
+        }
+      });
+    }
+    return reply.send({ success: true, data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch high value order config", error: error.message });
+  }
+};
+
+export const updateHighValueOrderConfig = async (req, reply) => {
+  try {
+    const { enabled, threshold } = req.body;
+    let config = await GlobalConfig.findOne({ key: "high_value_order_config" });
+
+    if (!config) {
+      config = new GlobalConfig({
+        key: "high_value_order_config",
+        value: { enabled, threshold },
+        description: "Manage security for high-value orders. If order value > threshold, OTP is mandatory."
+      });
+    } else {
+      config.value = { enabled, threshold };
+    }
+
+    await config.save();
+    return reply.send({ success: true, message: "High value order config updated successfully", data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update high value order config", error: error.message });
+  }
+};

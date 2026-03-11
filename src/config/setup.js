@@ -348,6 +348,24 @@ export async function buildAdminRouter(app) {
       },
       { upsert: true, new: true }
     );
+
+    // ✅ Seed High Value Order Config if not exists
+    await mongoose.models.GlobalConfig.findOneAndUpdate(
+      { key: "high_value_order_config" },
+      {
+        $set: {
+            description: "Manage security for high-value orders. If order value > threshold, OTP is mandatory. Expected: { enabled: boolean, threshold: number }"
+        },
+        $setOnInsert: {
+          key: "high_value_order_config",
+          value: {
+            enabled: true,
+            threshold: 1000
+          }
+        }
+      },
+      { upsert: true, new: true }
+    );
   }
 
   console.log("🛠️ Building Admin Router... Models found:", Object.keys(mongoose.models).length);

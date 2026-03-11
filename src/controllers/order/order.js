@@ -303,6 +303,19 @@ export const createOrder = async (req, reply) => {
             },
         });
 
+        // --- HIGH VALUE ORDER OTP LOGIC ---
+        try {
+            const hvc = await GlobalConfig.findOne({ key: "high_value_order_config" });
+            if (hvc?.value?.enabled && totalAmount >= (hvc.value.threshold || 1000)) {
+                newOrder.isHighValueOrder = true;
+                newOrder.deliveryOtp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
+                console.log(`[OrderOTP] Secure OTP ${newOrder.deliveryOtp} generated for Order #${newOrder.orderId} (Value: ${totalAmount})`);
+            }
+        } catch (hvcError) {
+            console.error("[OTP] High-value config fetch failed:", hvcError.message);
+        }
+        // ----------------------------------
+
         // --- REWARD COINS CALCULATION ---
         try {
             const pricingConfig = await PricingConfig.findOne({ key: "primary" });
@@ -495,6 +508,24 @@ export const updateOrderStatus = async (req, reply) => {
 
         const oldStatus = order.status;
         console.log(`[StatusUpdate] START: Order ${orderId} | New: ${status} | Old: ${oldStatus}`);
+
+        // OTP Verification for High-Value Orders
+        if (status === ORDER_STATUS.DELIVERED && order.isHighValueOrder) {
+            const { otp } = req.body;
+            if (!otp) {
+                return reply.status(400).send({ 
+                    message: "OTP is compulsory for high-value orders. Please ask the customer for the code.", 
+                    otpRequired: true 
+                });
+            }
+            if (otp !== order.deliveryOtp) {
+                return reply.status(400).send({ 
+                    message: "Invalid Delivery OTP. Please ask the customer for the correct code.", 
+                    otpInvalid: true 
+                });
+            }
+            console.log(`[OrderOTP] SUCCESS: OTP ${otp} verified for Order #${order.orderId}`);
+        }
 
         // Assign driver if accepting an available order
         if (status === ORDER_STATUS.CONFIRMED && !order.deliveryPartner) {

@@ -37,11 +37,11 @@ import {
   adjustCustomerWallet,
   getSafeModeConfig,
   updateSafeModeConfig,
-  createManagerDriver,
-  updateManagerDriver,
   deleteManagerDriver,
   getOrderMaskingConfig,
   updateOrderMaskingConfig,
+  getHighValueOrderConfig,
+  updateHighValueOrderConfig,
 } from "../controllers/manager.js";
 import { updateProfileConfig } from "../controllers/profileConfig.js";
 import {
@@ -148,6 +148,8 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/safe-mode-config", AUTH, updateSafeModeConfig);
   fastify.get("/manager/order-masking-config", AUTH, getOrderMaskingConfig);
   fastify.post("/manager/order-masking-config", AUTH, updateOrderMaskingConfig);
+  fastify.get("/manager/high-value-config", AUTH, getHighValueOrderConfig);
+  fastify.post("/manager/high-value-config", AUTH, updateHighValueOrderConfig);
 
   // Driver CRUD for Manager
   fastify.post("/manager/drivers", AUTH, createManagerDriver);
