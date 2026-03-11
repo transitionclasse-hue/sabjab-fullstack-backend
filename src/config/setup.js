@@ -1336,10 +1336,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "image", "deliveryDays", "returnWindow", "tags"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
-          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isChoice", "deliveryDays", "returnWindow", "tags"],
+          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "isApproved", "image", "deliveryDays", "returnWindow", "tags"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isApproved", "sellerId", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isApproved", "sellerId", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
+          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isApproved", "isChoice", "deliveryDays", "returnWindow", "tags"],
           actions: {
             new: { 
               after: [replaceKeyWithUrl],
