@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction, Admin } from "../../models/index.js";
+import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction, Admin, GlobalConfig } from "../../models/index.js";
 import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
 
@@ -20,6 +20,26 @@ const VALID_DRIVER_STATUSES = new Set([
     ORDER_STATUS.DELIVERED,
     ORDER_STATUS.CANCELLED,
 ]);
+
+// Helper to mask order details for drivers if configured
+export const maskOrderForDriver = async (order, role) => {
+    if (role !== "DeliveryPartner") return order;
+
+    try {
+        const config = await GlobalConfig.findOne({ key: "order_masking_config" });
+        if (config?.value?.maskCustomerNumber && config?.value?.proxyNumber) {
+            const orderObj = typeof order.toObject === 'function' ? order.toObject() : order;
+            if (orderObj.customerInfo) {
+                orderObj.customerInfo.phone = config.value.proxyNumber;
+                orderObj.customerInfo.isMasked = true; // Flag for frontend to show "Masked" tag if wanted
+            }
+            return orderObj;
+        }
+    } catch (err) {
+        console.error("Masking logic error:", err.message);
+    }
+    return order;
+};
 
 export const calculateDriverEarning = async (orderTotal = 0) => {
     const config = await PricingConfig.findOne({ key: "primary" });
@@ -328,8 +348,9 @@ export const createOrder = async (req, reply) => {
         // Notify all online drivers about the new available order (ONLY for Quick orders)
         if (savedOrder.orderType === "quick") {
             console.log(`📡 [Socket] Emitting driver:new-order for order ${populatedOrder.orderId}`);
+            const maskedOrderForDriverBatch = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
             req.server.io.emit("driver:new-order", {
-                order: populatedOrder
+                order: maskedOrderForDriverBatch
             });
         }
 
@@ -425,14 +446,15 @@ export const confirmOrder = async (req, reply) => {
             status: ORDER_STATUS.CONFIRMED,
             orderNumber: order.orderId,
         });
+        const maskedOrderForAssignedDriver = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
         req.server.io.to(String(userId)).emit("driver:order-status-update", {
             orderId: String(order._id),
             status: ORDER_STATUS.CONFIRMED,
-            order: populatedOrder,
+            order: maskedOrderForAssignedDriver,
             orderNumber: order.orderId,
         });
 
-        return reply.send(populatedOrder);
+        return reply.send(maskedOrderForAssignedDriver);
     } catch (error) {
         return reply.status(500).send({ message: "Failed to confirm order", error });
     }
@@ -717,10 +739,11 @@ export const updateOrderStatus = async (req, reply) => {
                     orderNumber: populatedOrder.orderId
                 });
                 if (populatedOrder.deliveryPartner?._id) {
+                    const maskedOrderForAssignedDriver = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
                     req.server.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
                         orderId: String(order._id),
                         status,
-                        order: populatedOrder,
+                        order: maskedOrderForAssignedDriver,
                         orderNumber: populatedOrder.orderId,
                     });
                 }
@@ -739,7 +762,8 @@ export const updateOrderStatus = async (req, reply) => {
         }
 
         console.log(`[StatusUpdate] COMPLETED: Order ${orderId}`);
-        return reply.send(populatedOrder);
+        const maskedOrder = await maskOrderForDriver(populatedOrder, req.user?.role);
+        return reply.send(maskedOrder);
     } catch (error) {
         console.error("updateOrderStatus CRITICAL ERROR:", error);
         return reply.status(500).send({
@@ -782,6 +806,11 @@ export const getOrders = async (req, reply) => {
         const orders = await Order.find(query).populate(
             "customer branch items.item deliveryPartner"
         );
+
+        if (role === "DeliveryPartner") {
+            const maskedOrders = await Promise.all(orders.map(o => maskOrderForDriver(o, role)));
+            return reply.send(maskedOrders);
+        }
 
         return reply.send(orders);
     } catch (error) {
@@ -898,7 +927,8 @@ export const getOrderById = async (req, reply) => {
             return reply.status(403).send({ message: "Unauthorized access to this order" });
         }
 
-        return reply.send(order);
+        const maskedOrder = await maskOrderForDriver(order, role);
+        return reply.send(maskedOrder);
     } catch (error) {
         return reply.status(500).send({ message: "Failed to retrieve order", error: error.message });
     }

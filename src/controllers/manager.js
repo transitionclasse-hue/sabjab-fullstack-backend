@@ -3,7 +3,7 @@ import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import Referral from "../models/referral.js";
-import { expireStaleAssignedOrders } from "./order/order.js";
+import { expireStaleAssignedOrders, maskOrderForDriver } from "./order/order.js";
 
 const parseBool = (v) => String(v).toLowerCase() === "true";
 
@@ -214,8 +214,9 @@ export const assignDriverByManager = async (req, reply) => {
       status: "assigned",
       orderNumber: order.orderId,
     });
+    const maskedOrderForAssignedDriver = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
     req.server.io.to(String(driver._id)).emit("driver:order-assigned", {
-      order: populatedOrder,
+      order: maskedOrderForAssignedDriver,
     });
 
     // Send Push Notification to Driver
@@ -231,7 +232,7 @@ export const assignDriverByManager = async (req, reply) => {
     req.server.io.to(String(driver._id)).emit("driver:order-status-update", {
       orderId: String(order._id),
       status: "assigned",
-      order: populatedOrder,
+      order: maskedOrderForAssignedDriver,
       orderNumber: order.orderId,
     });
 
@@ -321,10 +322,11 @@ export const updateOrderStatusByManager = async (req, reply) => {
       orderNumber: populatedOrder.orderId,
     });
     if (order.deliveryPartner) {
+      const maskedOrderForAssignedDriverStatus = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
       req.server.io.to(String(order.deliveryPartner)).emit("driver:order-status-update", {
         orderId: String(order._id),
         status,
-        order: populatedOrder,
+        order: maskedOrderForAssignedDriverStatus,
         orderNumber: populatedOrder.orderId,
       });
     }
@@ -1313,5 +1315,45 @@ export const deleteManagerDriver = async (req, reply) => {
     return reply.send({ success: true, message: "Driver deleted successfully" });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to delete driver", error: error.message });
+  }
+};
+
+export const getOrderMaskingConfig = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "order_masking_config" });
+    if (!config) {
+      return reply.send({
+        success: true,
+        data: {
+          maskCustomerNumber: false,
+          proxyNumber: "+911234567890"
+        }
+      });
+    }
+    return reply.send({ success: true, data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch order masking config", error: error.message });
+  }
+};
+
+export const updateOrderMaskingConfig = async (req, reply) => {
+  try {
+    const { maskCustomerNumber, proxyNumber } = req.body;
+    let config = await GlobalConfig.findOne({ key: "order_masking_config" });
+
+    if (!config) {
+      config = new GlobalConfig({
+        key: "order_masking_config",
+        value: { maskCustomerNumber, proxyNumber },
+        description: "Mask customer phone numbers from drivers. If enabled, drivers see the proxyNumber instead."
+      });
+    } else {
+      config.value = { maskCustomerNumber, proxyNumber };
+    }
+
+    await config.save();
+    return reply.send({ success: true, message: "Order masking config updated successfully", data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update order masking config", error: error.message });
   }
 };

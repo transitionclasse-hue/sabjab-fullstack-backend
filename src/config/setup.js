@@ -267,7 +267,7 @@ export async function buildAdminRouter(app) {
           key: "support_contact",
           value: {
             phone: "+911234567890",
-            email: "support@sabjab.com"
+            email: "help@sabjab.com"
           },
         },
       },
@@ -326,6 +326,24 @@ export async function buildAdminRouter(app) {
             isMandatory: false
           },
           description: "Controls app versioning. Expected: { currentVersion, updateAvailable, updateMessage, isMandatory }"
+        }
+      },
+      { upsert: true, new: true }
+    );
+
+    // ✅ Seed Order Masking Config if not exists
+    await mongoose.models.GlobalConfig.findOneAndUpdate(
+      { key: "order_masking_config" },
+      {
+        $set: {
+            description: "Mask customer phone numbers from drivers. If enabled, drivers see the proxyNumber instead. Expected: { maskCustomerNumber: boolean, proxyNumber: string }"
+        },
+        $setOnInsert: {
+          key: "order_masking_config",
+          value: {
+            maskCustomerNumber: false,
+            proxyNumber: "+911234567890" // Default support number
+          }
         }
       },
       { upsert: true, new: true }
