@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+
+const SALT_ROUNDS = 10;
 
 // ================= BASE USER =================
 const userSchema = new mongoose.Schema({
@@ -57,6 +60,12 @@ const customerSchema = new mongoose.Schema({
   sensitiveMode: { type: Boolean, default: true },
 }, { timestamps: true });
 
+customerSchema.pre('save', async function (next) {
+  if (!this.isModified('password') || !this.password) return next();
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+  next();
+});
+
 // ================= DELIVERY PARTNER =================
 const deliveryPartnerSchema = new mongoose.Schema({
   ...userSchema.obj,
@@ -93,6 +102,12 @@ const deliveryPartnerSchema = new mongoose.Schema({
   codLimit: { type: Number, default: null }, // NEW: Falls back to global PricingConfig
 }, { timestamps: true });
 
+deliveryPartnerSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+  next();
+});
+
 // ================= ADMIN =================
 const adminSchema = new mongoose.Schema({
   ...userSchema.obj,
@@ -116,6 +131,12 @@ const adminSchema = new mongoose.Schema({
   profileImage: { type: String },
 }, { timestamps: true });
 
+adminSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+  next();
+});
+
 // ================= SELLER =================
 const sellerSchema = new mongoose.Schema({
   ...userSchema.obj,
@@ -137,6 +158,12 @@ const sellerSchema = new mongoose.Schema({
   pushToken: { type: String, default: null },
   notificationsEnabled: { type: Boolean, default: true },
 }, { timestamps: true });
+
+sellerSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+  next();
+});
 
 // ================= MODELS =================
 export const Customer = mongoose.model("Customer", customerSchema);

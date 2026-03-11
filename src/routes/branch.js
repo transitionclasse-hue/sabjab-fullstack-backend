@@ -1,17 +1,19 @@
 import { getNearestBranch } from "../controllers/branch.js";
 import { Branch } from "../models/index.js";
+import { verifyManager } from "../middleware/auth.js";
 
 export const branchRoutes = async (fastify) => {
+  // Public — customers need nearest branch
   fastify.get("/branch/nearest", getNearestBranch);
 
-  // Check branch location
+  // Public read — safe to expose
   fastify.get("/branch/:id", async (req, reply) => {
     const branch = await Branch.findById(req.params.id);
     return reply.send({ branch });
   });
 
-  // Update branch GPS location
-  fastify.put("/branch/:id/location", async (req, reply) => {
+  // 🔒 Protected — only Admin/Manager can update branch GPS
+  fastify.put("/branch/:id/location", { preHandler: [verifyManager] }, async (req, reply) => {
     const { latitude, longitude } = req.body;
     const branch = await Branch.findByIdAndUpdate(
       req.params.id,
@@ -21,8 +23,8 @@ export const branchRoutes = async (fastify) => {
     return reply.send({ success: true, branch });
   });
 
-  // Update branch delivery radius
-  fastify.put("/branch/:id/radius", async (req, reply) => {
+  // 🔒 Protected — only Admin/Manager can update delivery radius
+  fastify.put("/branch/:id/radius", { preHandler: [verifyManager] }, async (req, reply) => {
     const { radius } = req.body;
     const branch = await Branch.findByIdAndUpdate(
       req.params.id,

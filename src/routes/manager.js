@@ -69,82 +69,85 @@ import {
   deleteSuperCategory,
 } from "../controllers/product/superCategory.js";
 import { getOrderById } from "../controllers/order/order.js";
+import { verifyManager } from "../middleware/auth.js";
+
+const AUTH = { preHandler: [verifyManager] };
 
 export const managerRoutes = async (fastify) => {
-  fastify.get("/manager/overview", getManagerOverview);
-  fastify.get("/manager/analytics", getManagerAnalytics);
-  fastify.get("/manager/orders", getManagerOrders);
-  fastify.get("/manager/orders/:orderId", getOrderById);
-  fastify.get("/manager/drivers", getManagerDrivers);
-  fastify.get("/manager/branches", getManagerBranches);
-  fastify.post("/manager/branches", createManagerBranch);
-  fastify.put("/manager/branches/:id", updateManagerBranch);
-  fastify.patch("/manager/branches/:id/status", updateManagerBranch); // Re-use update for status
-  fastify.delete("/manager/branches/:id", deleteManagerBranch);
-  fastify.get("/manager/customers", getManagerCustomers);
-  fastify.get("/manager/products", getAllProducts);
-  fastify.get("/manager/categories", getAllCategories);
-  fastify.post("/manager/categories", createCategory);
-  fastify.put("/manager/categories/:id", updateCategory);
-  fastify.delete("/manager/categories/:id", deleteCategory);
+  fastify.get("/manager/overview", AUTH, getManagerOverview);
+  fastify.get("/manager/analytics", AUTH, getManagerAnalytics);
+  fastify.get("/manager/orders", AUTH, getManagerOrders);
+  fastify.get("/manager/orders/:orderId", AUTH, getOrderById);
+  fastify.get("/manager/drivers", AUTH, getManagerDrivers);
+  fastify.get("/manager/branches", AUTH, getManagerBranches);
+  fastify.post("/manager/branches", AUTH, createManagerBranch);
+  fastify.put("/manager/branches/:id", AUTH, updateManagerBranch);
+  fastify.patch("/manager/branches/:id/status", AUTH, updateManagerBranch);
+  fastify.delete("/manager/branches/:id", AUTH, deleteManagerBranch);
+  fastify.get("/manager/customers", AUTH, getManagerCustomers);
+  fastify.get("/manager/products", AUTH, getAllProducts);
+  fastify.get("/manager/categories", AUTH, getAllCategories);
+  fastify.post("/manager/categories", AUTH, createCategory);
+  fastify.put("/manager/categories/:id", AUTH, updateCategory);
+  fastify.delete("/manager/categories/:id", AUTH, deleteCategory);
 
-  fastify.get("/manager/subcategories", getAllSubCategories);
-  fastify.post("/manager/subcategories", createSubCategory);
-  fastify.put("/manager/subcategories/:id", updateSubCategory);
-  fastify.delete("/manager/subcategories/:id", deleteSubCategory);
+  fastify.get("/manager/subcategories", AUTH, getAllSubCategories);
+  fastify.post("/manager/subcategories", AUTH, createSubCategory);
+  fastify.put("/manager/subcategories/:id", AUTH, updateSubCategory);
+  fastify.delete("/manager/subcategories/:id", AUTH, deleteSubCategory);
 
-  fastify.get("/manager/supercategories", getAllSuperCategories);
-  fastify.post("/manager/supercategories", createSuperCategory);
-  fastify.put("/manager/supercategories/:id", updateSuperCategory);
-  fastify.delete("/manager/supercategories/:id", deleteSuperCategory);
-  fastify.post("/manager/products", createProduct);
-  fastify.put("/manager/products/:id", updateProduct);
-  fastify.delete("/manager/products/:id", deleteProduct);
-  fastify.patch("/manager/products/:id/status", updateProductStatus);
-  fastify.post("/manager/orders/:orderId/assign-driver", assignDriverByManager);
-  fastify.patch("/manager/orders/:orderId/status", updateOrderStatusByManager);
+  fastify.get("/manager/supercategories", AUTH, getAllSuperCategories);
+  fastify.post("/manager/supercategories", AUTH, createSuperCategory);
+  fastify.put("/manager/supercategories/:id", AUTH, updateSuperCategory);
+  fastify.delete("/manager/supercategories/:id", AUTH, deleteSuperCategory);
+  fastify.post("/manager/products", AUTH, createProduct);
+  fastify.put("/manager/products/:id", AUTH, updateProduct);
+  fastify.delete("/manager/products/:id", AUTH, deleteProduct);
+  fastify.patch("/manager/products/:id/status", AUTH, updateProductStatus);
+  fastify.post("/manager/orders/:orderId/assign-driver", AUTH, assignDriverByManager);
+  fastify.patch("/manager/orders/:orderId/status", AUTH, updateOrderStatusByManager);
 
   // Green Points Management
-  fastify.get("/manager/green-points/config", getGreenPointsConfig);
-  fastify.patch("/manager/green-points/config", updateGreenPointsConfig);
-  fastify.get("/manager/green-points/stats", getGreenPointsStats);
+  fastify.get("/manager/green-points/config", AUTH, getGreenPointsConfig);
+  fastify.patch("/manager/green-points/config", AUTH, updateGreenPointsConfig);
+  fastify.get("/manager/green-points/stats", AUTH, getGreenPointsStats);
 
   // Referral Management
-  fastify.get("/manager/referral/stats", getReferralStats);
-  fastify.get("/manager/referral/codes", getAllReferralCodes);
+  fastify.get("/manager/referral/stats", AUTH, getReferralStats);
+  fastify.get("/manager/referral/codes", AUTH, getAllReferralCodes);
 
   // Home Layout Management
-  fastify.get("/manager/occasions", getManagerOccasions);
-  fastify.post("/manager/occasions", createManagerOccasion);
-  fastify.patch("/manager/occasions/:id", updateManagerOccasion);
-  fastify.delete("/manager/occasions/:id", deleteManagerOccasion);
+  fastify.get("/manager/occasions", AUTH, getManagerOccasions);
+  fastify.post("/manager/occasions", AUTH, createManagerOccasion);
+  fastify.patch("/manager/occasions/:id", AUTH, updateManagerOccasion);
+  fastify.delete("/manager/occasions/:id", AUTH, deleteManagerOccasion);
 
-  fastify.get("/manager/home-components", getManagerHomeComponents);
-  fastify.post("/manager/home-components", createManagerHomeComponent);
-  fastify.patch("/manager/home-components/:id", updateManagerHomeComponent);
-  fastify.delete("/manager/home-components/:id", deleteManagerHomeComponent);
+  fastify.get("/manager/home-components", AUTH, getManagerHomeComponents);
+  fastify.post("/manager/home-components", AUTH, createManagerHomeComponent);
+  fastify.patch("/manager/home-components/:id", AUTH, updateManagerHomeComponent);
+  fastify.delete("/manager/home-components/:id", AUTH, deleteManagerHomeComponent);
 
   // Driver Financial Management
-  fastify.get("/manager/driver-finance", getManagerDriverFinance);
-  fastify.get("/manager/driver-finance/:id/report", getDriverDetailedReport);
-  fastify.post("/manager/payouts/bulk", bulkProcessPayout);
-  fastify.post("/manager/drivers/:id/settle-cod", settleDriverCod);
-  fastify.patch("/manager/drivers/:id/cod-limit", updateDriverCodLimit);
-  fastify.get("/manager/config/cod-limit", getGlobalCodLimit);
-  fastify.patch("/manager/config/cod-limit", updateGlobalCodLimit);
+  fastify.get("/manager/driver-finance", AUTH, getManagerDriverFinance);
+  fastify.get("/manager/driver-finance/:id/report", AUTH, getDriverDetailedReport);
+  fastify.post("/manager/payouts/bulk", AUTH, bulkProcessPayout);
+  fastify.post("/manager/drivers/:id/settle-cod", AUTH, settleDriverCod);
+  fastify.patch("/manager/drivers/:id/cod-limit", AUTH, updateDriverCodLimit);
+  fastify.get("/manager/config/cod-limit", AUTH, getGlobalCodLimit);
+  fastify.patch("/manager/config/cod-limit", AUTH, updateGlobalCodLimit);
 
-  fastify.get("/manager/dispatch", getManagerDispatchOrders);
-  fastify.get("/manager/driver-rankings", getManagerDriverRankings);
-  fastify.get("/manager/finance-history", getManagerFinanceHistory);
-  fastify.get("/manager/driver-activity", getManagerDriverActivity);
-  fastify.post("/manager/customers/:customerId/wallet-adjustment", adjustCustomerWallet);
-  fastify.post("/manager/profile-config", updateProfileConfig);
-  fastify.get("/manager/safe-mode-config", getSafeModeConfig);
-  fastify.post("/manager/safe-mode-config", updateSafeModeConfig);
+  fastify.get("/manager/dispatch", AUTH, getManagerDispatchOrders);
+  fastify.get("/manager/driver-rankings", AUTH, getManagerDriverRankings);
+  fastify.get("/manager/finance-history", AUTH, getManagerFinanceHistory);
+  fastify.get("/manager/driver-activity", AUTH, getManagerDriverActivity);
+  fastify.post("/manager/customers/:customerId/wallet-adjustment", AUTH, adjustCustomerWallet);
+  fastify.post("/manager/profile-config", AUTH, updateProfileConfig);
+  fastify.get("/manager/safe-mode-config", AUTH, getSafeModeConfig);
+  fastify.post("/manager/safe-mode-config", AUTH, updateSafeModeConfig);
 
   // Driver CRUD for Manager
-  fastify.post("/manager/drivers", createManagerDriver);
-  fastify.put("/manager/drivers/:id", updateManagerDriver);
-  fastify.patch("/manager/drivers/:id/status", updateManagerDriver);
-  fastify.delete("/manager/drivers/:id", deleteManagerDriver);
+  fastify.post("/manager/drivers", AUTH, createManagerDriver);
+  fastify.put("/manager/drivers/:id", AUTH, updateManagerDriver);
+  fastify.patch("/manager/drivers/:id/status", AUTH, updateManagerDriver);
+  fastify.delete("/manager/drivers/:id", AUTH, deleteManagerDriver);
 };

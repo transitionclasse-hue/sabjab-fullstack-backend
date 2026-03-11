@@ -1,5 +1,6 @@
 import { Customer, DeliveryPartner, Admin, Seller } from '../../models/user.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -15,13 +16,13 @@ const generateTokens = (user) => {
   const accessToken = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: isPrivileged ? '30d' : '1d' } // 30 days for managers
+    { expiresIn: isPrivileged ? '7d' : '1d' } // 7 days for managers
   );
 
   const refreshToken = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.REFRESH_TOKEN_SECRET,
-    { expiresIn: isPrivileged ? '365d' : '7d' } // 1 year refresh for managers
+    { expiresIn: isPrivileged ? '30d' : '7d' } // 30-day refresh for managers
   );
 
   return { accessToken, refreshToken };
@@ -131,7 +132,6 @@ export const requestEmailOtp = async (req, reply) => {
 
     return reply.send({
       message: "OTP sent successfully",
-      otp: otp,
       phone: finalPhone // return phone so frontend can use it if it only had email
     });
 
@@ -179,10 +179,13 @@ export const verifyOtp = async (req, reply) => {
     }
     await customer.save();
 
+    const customerObj = customer.toObject();
+    delete customerObj.password;
+    delete customerObj.otp;
     return reply.send({
       message: "Login Successful",
       ...generateTokens(customer),
-      customer
+      customer: customerObj
     });
 
   } catch (error) {
@@ -240,16 +243,18 @@ export const loginPassword = async (req, reply) => {
     let customer = await Customer.findOne({ phone });
 
     // Ensure password matches if they have one set
-    if (!customer || customer.password !== password) {
+    if (!customer || !customer.password || !await bcrypt.compare(password, customer.password)) {
       return reply.code(401).send({ message: "Invalid phone number or password" });
     }
 
     const { accessToken, refreshToken } = generateTokens(customer);
+    const customerObj = customer.toObject();
+    delete customerObj.password;
     return reply.send({
       message: "Login successful",
       accessToken,
       refreshToken,
-      customer,
+      customer: customerObj,
     });
   } catch (error) {
     return reply.code(500).send({ message: "Login failed", error: error.message });
@@ -267,12 +272,10 @@ export const loginDeliveryPartner = async (req, reply) => {
     const email = String(rawEmail).trim().toLowerCase();
     const password = String(rawPassword).trim();
 
-    console.log(`[AUTH DEBUG] Attempting Driver Login: |${email}| with pass |${password}|`);
-
     const driver = await DeliveryPartner.findOne({ email, role: "DeliveryPartner" });
 
-    if (!driver || driver.password !== password) {
-      return reply.code(401).send({ message: `Invalid driver credentials. (Seen: '${email}' / '${password}')` });
+    if (!driver || !await bcrypt.compare(password, driver.password)) {
+      return reply.code(401).send({ message: "Invalid driver credentials" });
     }
 
     if (!driver.isActivated) {
@@ -281,11 +284,13 @@ export const loginDeliveryPartner = async (req, reply) => {
 
     const { accessToken, refreshToken } = generateTokens(driver);
 
+    const driverObj = driver.toObject();
+    delete driverObj.password;
     return reply.send({
       message: "Driver login successful",
       accessToken,
       refreshToken,
-      deliveryPartner: driver,
+      deliveryPartner: driverObj,
     });
   } catch (error) {
     return reply.code(500).send({ message: "Driver login failed", error: error.message });
@@ -301,26 +306,25 @@ export const loginAdmin = async (req, reply) => {
     const email = String(rawEmail || "").trim().toLowerCase();
     const password = String(rawPassword || "").trim();
 
-    console.log(`[AUTH DEBUG] Attempting Admin Login: "${email}"`);
     const user = await Admin.findOne({ email });
 
     if (!user) {
-      console.log(`[AUTH DEBUG] User not found for: "${email}"`);
       return reply.code(401).send({ message: "Invalid admin credentials" });
     }
 
-    if (user.password !== password) {
-      console.log(`[AUTH DEBUG] Password mismatch for: "${email}" (Expected: "${user.password}", Got: "${password}")`);
+    if (!await bcrypt.compare(password, user.password)) {
       return reply.code(401).send({ message: "Invalid admin credentials" });
     }
 
     const { accessToken, refreshToken } = generateTokens(user);
 
+    const userObj = user.toObject();
+    delete userObj.password;
     return reply.send({
       message: "Admin login successful",
       token: accessToken, // Manager app expects 'token'
       refreshToken,
-      user
+      user: userObj
     });
   } catch (error) {
     return reply.code(500).send({ message: "Admin login failed", error: error.message });
@@ -399,8 +403,8 @@ export const deleteCustomerAccount = async (req, reply) => {
 export const fetchUser = async (req, reply) => {
   try {
     const user =
-      (await Customer.findById(req.user.userId)) ||
-      (await DeliveryPartner.findById(req.user.userId));
+      (await Customer.findById(req.user.userId).select('-password -otp')) ||
+      (await DeliveryPartner.findById(req.user.userId).select('-password'));
 
     return reply.send({ user });
 

@@ -584,15 +584,18 @@ export async function buildAdminRouter(app) {
             "freeDeliveryEnabled",
             "freeDeliveryThreshold",
             "baseDeliveryFee",
+            "choiceDeliveryFee",
+            "choiceFreeDeliveryEnabled",
             "rewardCoinsEnabled",
-            "rewardCoinsPercentage",
-            "minAmountForCoins",
             "updatedAt",
           ],
           editProperties: [
             "freeDeliveryEnabled",
             "freeDeliveryThreshold",
             "baseDeliveryFee",
+            "choiceDeliveryFee",
+            "choiceFreeDeliveryEnabled",
+            "choiceFreeDeliveryThreshold",
             "rewardCoinsPercentage",
             "minAmountForCoins",
             "promiseProtectEnabled",
@@ -617,6 +620,9 @@ export async function buildAdminRouter(app) {
             "freeDeliveryEnabled",
             "freeDeliveryThreshold",
             "baseDeliveryFee",
+            "choiceDeliveryFee",
+            "choiceFreeDeliveryEnabled",
+            "choiceFreeDeliveryThreshold",
             "promiseProtectEnabled",
             "promiseProtectFee",
             "smallCartFeeEnabled",
@@ -654,6 +660,18 @@ export async function buildAdminRouter(app) {
             },
             baseDeliveryFee: {
               label: "Base Delivery Fee",
+            },
+            choiceDeliveryFee: {
+              label: "Choice Delivery Fee",
+              description: "Delivery fee charged for Choice (inter-city) orders.",
+            },
+            choiceFreeDeliveryEnabled: {
+              label: "Enable Choice Free Delivery",
+              description: "If enabled, Choice delivery becomes free above the threshold.",
+            },
+            choiceFreeDeliveryThreshold: {
+              label: "Choice Free Delivery Threshold",
+              description: "Cart amount above which Choice delivery becomes free.",
             },
             promiseProtectEnabled: {
               label: "Enable Promise Protect Fee",
@@ -2375,7 +2393,7 @@ export async function buildAdminRouter(app) {
     authentication: {
       authenticate,
       cookieName: "adminjs-session",
-      cookiePassword: process.env.COOKIE_PASSWORD || "cookie-password",
+      cookiePassword: process.env.COOKIE_PASSWORD || crypto.randomUUID(),
     },
     settings: {
       perPage: 50,
@@ -2397,7 +2415,7 @@ export async function buildAdminRouter(app) {
   // ✅ Use buildAuthenticatedRouter for security
   await AdminJSFastify.buildAuthenticatedRouter(admin, {
     authenticate,
-    cookiePassword: process.env.COOKIE_PASSWORD || "cookie-password",
+    cookiePassword: process.env.COOKIE_PASSWORD || crypto.randomUUID(),
     cookieName: "adminjs-session",
   }, app);
 

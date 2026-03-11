@@ -117,11 +117,16 @@ const start = async () => {
           }
         });
 
-        socket.on("joinRoom", (roomId) => {
-          if (roomId) {
-            socket.join(String(roomId));
-            console.log(`📦 Socket ${socket.id} joined tracking room ${roomId}`);
+        socket.on("joinRoom", async (roomId) => {
+          if (!roomId) return;
+          // Validate that roomId is a valid MongoDB ObjectId
+          const isValidId = /^[0-9a-fA-F]{24}$/.test(String(roomId));
+          if (!isValidId) {
+            console.log(`⚠️ Socket ${socket.id} rejected — invalid room ID: ${roomId}`);
+            return;
           }
+          socket.join(String(roomId));
+          console.log(`📦 Socket ${socket.id} joined tracking room ${roomId}`);
         });
 
         socket.on("disconnect", () => {

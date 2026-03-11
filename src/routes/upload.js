@@ -11,6 +11,8 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+import { verifyToken } from '../middleware/auth.js';
+
 export const uploadRoutes = async (fastify, options) => {
     // Register multipart locally to avoid conflicts with global AdminJS config
     await fastify.register(fastifyMultipart, {
@@ -20,7 +22,7 @@ export const uploadRoutes = async (fastify, options) => {
         }
     });
 
-    fastify.post('/upload', async (request, reply) => {
+    fastify.post('/upload', { preHandler: [verifyToken] }, async (request, reply) => {
         try {
             console.log("📦 Incoming Upload. Headers:", JSON.stringify(request.headers));
 

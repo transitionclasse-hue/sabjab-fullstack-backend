@@ -4,6 +4,21 @@ import jwt from "jsonwebtoken";
  * ✅ FASTIFY AUTH MIDDLEWARE
  * Secured for the new OTP login flow and optimized for Render's environment.
  */
+/**
+ * 🛡️ ROLE-BASED MIDDLEWARE
+ * Verifies token AND checks that user is Admin or Manager.
+ */
+export const verifyManager = async (req, reply) => {
+    await verifyToken(req, reply);
+    // If verifyToken already sent a response (401/403), stop here
+    if (reply.sent) return;
+    const role = req.user?.role;
+    if (role !== "Admin" && role !== "Manager") {
+        return reply.status(403).send({ message: "Forbidden. Admin or Manager role required." });
+    }
+    return true;
+};
+
 export const verifyToken = async (req, reply) => {
     try {
         const authHeader = req.headers["authorization"];

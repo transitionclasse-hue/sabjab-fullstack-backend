@@ -49,9 +49,4 @@ export const authRoutes = async (fastify) => {
     fastify.put("/customer/update-profile", { preHandler: [verifyToken] }, updateCustomerProfile);
     fastify.delete("/customer/delete-account", { preHandler: [verifyToken] }, deleteCustomerAccount);
 
-    fastify.get("/debug/drivers", async (req, reply) => {
-        const { DeliveryPartner } = await import("../models/user.js");
-        const drivers = await DeliveryPartner.find({});
-        return reply.send({ count: drivers.length, drivers });
-    });
 };

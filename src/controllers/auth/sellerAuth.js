@@ -1,6 +1,6 @@
 import { Seller } from "../../models/user.js";
 import jwt from "jsonwebtoken";
-
+import bcrypt from "bcrypt";
 const sanitizeSeller = (seller) => {
     if (!seller) return null;
     const safeSeller = seller.toObject ? seller.toObject() : { ...seller };
@@ -70,7 +70,7 @@ export const loginSeller = async (req, reply) => {
             return reply.status(404).send({ message: "Seller not found" });
         }
 
-        if (seller.password !== password) {
+        if (!await bcrypt.compare(password, seller.password)) {
             return reply.status(401).send({ message: "Invalid credentials" });
         }
 
