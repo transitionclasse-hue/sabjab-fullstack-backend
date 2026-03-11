@@ -23,6 +23,28 @@ export const createSuggestion = async (req, reply) => {
     }
 };
 
+export const getWinners = async (req, reply) => {
+    try {
+        const winners = await Suggestion.find({ isWinner: true })
+            .populate("customer", "name")
+            .sort({ createdAt: -1 })
+            .limit(10);
+        
+        // Format for frontend (mask names slightly like "Rahul S.")
+        const formatted = winners.map(w => ({
+            id: w._id,
+            name: w.customer?.name ? `${w.customer.name.split(' ')[0]} ${w.customer.name.split(' ')[1]?.[0] || ''}.`.trim() : "User",
+            prize: `${w.rewardCoins} SabJab Coins`,
+            product: w.brandName,
+            date: w.createdAt
+        }));
+
+        return reply.send({ success: true, winners: formatted });
+    } catch (error) {
+        return reply.status(500).send({ message: "An error occurred", error: error.message });
+    }
+};
+
 export const getMySuggestions = async (req, reply) => {
     try {
         const userId = req.user.userId;
@@ -37,30 +59,38 @@ export const getMySuggestions = async (req, reply) => {
 export const approveSuggestion = async (req, reply) => {
     try {
         const { id } = req.params;
-        const { coins } = req.body; // How many coins to reward
+        const { coins, isWinner, status } = req.body; // How many coins to reward
 
         const sug = await Suggestion.findById(id);
         if (!sug) return reply.status(404).send({ message: "Not found" });
 
-        sug.status = "reviewed";
-        sug.rewardCoins = coins || 50;
+        if (status) sug.status = status;
+        else sug.status = "reviewed";
+
+        if (isWinner !== undefined) sug.isWinner = isWinner;
+        
+        sug.rewardCoins = coins || 0;
         await sug.save();
 
-        if (coins > 0) {
+        if (coins > 0 && !sug.rewardSent) {
             const customer = await Customer.findById(sug.customer);
-            customer.walletBalance += Number(coins);
-            await customer.save();
+            if (customer) {
+                customer.walletBalance += Number(coins);
+                await customer.save();
 
-            // Record transaction
-            const txn = new WalletTransaction({
-                customer: sug.customer,
-                amount: Number(coins),
-                type: "credit",
-                txnType: "manual_adjustment",
-                description: `Reward for suggesting brand: ${sug.brandName}`,
-                status: "completed",
-            });
-            await txn.save();
+                // Record transaction
+                const txn = new WalletTransaction({
+                    customer: sug.customer,
+                    amount: Number(coins),
+                    type: "credit",
+                    txnType: "manual_adjustment",
+                    description: `Reward for suggesting brand: ${sug.brandName}`,
+                    status: "completed",
+                });
+                await txn.save();
+                sug.rewardSent = true;
+                await sug.save();
+            }
         }
 
         return reply.send({ success: true, message: "Suggestion approved and rewarded" });

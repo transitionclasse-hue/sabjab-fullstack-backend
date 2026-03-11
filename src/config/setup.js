@@ -27,6 +27,45 @@ const sanitizeFilename = (filename) => {
     .toLowerCase();
 };
 
+const afterSuggestionEdit = async (response, request, context) => {
+  const { record } = context;
+  const Suggestion = mongoose.models.Suggestion;
+  const Customer = mongoose.models.Customer;
+  const WalletTransaction = mongoose.models.WalletTransaction;
+
+  if (request.method !== 'post') return response;
+
+  const sugId = record.params._id;
+  const sug = await Suggestion.findById(sugId);
+
+  if (sug && sug.rewardCoins > 0 && !sug.rewardSent && (sug.status === 'reviewed' || sug.status === 'added')) {
+    const customer = await Customer.findById(sug.customer);
+    if (customer) {
+      customer.walletBalance += Number(sug.rewardCoins);
+      await customer.save();
+
+      const txn = new WalletTransaction({
+        customer: sug.customer,
+        amount: Number(sug.rewardCoins),
+        type: "credit",
+        txnType: "manual_adjustment",
+        description: `Reward for suggesting brand: ${sug.brandName} (via Admin Panel)`,
+        status: "completed",
+      });
+      await txn.save();
+
+      sug.rewardSent = true;
+      await sug.save();
+      
+      // Update the record in context to show rewardSent as true
+      if (response.record && response.record.params) {
+        response.record.params.rewardSent = true;
+      }
+    }
+  }
+  return response;
+};
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -792,6 +831,37 @@ export async function buildAdminRouter(app) {
               ]
             },
           },
+        },
+      };
+    }
+
+    if (model.modelName === "Suggestion") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "Marketing", icon: "MessageSquare" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
+          listProperties: ["brandName", "customer", "status", "rewardCoins", "rewardSent", "isWinner", "createdAt"],
+          editProperties: ["brandName", "customer", "status", "rewardCoins", "isWinner"],
+          actions: {
+            edit: { after: [afterSuggestionEdit] },
+            new: { after: [afterSuggestionEdit] },
+          },
+          properties: {
+            brandName: { label: "Suggested Brand" },
+            status: {
+              availableValues: [
+                { value: "pending", label: "Pending Review" },
+                { value: "reviewed", label: "Reviewed" },
+                { value: "added", label: "Brand Added" },
+                { value: "rejected", label: "Rejected" },
+              ]
+            },
+            rewardCoins: { label: "Reward Coins (SabJab Coins)" },
+            isWinner: { label: "🏆 Community Winner?" },
+            rewardSent: { label: "✅ Reward Dispatched?", isReadOnly: true },
+            customer: { isReadOnly: true }
+          }
         },
       };
     }
