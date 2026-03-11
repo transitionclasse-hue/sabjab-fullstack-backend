@@ -2,6 +2,7 @@ import "dotenv/config";
 import fastifySession from "@fastify/session";
 import ConnectMongoDBSession from "connect-mongodb-session";
 import { Admin } from "../models/index.js";
+import bcrypt from "bcrypt";
 
 // Your existing connection variables
 export const PORT = process.env.PORT || 5000;
@@ -33,9 +34,10 @@ export const authenticate = async (email, password) => {
             return null; // Admin not found
         }
 
-        // Check if the password matches
-        if (user.password === password) {
-            return Promise.resolve({ email: email, password: password });
+        // Check if the password matches (bcrypt)
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (isMatch) {
+            return Promise.resolve({ email: email });
         } else {
             return null; // Wrong password
         }
