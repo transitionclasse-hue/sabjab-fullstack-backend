@@ -593,7 +593,6 @@ export async function buildAdminRouter(app) {
             "freeDeliveryEnabled",
             "freeDeliveryThreshold",
             "baseDeliveryFee",
-            "rewardCoinsEnabled",
             "rewardCoinsPercentage",
             "minAmountForCoins",
             "promiseProtectEnabled",
@@ -607,8 +606,12 @@ export async function buildAdminRouter(app) {
             "lateNightStartTime",
             "lateNightEndTime",
             "lateNightFee",
+            "defaultDriverEarning",
+            "defaultDriverCodLimit",
             "customFees",
             "cartBarColor",
+            "choiceCartBarColor",
+            "etaColor",
           ],
           showProperties: [
             "freeDeliveryEnabled",
@@ -625,8 +628,12 @@ export async function buildAdminRouter(app) {
             "lateNightStartTime",
             "lateNightEndTime",
             "lateNightFee",
+            "defaultDriverEarning",
+            "defaultDriverCodLimit",
             "customFees",
             "cartBarColor",
+            "choiceCartBarColor",
+            "etaColor",
             "updatedAt",
           ],
           navigation: {
@@ -700,6 +707,21 @@ export async function buildAdminRouter(app) {
             cartBarColor: {
               label: "CartBar Background Color (Hex)",
               description: "Example: #1A1A1A or #10b981. This controls the background color of the floating cart bar in the customer app.",
+            },
+            choiceCartBarColor: {
+              label: "Choice CartBar Color (Hex)",
+              description: "Background color for the Choice-specific cart pill.",
+            },
+            etaColor: {
+              label: "ETA Text Color (Hex)",
+              description: "Color for the ETA display text.",
+            },
+            defaultDriverEarning: {
+              label: "Default Driver Earning (per trip)",
+            },
+            defaultDriverCodLimit: {
+              label: "Default Driver COD Limit",
+              description: "Global fallback limit for drivers without a custom limit.",
             },
             updatedAt: {
               label: "Last Updated",
@@ -1425,10 +1447,10 @@ export async function buildAdminRouter(app) {
         options: {
           navigation: { name: "Inventory Catalog", icon: "Archive" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
-          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "isApproved", "image", "deliveryDays", "returnWindow", "tags"],
-          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isApproved", "sellerId", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
-          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "isAvailable", "isApproved", "sellerId", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "tags", "variations"],
-          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isApproved", "isChoice", "deliveryDays", "returnWindow", "tags"],
+          listProperties: ["name", "price", "stock", "costPrice", "quantity", "isAvailable", "isApproved", "image", "deliveryDays", "returnWindow", "shippingCost", "rtoCost", "tags"],
+          editProperties: ["name", "description", "uploadFile", "uploadVideo", "uploadGallery", "images", "video", "videoThumbnail", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "shippingCost", "rtoCost", "isAvailable", "isApproved", "sellerId", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "tags", "variations"],
+          showProperties: ["name", "description", "price", "discountPrice", "costPrice", "quantity", "stock", "deliveryDays", "returnWindow", "userStockLimit", "shippingCost", "rtoCost", "isAvailable", "isApproved", "sellerId", "isChoice", "isSensitive", "superCategory", "category", "subCategory", "image", "images", "video", "videoThumbnail", "tags", "variations"],
+          filterProperties: ["name", "category", "subCategory", "superCategory", "stock", "costPrice", "isAvailable", "isApproved", "isChoice", "deliveryDays", "returnWindow", "shippingCost", "rtoCost", "tags"],
           actions: {
             new: { 
               after: [replaceKeyWithUrl],
