@@ -545,6 +545,37 @@ export const updateOrderStatus = async (req, reply) => {
                         console.log(`[OrderRewards] SUCCESS: Awarded ${order.rewardCoinsEarned} SabJab Coins to customer ${order.customer} for order ${order.orderId}`);
                     }
                 }
+
+                // NEW: Credit Sellers for delivered items
+                if (order.items && order.items.length > 0) {
+                    const sellerEarnings = new Map();
+
+                    for (const orderItem of order.items) {
+                        const product = await Product.findById(orderItem.item);
+                        if (product && product.sellerId) {
+                            const sellerId = product.sellerId.toString();
+                            const itemPrice = orderItem.variation?.price || product.price || 0;
+                            const itemEarning = itemPrice * (orderItem.count || 1);
+
+                            sellerEarnings.set(sellerId, (sellerEarnings.get(sellerId) || 0) + itemEarning);
+                        }
+                    }
+
+                    for (const [sellerId, amount] of sellerEarnings) {
+                        if (amount > 0) {
+                            await WalletTransaction.create({
+                                seller: sellerId,
+                                order: order._id,
+                                amount: amount,
+                                type: "credit",
+                                txnType: "seller_sale",
+                                description: `Earning from order #${order.orderId}`,
+                                status: "completed"
+                            });
+                            console.log(`[OrderUpdate] SUCCESS: Credited ₹${amount} to seller ${sellerId} for order ${order.orderId}`);
+                        }
+                    }
+                }
             } catch (calcError) {
                 console.error("[StatusUpdate] Order delivery logic failed:", calcError.message);
             }

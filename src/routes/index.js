@@ -24,6 +24,7 @@ import { uploadRoutes } from "./upload.js";
 import { suggestionRoutes } from "./suggestion.js";
 import { ticketRoutes } from "./ticket.js";
 import profileConfigRoutes from "./profileConfig.js";
+import { sellerRoutes } from "./seller.js";
 
 const prefix = "/api";
 
@@ -94,4 +95,7 @@ export const registerRoutes = async (fastify) => {
 
   // Profile Page Configuration
   fastify.register(profileConfigRoutes, { prefix: `${prefix}/profile-config` });
+
+  // Seller Dashboard logic
+  fastify.register(sellerRoutes, { prefix });
 };

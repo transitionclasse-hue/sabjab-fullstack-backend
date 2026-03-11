@@ -5,11 +5,14 @@ const walletTransactionSchema = new mongoose.Schema(
         customer: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Customer",
-            // required: true, // Removed required:true to support Driver transactions
         },
         deliveryPartner: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "DeliveryPartner",
+        },
+        seller: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Seller",
         },
         order: {
             type: mongoose.Schema.Types.ObjectId,
@@ -23,7 +26,7 @@ const walletTransactionSchema = new mongoose.Schema(
         },
         txnType: {
             type: String,
-            enum: ["delivery_fee", "cod_collection", "cod_settlement", "payout", "customer_order", "refund", "referral_bonus", "green_points_redemption", "reward_coins", "return_deduction", "manual_adjustment"],
+            enum: ["delivery_fee", "cod_collection", "cod_settlement", "payout", "customer_order", "refund", "referral_bonus", "green_points_redemption", "reward_coins", "return_deduction", "manual_adjustment", "seller_sale"],
             default: "customer_order",
         },
         status: {
@@ -48,7 +51,7 @@ walletTransactionSchema.post("save", async function (doc) {
     if (doc.status !== "completed") return;
 
     try {
-        const { Customer, DeliveryPartner } = await import("./user.js");
+        const { Customer, DeliveryPartner, Seller } = await import("./user.js");
 
         if (doc.deliveryPartner) {
             const update = {};
@@ -56,38 +59,35 @@ walletTransactionSchema.post("save", async function (doc) {
                 // Wallet balance updates (Atomic $inc)
                 const change = doc.type === "credit" ? doc.amount : -doc.amount;
                 update.$inc = { walletBalance: change };
-                console.log(`[WalletSync] ATOMIC_WALLET_START: ${doc.txnType} | Amt: ${change} | Driver: ${doc.deliveryPartner}`);
+                console.log(`[WalletSync] ATOMIC_DRIVER_WALLET: ${doc.txnType} | Amt: ${change} | Driver: ${doc.deliveryPartner}`);
             } else if (doc.txnType === "cod_collection" || doc.txnType === "cod_settlement") {
                 // Cash in hand updates (Atomic $inc)
                 const change = doc.txnType === "cod_collection" ? doc.amount : -doc.amount;
                 update.$inc = { cashInHand: change };
-                console.log(`[WalletSync] ATOMIC_CASH_START: ${doc.txnType} | Amt: ${change} | Driver: ${doc.deliveryPartner}`);
+                console.log(`[WalletSync] ATOMIC_CASH: ${doc.txnType} | Amt: ${change} | Driver: ${doc.deliveryPartner}`);
             }
 
             if (Object.keys(update).length > 0) {
-                const updatedDriver = await DeliveryPartner.findByIdAndUpdate(
-                    doc.deliveryPartner,
-                    update,
-                    { new: true }
-                );
-                if (updatedDriver) {
-                    console.log(`[WalletSync] ATOMIC_SUCCESS: Driver ${doc.deliveryPartner} | Wallet: ${updatedDriver.walletBalance} | Cash: ${updatedDriver.cashInHand}`);
-                } else {
-                    console.warn(`[WalletSync] ATOMIC_FAIL: Driver ${doc.deliveryPartner} not found`);
-                }
+                await DeliveryPartner.findByIdAndUpdate(doc.deliveryPartner, update);
             }
         }
 
         if (doc.customer) {
             const change = doc.type === "credit" ? doc.amount : -doc.amount;
-            const updatedCustomer = await Customer.findByIdAndUpdate(
+            await Customer.findByIdAndUpdate(
                 doc.customer,
-                { $inc: { walletBalance: change } },
-                { new: true }
+                { $inc: { walletBalance: change } }
             );
-            if (updatedCustomer) {
-                console.log(`[WalletSync] ATOMIC_CUSTOMER_SUCCESS: Customer ${doc.customer} | New Balance: ${updatedCustomer.walletBalance}`);
-            }
+            console.log(`[WalletSync] ATOMIC_CUSTOMER: ${doc.customer} | Change: ${change}`);
+        }
+
+        if (doc.seller) {
+            const change = doc.type === "credit" ? doc.amount : -doc.amount;
+            await Seller.findByIdAndUpdate(
+                doc.seller,
+                { $inc: { walletBalance: change } }
+            );
+            console.log(`[WalletSync] ATOMIC_SELLER: ${doc.seller} | Change: ${change}`);
         }
     } catch (error) {
         console.error("[WalletSync] Error in post-save hook:", error.message);
