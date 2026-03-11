@@ -360,6 +360,25 @@ export async function buildAdminRouter(app) {
         }
       };
     }
+    if (model.modelName === "Seller") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "Users & Partners", icon: "Store" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
+          listProperties: ["businessName", "name", "email", "phone", "isApproved"],
+          editProperties: ["businessName", "name", "email", "password", "phone", "businessAddress", "gstNumber", "bankAccount.bankName", "bankAccount.accountNumber", "bankAccount.ifsc", "isApproved"],
+          showProperties: ["businessName", "name", "email", "phone", "businessAddress", "gstNumber", "bankAccount.bankName", "bankAccount.accountNumber", "bankAccount.ifsc", "isApproved", "phoneVerified", "walletBalance"],
+          filterProperties: ["businessName", "name", "email", "isApproved"],
+          properties: {
+            isApproved: {
+              label: "✅ Approved for Marketplace",
+              description: "Must be checked for the seller's products to be visible on the customer app.",
+            },
+          }
+        },
+      };
+    }
     if (model.modelName === "Customer") {
       return {
         resource: model,
@@ -1448,6 +1467,16 @@ export async function buildAdminRouter(app) {
             }
           },
           properties: {
+            isApproved: {
+              label: "✅ Admin Approved",
+              description: "Visible to customers only if Approved is TRUE. Seller-uploaded products start as FALSE.",
+              type: 'boolean'
+            },
+            sellerId: {
+              label: "👤 Assigned Seller",
+              description: "The seller who owns this product. Null for platform-owned items.",
+              reference: "Seller"
+            },
             name: {
               label: "Product Name",
               isRequired: true,
