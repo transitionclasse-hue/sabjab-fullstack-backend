@@ -10,15 +10,21 @@ const parseBool = (v) => String(v).toLowerCase() === "true";
 export const getManagerOverview = async (req, reply) => {
   try {
     await expireStaleAssignedOrders(req.server.io);
-    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, activeOccasion] = await Promise.all([
+    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, activeOccasion] = await Promise.all([
       Order.countDocuments({}),
       Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
       Order.countDocuments({ status: "delivered" }),
       Customer.countDocuments({}),
       DeliveryPartner.countDocuments({}),
+      Order.aggregate([
+        { $match: { status: "delivered" } },
+        { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+      ]),
       Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle").lean() ||
       Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean()
     ]);
+
+    const totalRevenue = revenueAgg[0]?.total || 0;
 
     return reply.send({
       totalOrders,
@@ -26,6 +32,7 @@ export const getManagerOverview = async (req, reply) => {
       deliveredOrders,
       totalCustomers: customers,
       totalDrivers: drivers,
+      totalRevenue,
       themeEffect: activeOccasion?.themeEffect || "none",
       searchBarStyle: activeOccasion?.searchBarStyle || "standard",
     });

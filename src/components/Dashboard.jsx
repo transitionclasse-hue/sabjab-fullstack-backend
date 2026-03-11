@@ -72,11 +72,12 @@ const Dashboard = () => {
                 // Note: 'Order' might be registered multiple times, but AdminJS usually keeps the last one or the one with specific ID.
                 // In our setup, 'Order' is the primary one, and 'OrderAssignment' is the secondary.
                 
-                const [ordersRes, pendingOrdersRes, customersRes, lowStockRes, recentOrdersRes] = await Promise.all([
+                const [ordersRes, pendingOrdersRes, customersRes, lowStockRes, deliveredOrdersRes, recentOrdersRes] = await Promise.all([
                     api.resourceAction({ resourceId: 'Order', actionName: 'list', params: { perPage: 1 } }),
                     api.resourceAction({ resourceId: 'Order', actionName: 'list', params: { 'filters.status': 'available', perPage: 1 } }),
                     api.resourceAction({ resourceId: 'Customer', actionName: 'list', params: { perPage: 1 } }),
                     api.resourceAction({ resourceId: 'Product', actionName: 'list', params: { 'filters.stock~~lte': 10, perPage: 1 } }),
+                    api.resourceAction({ resourceId: 'Order', actionName: 'list', params: { 'filters.status': 'delivered', perPage: 100, sortBy: 'createdAt', direction: 'desc' } }),
                     api.resourceAction({ resourceId: 'Order', actionName: 'list', params: { perPage: 5, sortBy: 'createdAt', direction: 'desc' } })
                 ]);
 
@@ -93,11 +94,20 @@ const Dashboard = () => {
                     return [];
                 };
 
+                // Calculate revenue from delivered orders
+                const deliveredRecords = getRecords(deliveredOrdersRes);
+                let totalRevenue = 0;
+                deliveredRecords.forEach(order => {
+                    const price = parseFloat(order.params?.totalPrice || 0);
+                    if (!isNaN(price)) totalRevenue += price;
+                });
+
                 setStats({
                     totalOrders: getTotal(ordersRes),
                     pendingOrders: getTotal(pendingOrdersRes),
                     activeCustomers: getTotal(customersRes),
-                    lowStockAlerts: getTotal(lowStockRes)
+                    lowStockAlerts: getTotal(lowStockRes),
+                    totalRevenue: Math.round(totalRevenue)
                 });
 
                 setRecentOrders(getRecords(recentOrdersRes));
@@ -136,7 +146,7 @@ const Dashboard = () => {
             </Box>
 
             {/* Main Stats Grid */}
-            <Box display="grid" gridTemplateColumns={["1fr", "1fr 1fr", "1fr 1fr 1fr 1fr"]} gridGap="32px" mb="xxxl">
+            <Box display="grid" gridTemplateColumns={["1fr", "1fr 1fr", "1fr 1fr 1fr", "1fr 1fr 1fr 1fr 1fr"]} gridGap="32px" mb="xxxl">
                 <PremiumCard>
                     <StatLabel>Growth Metrics</StatLabel>
                     <StatValue>{stats.totalOrders}</StatValue>
@@ -166,6 +176,14 @@ const Dashboard = () => {
                     <StatValue color={stats.lowStockAlerts > 0 ? "#991b1b" : "#10b981"}>{stats.lowStockAlerts}</StatValue>
                     <Box mt="md" display="flex" alignItems="center">
                         <Text color="#991b1b" fontWeight="bold" variant="sm">Low Stock Alerts</Text>
+                    </Box>
+                </PremiumCard>
+
+                <PremiumCard borderLeft="4px solid #06b6d4">
+                    <StatLabel>Revenue</StatLabel>
+                    <StatValue>₹{(stats.totalRevenue || 0).toLocaleString()}</StatValue>
+                    <Box mt="md" display="flex" alignItems="center">
+                        <Text color="#06b6d4" fontWeight="bold" variant="sm">Total Delivered Revenue</Text>
                     </Box>
                 </PremiumCard>
             </Box>
