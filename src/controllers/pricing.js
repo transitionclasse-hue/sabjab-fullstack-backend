@@ -26,6 +26,7 @@ const DEFAULT_PRICING_CONFIG = {
   minAmountForCoins: 1,
   customFees: [],
   cartBarColor: "#1A1A1A",
+  choiceCartBarColor: "#6D28D9",
   etaColor: "#1A1A1A",
 };
 
@@ -55,23 +56,25 @@ const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
   return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 };
 
-const calculateFees = (config, itemsTotal, coupon = null) => {
+const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick') => {
   const subtotal = Math.max(0, toNumber(itemsTotal, 0));
   const breakdown = [];
 
-  const freeDeliveryEnabled = Boolean(config.freeDeliveryEnabled);
-  const freeDeliveryThreshold = toNumber(config.freeDeliveryThreshold, 0);
-  const baseDeliveryFee = toNumber(config.baseDeliveryFee, 0);
-  const deliveryFee =
-    freeDeliveryEnabled && subtotal >= freeDeliveryThreshold ? 0 : baseDeliveryFee;
+  const isChoice = orderType === 'choice';
+  const freeEnabled = isChoice ? Boolean(config.choiceFreeDeliveryEnabled) : Boolean(config.freeDeliveryEnabled);
+  const freeThreshold = isChoice ? toNumber(config.choiceFreeDeliveryThreshold, 0) : toNumber(config.freeDeliveryThreshold, 0);
+  const baseFee = isChoice ? toNumber(config.choiceDeliveryFee, 40) : toNumber(config.baseDeliveryFee, 0);
+  
+  const deliveryFee = (freeEnabled && subtotal >= freeThreshold) ? 0 : baseFee;
 
   breakdown.push({
     code: "delivery_fee",
-    label: "Delivery Fee",
+    label: isChoice ? "Choice Delivery Fee" : "Delivery Fee",
     amount: deliveryFee,
     meta: {
-      freeDeliveryApplied: freeDeliveryEnabled && subtotal >= freeDeliveryThreshold,
-      freeDeliveryThreshold,
+      freeDeliveryApplied: freeEnabled && subtotal >= freeThreshold,
+      freeDeliveryThreshold: freeThreshold,
+      orderType
     },
   });
 
@@ -193,7 +196,7 @@ export const getPricingConfig = async (req, reply) => {
 
 export const estimatePricing = async (req, reply) => {
   try {
-    const { itemsTotal, couponCode } = req.body;
+    const { itemsTotal, couponCode, orderType } = req.body;
     const subtotal = toNumber(itemsTotal, 0);
 
     const config = await PricingConfig.findOneAndUpdate(
@@ -223,7 +226,7 @@ export const estimatePricing = async (req, reply) => {
       }
     }
 
-    const estimate = calculateFees(config, subtotal, coupon);
+    const estimate = calculateFees(config, subtotal, coupon, orderType);
     return reply.send(estimate);
   } catch (error) {
     return reply.status(500).send({
@@ -261,6 +264,7 @@ export const updatePricingConfig = async (req, reply) => {
       minAmountForCoins: Math.max(0, toNumber(body.minAmountForCoins, 1)),
       customFees: sanitizeCustomFees(body.customFees),
       cartBarColor: String(body.cartBarColor || "#1A1A1A").trim(),
+      choiceCartBarColor: String(body.choiceCartBarColor || "#6D28D9").trim(),
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
     };
 

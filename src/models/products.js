@@ -93,6 +93,11 @@ productSchema.pre('save', function (next) {
     this.stock = this.variations.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
   }
 
+  // NEW: Default Choice products to 15-day return window if not set
+  if (this.isChoice && (!this.returnWindow || this.returnWindow === 0)) {
+    this.returnWindow = 360; // 15 days * 24 hours
+  }
+
   next();
 });
 
