@@ -50,8 +50,20 @@ const orderSchema = new mongoose.Schema({
         default: "none",
       },
       returnReason: { type: String },
+      deliveryStatus: {
+        type: String,
+        enum: ["pending", "shipped", "delivered"],
+        default: "pending",
+      },
+      expectedDate: { type: Date },
     },
   ],
+
+  orderType: {
+    type: String,
+    enum: ["quick", "choice"],
+    default: "quick",
+  },
 
   deliveryLocation: {
     latitude: { type: Number, required: true },

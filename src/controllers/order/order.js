@@ -74,7 +74,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -182,6 +182,8 @@ export const createOrder = async (req, reply) => {
 
             item.itemPrice = price; // Store for total calculation
             item.variationData = variationData;
+            item.isChoice = product.isChoice;
+            item.deliveryDays = product.deliveryDays || 0;
         }
 
         // Calculate actual itemsTotal from DB prices for coupon validation
@@ -242,13 +244,23 @@ export const createOrder = async (req, reply) => {
 
         const newOrder = new Order({
             customer: userId,
-            items: items.map((item, idx) => ({
-                id: item._id || item.id,
-                item: item._id || item.id,
-                count: item.qty || item.quantity || item.count || 1,
-                variation: item.variationData,
-                returnWindow: stockUpdates[idx].product.returnWindow || 0 // SNAPSHOT the return window
-            })),
+            items: items.map((item, idx) => {
+                const deliveryDays = item.deliveryDays || 0;
+                const expectedDate = new Date();
+                expectedDate.setDate(expectedDate.getDate() + deliveryDays);
+
+                return {
+                    id: item._id || item.id,
+                    item: item._id || item.id,
+                    count: item.qty || item.quantity || item.count || 1,
+                    variation: item.variationData,
+                    returnWindow: stockUpdates[idx].product.returnWindow || 0,
+                    isChoice: item.isChoice,
+                    deliveryStatus: item.isChoice ? "pending" : "delivered", // Quick deliveries are "delivered" in terms of Choice logistics
+                    expectedDate: expectedDate
+                };
+            }),
+            orderType: orderType || "quick",
             branch: resolvedBranchId,
             totalPrice: Number(totalAmount),
             paymentMethod: paymentMethod || "COD",
@@ -313,25 +325,28 @@ export const createOrder = async (req, reply) => {
             deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
         });
 
-        // Notify all online drivers about the new available order
-        console.log(`📡 [Socket] Emitting driver:new-order for order ${populatedOrder.orderId}`);
-        req.server.io.emit("driver:new-order", {
-            order: populatedOrder
-        });
+        // Notify all online drivers about the new available order (ONLY for Quick orders)
+        if (savedOrder.orderType === "quick") {
+            console.log(`📡 [Socket] Emitting driver:new-order for order ${populatedOrder.orderId}`);
+            req.server.io.emit("driver:new-order", {
+                order: populatedOrder
+            });
+        }
 
         // 🆕 NEW: Push Notifications
         (async () => {
             try {
-                // 1. Notify Online Drivers
-                const onlineDrivers = await DeliveryPartner.find({ isOnline: true, pushToken: { $ne: null } });
-                for (const driver of onlineDrivers) {
-                    await sendPushNotification(
-                        driver._id,
-                        "New Order Available! 🚀",
-                        `New order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || "SabJab"}`,
-                        { orderId: String(savedOrder._id), type: "new_order" },
-                        "DeliveryPartner"
-                    );
+                if (savedOrder.orderType === "quick") {
+                    const onlineDrivers = await DeliveryPartner.find({ isOnline: true, pushToken: { $ne: null } });
+                    for (const driver of onlineDrivers) {
+                        await sendPushNotification(
+                            driver._id,
+                            "New Order Available! 🚀",
+                            `New order #${populatedOrder.orderId} from ${populatedOrder.branch?.name || "SabJab"}`,
+                            { orderId: String(savedOrder._id), type: "new_order" },
+                            "DeliveryPartner"
+                        );
+                    }
                 }
 
                 // 2. Notify Admins/Managers
@@ -477,6 +492,9 @@ export const updateOrderStatus = async (req, reply) => {
                 order.items.forEach(item => {
                     if (item.returnWindow > 0) {
                         item.returnExpiresAt = new Date(order.deliveredAt.getTime() + (item.returnWindow * 3600000));
+                    }
+                    if (order.orderType === "choice") {
+                        item.deliveryStatus = "delivered";
                     }
                 });
             }
