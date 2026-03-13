@@ -1,6 +1,7 @@
 import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction, Admin, GlobalConfig } from "../../models/index.js";
 import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
+import { getDistanceKm, isValidLatLng } from "../../utils/geo.js";
 
 const ORDER_STATUS = {
     AVAILABLE: "available",
@@ -122,6 +123,28 @@ export const createOrder = async (req, reply) => {
         if (!resolvedBranchId) {
             return reply.status(400).send({ message: "Unable to resolve branch for this order" });
         }
+
+        // --- GEOFENCING VALIDATION ---
+        const userLat = Number(deliveryAddress?.latitude || deliveryAddress?.coords?.lat);
+        const userLng = Number(deliveryAddress?.longitude || deliveryAddress?.coords?.lng);
+        const branchLat = Number(branchData.location?.latitude);
+        const branchLng = Number(branchData.location?.longitude);
+
+        if (isValidLatLng(userLat, userLng) && isValidLatLng(branchLat, branchLng)) {
+            const distance = getDistanceKm(userLat, userLng, branchLat, branchLng);
+            const radius = branchData.deliveryRadius || 2.5;
+
+            if (distance > radius) {
+                console.log(`[Geofence] REJECTED: Distance ${distance.toFixed(2)}km > Radius ${radius}km`);
+                return reply.status(400).send({
+                    message: `We do not deliver to this location yet. Your distance (${distance.toFixed(2)} km) exceeds our delivery range (${radius} km).`,
+                    outOfRange: true,
+                    distance: distance.toFixed(2),
+                    radius
+                });
+            }
+        }
+        // -----------------------------
 
         // --- STOCK VALIDATION & ATOMIC UPDATES ---
         const stockUpdates = [];
