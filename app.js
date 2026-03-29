@@ -129,6 +129,15 @@ const start = async () => {
           console.log(`📦 Socket ${socket.id} joined tracking room ${roomId}`);
         });
 
+        // --- CONTINUOUS LIVE TRACKING RELAY ---
+        socket.on("driverLocationUpdate", (data) => {
+          if (data?.orderId && data?.location) {
+            // Forward the ultra-lightweight GPS ping to anyone in the order tracking room (Customer App)
+            socket.to(String(data.orderId)).emit("driverLocationUpdate", data.location);
+          }
+        });
+        // --------------------------------------
+
         socket.on("disconnect", () => {
           console.log("🔴 User disconnected");
         });
