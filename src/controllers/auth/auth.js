@@ -10,8 +10,8 @@ dotenv.config();
 ===================================================== */
 
 const generateTokens = (user) => {
-  // Provision for Manager/Seller to stay logged in longer
-  const isPrivileged = user.role === 'Admin' || user.role === 'Seller';
+  // Provision for Manager/SubManager/Seller to stay logged in longer
+  const isPrivileged = user.role === 'Admin' || user.role === 'Seller' || user.role === 'SubManager';
   
   const accessToken = jwt.sign(
     { userId: user._id, role: user.role },
@@ -355,6 +355,8 @@ export const updateCustomerProfile = async (req, reply) => {
     // ✅ Sensitive Mode preference
     if (typeof sensitiveMode === 'boolean') {
       customer.sensitiveMode = sensitiveMode;
+    } else if (sensitiveMode === 'true' || sensitiveMode === 'false') {
+      customer.sensitiveMode = sensitiveMode === 'true';
     }
 
     if (dateOfBirth) {

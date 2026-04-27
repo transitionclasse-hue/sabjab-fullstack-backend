@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String },
   role: {
     type: String,
-    enum: ["Customer", "Admin", "DeliveryPartner", "Seller"],
+    enum: ["Customer", "Admin", "DeliveryPartner", "Seller", "SubManager"],
     required: true,
   },
   isActivated: { type: Boolean, default: false },
@@ -113,7 +113,7 @@ const adminSchema = new mongoose.Schema({
   ...userSchema.obj,
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ["Admin"], default: "Admin" },
+  role: { type: String, enum: ["Admin", "SubManager"], default: "Admin" },
   pushToken: { type: String, default: null },
   notificationsEnabled: { type: Boolean, default: true },
   

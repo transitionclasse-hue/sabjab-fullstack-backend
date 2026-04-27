@@ -13,8 +13,8 @@ export const verifyManager = async (req, reply) => {
     // If verifyToken already sent a response (401/403), stop here
     if (reply.sent) return;
     const role = req.user?.role;
-    if (role !== "Admin" && role !== "Manager") {
-        return reply.status(403).send({ message: "Forbidden. Admin or Manager role required." });
+    if (role !== "Admin" && role !== "Manager" && role !== "SubManager") {
+        return reply.status(403).send({ message: "Forbidden. Admin, Manager, or SubManager role required." });
     }
     return true;
 };

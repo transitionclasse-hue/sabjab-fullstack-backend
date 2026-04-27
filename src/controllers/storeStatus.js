@@ -159,9 +159,14 @@ export const updateStoreStatus = async (req, reply) => {
       update.note = payload.note;
     }
 
+    const setOnInsert = { ...DEFAULT_STORE_STATUS };
+    for (const key of Object.keys(update)) {
+      delete setOnInsert[key];
+    }
+
     const config = await StoreStatus.findOneAndUpdate(
       { key: "primary" },
-      { $setOnInsert: DEFAULT_STORE_STATUS, $set: update },
+      { $setOnInsert: setOnInsert, $set: update },
       { upsert: true, new: true }
     );
 
