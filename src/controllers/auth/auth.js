@@ -332,6 +332,151 @@ export const loginAdmin = async (req, reply) => {
 };
 
 /* =====================================================
+   DRIVER OTP REGISTRATION (NATIVE APP)
+===================================================== */
+
+export const requestDriverOtp = async (req, reply) => {
+  try {
+    const { email } = req.body;
+    const phoneStr = req.body.phone ? String(req.body.phone).replace(/[^0-9]/g, "").slice(-10) : null;
+    const phone = phoneStr && phoneStr.length === 10 ? Number(phoneStr) : null;
+
+    if (!phone || !email) {
+      return reply.status(400).send({ message: "Valid 10-digit phone number and email are required." });
+    }
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    let driver = await DeliveryPartner.findOne({ phone });
+    
+    // Check if email is used by another driver
+    const existingEmail = await DeliveryPartner.findOne({ email: email.toLowerCase().trim() });
+    if (existingEmail && existingEmail.phone !== phone) {
+      return reply.status(400).send({ message: "Email is already registered to another driver." });
+    }
+    
+    if (!driver) {
+      // Create skeleton driver profile pending registration
+      driver = new DeliveryPartner({
+        phone,
+        email: email.toLowerCase().trim(),
+        role: "DeliveryPartner",
+        isActivated: false
+      });
+    } else {
+      driver.email = email.toLowerCase().trim();
+    }
+
+    driver.otp = otp;
+    driver.otpExpires = Date.now() + 300000;
+    await driver.save();
+
+    console.log(`✅ Driver OTP saved in DB for phone: ${phone}, OTP: ${otp}`);
+
+    // If driver has an email, send OTP via email
+    if (driver.email) {
+      try {
+        await fetch("https://sabjab.com/send-otp.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: driver.email, otp }),
+        });
+        console.log("✅ OTP email sent to driver");
+      } catch (mailError) {
+        console.error("⚠️ Mail API error:", mailError.message);
+      }
+    }
+
+    return reply.send({ message: "OTP sent successfully", phone });
+  } catch (error) {
+    console.error("❌ requestDriverOtp ERROR:", error);
+    return reply.status(500).send({ message: "Error", error: error.message });
+  }
+};
+
+export const verifyDriverOtp = async (req, reply) => {
+  try {
+    const phoneStr = req.body.phone ? String(req.body.phone).replace(/[^0-9]/g, "").slice(-10) : null;
+    const phone = phoneStr ? Number(phoneStr) : null;
+    const { otp } = req.body;
+
+    const driver = await DeliveryPartner.findOne({ phone });
+
+    if (!driver || driver.otp !== otp || driver.otpExpires < Date.now()) {
+      return reply.status(400).send({ message: "Invalid or expired OTP" });
+    }
+
+    driver.otp = undefined;
+    await driver.save();
+
+    // Check if the driver has completed registration (has name)
+    if (!driver.name) {
+      return reply.send({
+        status: "needs_registration",
+        deliveryPartner: { _id: driver._id, phone: driver.phone }
+      });
+    }
+
+    // Check if deactivated by Manager (if they have a name but isActivated is false, they were deactivated)
+    if (!driver.isActivated) {
+      return reply.send({
+        status: "pending_approval", // Re-using this status for deactivated or pending
+        message: "Your account is inactive. Please contact your manager.",
+        deliveryPartner: { _id: driver._id, phone: driver.phone, name: driver.name }
+      });
+    }
+
+    // Driver is fully registered and active -> Generate tokens
+    const { accessToken, refreshToken } = generateTokens(driver);
+    const driverObj = driver.toObject();
+    delete driverObj.password;
+
+    return reply.send({
+      status: "success",
+      message: "Driver login successful",
+      accessToken,
+      refreshToken,
+      deliveryPartner: driverObj,
+    });
+  } catch (error) {
+    console.error("❌ verifyDriverOtp ERROR:", error);
+    return reply.status(500).send({ message: "Error verifying OTP" });
+  }
+};
+
+export const registerDriverDetails = async (req, reply) => {
+  try {
+    const { phone, name } = req.body;
+    const phoneStr = phone ? String(phone).replace(/[^0-9]/g, "").slice(-10) : null;
+    const phoneNumber = phoneStr ? Number(phoneStr) : null;
+
+    if (!phoneNumber || !name) {
+      return reply.status(400).send({ message: "Phone and Name are required." });
+    }
+
+    const driver = await DeliveryPartner.findOne({ phone: phoneNumber });
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found. Please restart OTP flow." });
+    }
+
+    driver.name = name;
+    driver.isActivated = false; // Remains false pending Manager approval
+
+    await driver.save();
+
+    return reply.send({
+      status: "pending_approval",
+      message: "Registration successful. Pending manager approval.",
+      deliveryPartner: { _id: driver._id, phone: driver.phone, name: driver.name }
+    });
+
+  } catch (error) {
+    console.error("❌ registerDriverDetails ERROR:", error);
+    return reply.status(500).send({ message: "Error completing registration" });
+  }
+};
+
+/* =====================================================
    REQUIRED EXPORTS
 ===================================================== */
 

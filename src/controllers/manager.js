@@ -1284,7 +1284,8 @@ export const createManagerDriver = async (req, reply) => {
       licenseNumber,
       branch: branch || null,
       role: "DeliveryPartner",
-      isActivated: true
+      isActivated: true,
+      password: "password123" // Default password
     });
 
     await newDriver.save();
@@ -1298,9 +1299,21 @@ export const updateManagerDriver = async (req, reply) => {
   try {
     const { id } = req.params;
     const { DeliveryPartner } = await import("../models/user.js");
-    const updatedDriver = await DeliveryPartner.findByIdAndUpdate(id, req.body, { new: true });
-    if (!updatedDriver) return reply.status(404).send({ message: "Driver not found" });
-    return reply.send(updatedDriver);
+    
+    // findByIdAndUpdate bypasses pre-save hooks (like password hashing)
+    // So we must manually fetch, update, and save
+    const driver = await DeliveryPartner.findById(id);
+    if (!driver) return reply.status(404).send({ message: "Driver not found" });
+
+    // Update all fields from req.body
+    Object.keys(req.body).forEach(key => {
+      // Don't update empty password
+      if (key === 'password' && !req.body[key]) return;
+      driver[key] = req.body[key];
+    });
+
+    await driver.save(); // This triggers the bcrypt hash pre-save hook
+    return reply.send(driver);
   } catch (error) {
     return reply.status(500).send({ message: "Failed to update driver", error: error.message });
   }

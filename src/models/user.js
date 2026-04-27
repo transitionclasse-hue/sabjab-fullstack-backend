@@ -69,8 +69,10 @@ customerSchema.pre('save', async function (next) {
 // ================= DELIVERY PARTNER =================
 const deliveryPartnerSchema = new mongoose.Schema({
   ...userSchema.obj,
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
+  email: { type: String, unique: true, sparse: true },
+  password: { type: String },
+  otp: { type: String },
+  otpExpires: { type: Date },
   phone: { type: Number, required: true },
   role: {
     type: String,
