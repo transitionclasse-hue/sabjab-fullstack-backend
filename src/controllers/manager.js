@@ -1273,19 +1273,19 @@ export const adjustCustomerWallet = async (req, reply) => {
 
 export const createManagerDriver = async (req, reply) => {
   try {
-    const { name, phone, email, vehicleType, licenseNumber, branch } = req.body;
+    const { name, phone, email, vehicleType, licenseNumber, branch, password } = req.body;
     const { DeliveryPartner } = await import("../models/user.js");
     
     const newDriver = new DeliveryPartner({
       name,
       phone,
-      email,
+      email: email || undefined,
       vehicleType,
       licenseNumber,
-      branch: branch || null,
+      branch: branch || undefined,
       role: "DeliveryPartner",
       isActivated: true,
-      password: "password123" // Default password
+      password: password || "password123" // Use provided password or default
     });
 
     await newDriver.save();
@@ -1309,6 +1309,13 @@ export const updateManagerDriver = async (req, reply) => {
     Object.keys(req.body).forEach(key => {
       // Don't update empty password
       if (key === 'password' && !req.body[key]) return;
+      
+      // Handle empty email and branch to avoid MongoDB CastError or DuplicateKey errors
+      if ((key === 'email' || key === 'branch') && !req.body[key]) {
+        driver[key] = undefined;
+        return;
+      }
+      
       driver[key] = req.body[key];
     });
 
