@@ -529,6 +529,37 @@ export const updateCustomerProfile = async (req, reply) => {
   }
 };
 
+export const updateDriverProfile = async (req, reply) => {
+  try {
+    const { name, email, address, vehicleType, licenseNumber, aadhaarNumber } = req.body;
+    const userId = req.user.userId;
+
+    const { DeliveryPartner } = await import("../../models/user.js");
+    const driver = await DeliveryPartner.findById(userId);
+    
+    if (!driver) {
+      return reply.status(404).send({ message: "Driver not found" });
+    }
+
+    if (name) driver.name = name;
+    if (email !== undefined) driver.email = email === "" ? undefined : email.toLowerCase();
+    if (address !== undefined) driver.address = address;
+    if (vehicleType !== undefined) driver.vehicleType = vehicleType;
+    if (licenseNumber !== undefined) driver.licenseNumber = licenseNumber;
+    if (aadhaarNumber !== undefined) driver.aadhaarNumber = aadhaarNumber;
+
+    await driver.save();
+
+    return reply.send({
+      message: "Profile updated successfully",
+      driver
+    });
+  } catch (error) {
+    console.error("❌ UPDATE DRIVER PROFILE ERROR:", error);
+    return reply.status(500).send({ message: "Error updating driver profile", error: error.message });
+  }
+};
+
 export const deleteCustomerAccount = async (req, reply) => {
   try {
     const userId = req.user.userId;

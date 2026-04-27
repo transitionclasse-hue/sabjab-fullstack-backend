@@ -84,6 +84,7 @@ const deliveryPartnerSchema = new mongoose.Schema({
     longitude: { type: Number },
   },
   address: { type: String },
+  aadhaarNumber: { type: String },
   branch: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Branch",

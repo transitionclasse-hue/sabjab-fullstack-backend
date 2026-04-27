@@ -13,9 +13,10 @@ import {
     updateAdminPushToken,
     requestDriverOtp,
     verifyDriverOtp,
-    registerDriverDetails
+    registerDriverDetails,
+    updateDriverProfile
 } from "../controllers/auth/auth.js";
-import { verifyToken } from "../middleware/auth.js";
+import { verifyToken, verifyDeliveryPartner } from "../middleware/auth.js";
 import {
     registerSeller,
     loginSeller,
@@ -37,6 +38,8 @@ export const authRoutes = async (fastify) => {
     fastify.post("/delivery/request-otp", requestDriverOtp);
     fastify.post("/delivery/verify-otp", verifyDriverOtp);
     fastify.post("/delivery/register-details", registerDriverDetails);
+    fastify.put("/delivery/update-profile", { preHandler: [verifyToken, verifyDeliveryPartner] }, updateDriverProfile);
+    
     fastify.post("/auth/login", loginAdmin); // For Manager App
     fastify.put("/auth/profile", { preHandler: [verifyToken] }, updateAdminProfile);
     fastify.put("/admin/push-token", { preHandler: [verifyToken] }, updateAdminPushToken);
