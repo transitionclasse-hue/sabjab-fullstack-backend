@@ -417,16 +417,7 @@ export const verifyDriverOtp = async (req, reply) => {
       });
     }
 
-    // Check if deactivated by Manager (if they have a name but isActivated is false, they were deactivated)
-    if (!driver.isActivated) {
-      return reply.send({
-        status: "pending_approval", // Re-using this status for deactivated or pending
-        message: "Your account is inactive. Please contact your manager.",
-        deliveryPartner: { _id: driver._id, phone: driver.phone, name: driver.name }
-      });
-    }
-
-    // Driver is fully registered and active -> Generate tokens
+    // Driver has registered name -> Generate tokens (even if pending approval, they can access app to fill forms)
     const { accessToken, refreshToken } = generateTokens(driver);
     const driverObj = driver.toObject();
     delete driverObj.password;
@@ -464,10 +455,17 @@ export const registerDriverDetails = async (req, reply) => {
 
     await driver.save();
 
+    // Generate tokens so they are logged in immediately
+    const { accessToken, refreshToken } = generateTokens(driver);
+    const driverObj = driver.toObject();
+    delete driverObj.password;
+
     return reply.send({
-      status: "pending_approval",
+      status: "success", // Navigate them into the app directly!
       message: "Registration successful. Pending manager approval.",
-      deliveryPartner: { _id: driver._id, phone: driver.phone, name: driver.name }
+      accessToken,
+      refreshToken,
+      deliveryPartner: driverObj
     });
 
   } catch (error) {
