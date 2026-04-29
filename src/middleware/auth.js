@@ -19,6 +19,15 @@ export const verifyManager = async (req, reply) => {
     return true;
 };
 
+export const verifyDeliveryPartner = async (req, reply) => {
+    await verifyToken(req, reply);
+    if (reply.sent) return;
+    if (req.user?.role !== "DeliveryPartner") {
+        return reply.status(403).send({ message: "Forbidden. DeliveryPartner access only." });
+    }
+    return true;
+};
+
 export const verifyToken = async (req, reply) => {
     try {
         const authHeader = req.headers["authorization"];
