@@ -25,12 +25,23 @@ export const sendPushNotification = async (userId, title, body, data = {}, userT
             return null;
         }
 
+        // Map sound name to Android notification channel ID
+        const soundToChannelId = {
+            'default': 'orders_default',
+            'Siren': 'orders_siren',
+            'Bell': 'orders_bell',
+            'Loud Alert': 'orders_alert',
+        };
+        const selectedSound = user.notificationSound || 'default';
+        const channelId = soundToChannelId[selectedSound] || 'orders_default';
+
         const messages = [{
             to: user.pushToken,
-            sound: user.notificationSound || "default",
+            sound: selectedSound === 'default' ? 'default' : `${selectedSound.toLowerCase().replace(' ', '_')}.mp3`,
             title,
             body,
             data,
+            channelId, // Android uses this to pick the right sound channel
         }];
 
         const chunks = expo.chunkPushNotifications(messages);
@@ -84,15 +95,25 @@ export const broadcastPushNotification = async (title, body, data = {}, userType
             return 0;
         }
 
+        const soundToChannelId = {
+            'default': 'orders_default',
+            'Siren': 'orders_siren',
+            'Bell': 'orders_bell',
+            'Loud Alert': 'orders_alert',
+        };
+
         const messages = [];
         for (const user of users) {
             if (Expo.isExpoPushToken(user.pushToken)) {
+                const selectedSound = user.notificationSound || 'default';
+                const channelId = soundToChannelId[selectedSound] || 'orders_default';
                 messages.push({
                     to: user.pushToken,
-                    sound: user.notificationSound || "default",
+                    sound: selectedSound === 'default' ? 'default' : `${selectedSound.toLowerCase().replace(' ', '_')}.mp3`,
                     title,
                     body,
                     data,
+                    channelId,
                 });
             }
         }
