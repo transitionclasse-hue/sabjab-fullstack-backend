@@ -130,10 +130,36 @@ const start = async () => {
         });
 
         // --- CONTINUOUS LIVE TRACKING RELAY ---
-        socket.on("driverLocationUpdate", (data) => {
+        socket.on("driverLocationUpdate", async (data) => {
           if (data?.orderId && data?.location) {
             // Forward the ultra-lightweight GPS ping to anyone in the order tracking room (Customer App)
             socket.to(String(data.orderId)).emit("driverLocationUpdate", data.location);
+          }
+        });
+
+        // --- GENERAL DRIVER HUB UPDATES (Location & Battery) ---
+        socket.on("driverUpdateLocation", async (data) => {
+          if (data?.driverId && data?.location) {
+            try {
+              const { DeliveryPartner } = await import("./src/models/user.js");
+              const updatePayload = {
+                liveLocation: data.location,
+                lastSeen: new Date(),
+              };
+              if (data.batteryLevel !== undefined) {
+                updatePayload.batteryLevel = data.batteryLevel;
+              }
+              await DeliveryPartner.findByIdAndUpdate(data.driverId, updatePayload);
+              
+              // Broadcast to manager apps listening for all driver movements
+              app.io.emit("admin:driver-location-update", {
+                driverId: data.driverId,
+                location: data.location,
+                batteryLevel: data.batteryLevel,
+              });
+            } catch (err) {
+              console.error("Error updating driver location via socket:", err);
+            }
           }
         });
         // --------------------------------------
