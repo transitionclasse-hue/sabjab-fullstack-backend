@@ -560,7 +560,7 @@ export const updateOrderStatus = async (req, reply) => {
         order.deliveryPersonLocation = deliveryPersonLocation;
 
         // 1. Status-specific logic (DO NOT SAVE HERE, modify order object)
-        if (status === ORDER_STATUS.CONFIRMED && !order.pickedUpAt) {
+        if (status === ORDER_STATUS.ARRIVING && !order.pickedUpAt) {
             order.pickedUpAt = new Date();
         }
 
