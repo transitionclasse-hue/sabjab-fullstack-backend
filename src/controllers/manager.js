@@ -73,7 +73,8 @@ export const getManagerOverview = async (req, reply) => {
             } 
           }
         ]
-      }).catch(() => 0) // Fallback for complex query compatibility
+      }).catch(() => 0),
+      Product.countDocuments({})
     ]);
 
     // Use a more robust check for variations in overview
@@ -121,6 +122,7 @@ export const getManagerOverview = async (req, reply) => {
       totalRevenue,
       inventoryProfit,
       lowStockCount: actualLowStockCount,
+      totalProducts: totalProducts || 0,
       themeEffect: activeOccasion?.themeEffect || "none",
       searchBarStyle: activeOccasion?.searchBarStyle || "standard",
     });
@@ -165,6 +167,43 @@ export const getLowStockProducts = async (req, reply) => {
     return reply.send(populatedProducts);
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch low stock products", error: error.message });
+  }
+};
+
+export const getInventoryStats = async (req, reply) => {
+  try {
+    const [totalProducts, categoryStats, variationsStats] = await Promise.all([
+      Product.countDocuments({}),
+      Product.aggregate([
+        {
+          $group: {
+            _id: "$category",
+            count: { $sum: 1 }
+          }
+        },
+        {
+          $lookup: {
+            from: "categories",
+            localField: "_id",
+            foreignField: "_id",
+            as: "categoryInfo"
+          }
+        },
+        { $unwind: { path: "$categoryInfo", preserveNullAndEmptyArrays: true } }
+      ]),
+      Product.countDocuments({ variations: { $exists: true, $not: { $size: 0 } } })
+    ]);
+
+    return reply.send({
+      totalProducts,
+      categoryStats: categoryStats.map(c => ({
+        name: c.categoryInfo?.name || "Uncategorized",
+        count: c.count
+      })),
+      productsWithVariations: variationsStats
+    });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch inventory stats", error: error.message });
   }
 };
 
