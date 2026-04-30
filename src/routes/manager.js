@@ -6,6 +6,8 @@ import {
   getManagerOrders,
   getManagerOverview,
   updateOrderStatusByManager,
+  getLowStockProducts,
+  updateInventoryStock,
   getGreenPointsConfig,
   updateGreenPointsConfig,
   getGreenPointsStats,
@@ -110,6 +112,8 @@ export const managerRoutes = async (fastify) => {
   fastify.patch("/manager/products/:id/status", AUTH, updateProductStatus);
   fastify.post("/manager/orders/:orderId/assign-driver", AUTH, assignDriverByManager);
   fastify.patch("/manager/orders/:orderId/status", AUTH, updateOrderStatusByManager);
+  fastify.get("/manager/inventory/low-stock", AUTH, getLowStockProducts);
+  fastify.post("/manager/inventory/update", AUTH, updateInventoryStock);
 
   // Green Points Management
   fastify.get("/manager/green-points/config", AUTH, getGreenPointsConfig);

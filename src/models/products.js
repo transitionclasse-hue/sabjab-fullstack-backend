@@ -35,6 +35,15 @@ const productSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
+    default: 0,
+  },
+  lowStockThreshold: {
+    type: Number,
+    default: 10,
+  },
+  lastRestockedAt: {
+    type: Date,
+    default: Date.now,
   },
   variations: [
     {
@@ -42,6 +51,8 @@ const productSchema = new mongoose.Schema({
       price: { type: Number, required: true },
       discountPrice: { type: Number },
       stock: { type: Number, default: 0 },
+      lowStockThreshold: { type: Number, default: 5 },
+      lastRestockedAt: { type: Date, default: Date.now },
       image: { type: String },
       isAvailable: { type: Boolean, default: true },
     },

@@ -10,7 +10,7 @@ const parseBool = (v) => String(v).toLowerCase() === "true";
 export const getManagerOverview = async (req, reply) => {
   try {
     await expireStaleAssignedOrders(req.server.io);
-    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, profitAgg, activeOccasion] = await Promise.all([
+    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, profitAgg, activeOccasion, lowStockCount] = await Promise.all([
       Order.countDocuments({}),
       Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
       Order.countDocuments({ status: "delivered" }),
@@ -58,8 +58,54 @@ export const getManagerOverview = async (req, reply) => {
         }
       ]),
       Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle").lean() ||
-      Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean()
+      Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean(),
+      Product.countDocuments({
+        $or: [
+          { $expr: { $lte: ["$stock", "$lowStockThreshold"] } },
+          { 
+            variations: { 
+              $elemMatch: { 
+                $and: [
+                  { stock: { $exists: true } },
+                  { $expr: { $lte: ["$stock", "$lowStockThreshold"] } }
+                ] 
+              } 
+            } 
+          }
+        ]
+      }).catch(() => 0) // Fallback for complex query compatibility
     ]);
+
+    // Use a more robust check for variations in overview
+    const lowStockCountFinal = await Product.aggregate([
+      {
+        $addFields: {
+          isLow: {
+            $or: [
+              { $lte: ["$stock", "$lowStockThreshold"] },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $ifNull: ["$variations", []] },
+                        as: "v",
+                        cond: { $lte: ["$$v.stock", "$$v.lowStockThreshold"] }
+                      }
+                    }
+                  },
+                  0
+                ]
+              }
+            ]
+          }
+        }
+      },
+      { $match: { isLow: true } },
+      { $count: "count" }
+    ]);
+
+    const actualLowStockCount = lowStockCountFinal[0]?.count || 0;
 
     const totalRevenue = revenueAgg[0]?.total || 0;
 
@@ -74,11 +120,80 @@ export const getManagerOverview = async (req, reply) => {
       totalDrivers: drivers,
       totalRevenue,
       inventoryProfit,
+      lowStockCount: actualLowStockCount,
       themeEffect: activeOccasion?.themeEffect || "none",
       searchBarStyle: activeOccasion?.searchBarStyle || "standard",
     });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch overview", error: error.message });
+  }
+};
+
+export const getLowStockProducts = async (req, reply) => {
+  try {
+    const products = await Product.aggregate([
+      {
+        $addFields: {
+          isLow: {
+            $or: [
+              { $lte: ["$stock", "$lowStockThreshold"] },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $ifNull: ["$variations", []] },
+                        as: "v",
+                        cond: { $lte: ["$$v.stock", "$$v.lowStockThreshold"] }
+                      }
+                    }
+                  },
+                  0
+                ]
+              }
+            ]
+          }
+        }
+      },
+      { $match: { isLow: true } },
+      { $sort: { stock: 1 } }
+    ]);
+
+    // Populate category after aggregation
+    const populatedProducts = await Category.populate(products, { path: "category" });
+
+    return reply.send(populatedProducts);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch low stock products", error: error.message });
+  }
+};
+
+export const updateInventoryStock = async (req, reply) => {
+  try {
+    const { productId, variationId, stock, threshold } = req.body;
+    const product = await Product.findById(productId);
+    if (!product) return reply.status(404).send({ message: "Product not found" });
+
+    if (variationId) {
+      const variation = product.variations.id(variationId);
+      if (!variation) return reply.status(404).send({ message: "Variation not found" });
+      if (stock !== undefined) {
+        variation.stock = Number(stock);
+        variation.lastRestockedAt = new Date();
+      }
+      if (threshold !== undefined) variation.lowStockThreshold = Number(threshold);
+    } else {
+      if (stock !== undefined) {
+        product.stock = Number(stock);
+        product.lastRestockedAt = new Date();
+      }
+      if (threshold !== undefined) product.lowStockThreshold = Number(threshold);
+    }
+
+    await product.save();
+    return reply.send({ message: "Inventory updated successfully", product });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update inventory", error: error.message });
   }
 };
 

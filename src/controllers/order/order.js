@@ -572,7 +572,8 @@ export const updateOrderStatus = async (req, reply) => {
             const startTime = order.pickedUpAt || order.assignedAt || order.createdAt;
             if (startTime) {
                 const durationMs = order.deliveredAt.getTime() - new Date(startTime).getTime();
-                order.deliveryTimeMinutes = Math.round(durationMs / 60000);
+                // Professional floor: at least 1 minute, avoid 0 or negative
+                order.deliveryTimeMinutes = Math.max(1, Math.round(durationMs / 60000));
                 console.log(`[StatusUpdate] TIMING: Order #${order.orderId} delivered in ${order.deliveryTimeMinutes} minutes.`);
             }
 
