@@ -170,7 +170,7 @@ export const getLowStockProducts = async (req, reply) => {
 
 export const updateInventoryStock = async (req, reply) => {
   try {
-    const { productId, variationId, stock, threshold } = req.body;
+    const { productId, variationId, stock, threshold, rake } = req.body;
     const product = await Product.findById(productId);
     if (!product) return reply.status(404).send({ message: "Product not found" });
 
@@ -182,12 +182,14 @@ export const updateInventoryStock = async (req, reply) => {
         variation.lastRestockedAt = new Date();
       }
       if (threshold !== undefined) variation.lowStockThreshold = Number(threshold);
+      if (rake !== undefined) variation.rake = rake;
     } else {
       if (stock !== undefined) {
         product.stock = Number(stock);
         product.lastRestockedAt = new Date();
       }
       if (threshold !== undefined) product.lowStockThreshold = Number(threshold);
+      if (rake !== undefined) product.rake = rake;
     }
 
     await product.save();

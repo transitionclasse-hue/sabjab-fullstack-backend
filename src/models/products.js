@@ -45,6 +45,7 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  rake: { type: String, default: "" }, // Inventory location (shelf address)
   variations: [
     {
       name: { type: String, required: true },
@@ -55,6 +56,7 @@ const productSchema = new mongoose.Schema({
       lastRestockedAt: { type: Date, default: Date.now },
       image: { type: String },
       isAvailable: { type: Boolean, default: true },
+      rake: { type: String, default: "" }, // Variation-specific location
     },
   ],
   isSensitive: { type: Boolean, default: false },
