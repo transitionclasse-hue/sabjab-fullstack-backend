@@ -10,7 +10,7 @@ const parseBool = (v) => String(v).toLowerCase() === "true";
 export const getManagerOverview = async (req, reply) => {
   try {
     await expireStaleAssignedOrders(req.server.io);
-    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, profitAgg, activeOccasion, lowStockCount] = await Promise.all([
+    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, profitAgg, activeOccasion, lowStockCount, totalProducts] = await Promise.all([
       Order.countDocuments({}),
       Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
       Order.countDocuments({ status: "delivered" }),
