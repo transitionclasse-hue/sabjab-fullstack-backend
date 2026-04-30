@@ -560,9 +560,22 @@ export const updateOrderStatus = async (req, reply) => {
         order.deliveryPersonLocation = deliveryPersonLocation;
 
         // 1. Status-specific logic (DO NOT SAVE HERE, modify order object)
+        if (status === ORDER_STATUS.CONFIRMED && !order.pickedUpAt) {
+            order.pickedUpAt = new Date();
+        }
+
         if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
             console.log(`[StatusUpdate] BUSINESS LOGIC: Processing delivery for ${orderId}`);
             order.deliveredAt = new Date();
+            
+            // Calculate Delivery Time (in minutes)
+            const startTime = order.pickedUpAt || order.assignedAt || order.createdAt;
+            if (startTime) {
+                const durationMs = order.deliveredAt.getTime() - new Date(startTime).getTime();
+                order.deliveryTimeMinutes = Math.round(durationMs / 60000);
+                console.log(`[StatusUpdate] TIMING: Order #${order.orderId} delivered in ${order.deliveryTimeMinutes} minutes.`);
+            }
+
             // Calculate return expiry for each item
             if (order.items && order.items.length > 0) {
                 order.items.forEach(item => {

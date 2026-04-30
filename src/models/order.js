@@ -95,7 +95,9 @@ const orderSchema = new mongoose.Schema({
   },
 
   assignedAt: { type: Date },
+  pickedUpAt: { type: Date },
   deliveredAt: { type: Date },
+  deliveryTimeMinutes: { type: Number }, // Calculated duration from assignment/pickup to delivery
   returnWindow: { type: Number, default: 0 },
   returnExpiresAt: { type: Date },
   returnStatus: {
