@@ -17,6 +17,7 @@ const branchSchema = new mongoose.Schema({
   servicedPincodes: [{ type: String }], // Optional: list of pin codes this branch services
   prepTime: { type: Number, default: 5 }, // in minutes
   vehicleSpeed: { type: Number, default: 20 }, // in km/hr
+  phone: { type: String }, // NEW: Branch phone for call bridging
 });
 
 const Branch = mongoose.model("Branch", branchSchema);

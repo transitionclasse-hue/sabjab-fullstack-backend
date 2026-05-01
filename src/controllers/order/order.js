@@ -824,6 +824,22 @@ export const updateOrderStatus = async (req, reply) => {
                         orderNumber: populatedOrder.orderId,
                     });
                 }
+                // NEW: Notify Sellers of Order Status Changes
+                if (populatedOrder.items && populatedOrder.items.length > 0) {
+                    const uniqueSellers = new Set();
+                    populatedOrder.items.forEach(orderItem => {
+                        if (orderItem.item?.sellerId) uniqueSellers.add(String(orderItem.item.sellerId));
+                        else if (orderItem.item?.seller) uniqueSellers.add(String(orderItem.item.seller));
+                    });
+
+                    uniqueSellers.forEach(sellerId => {
+                        req.server.io.to(sellerId).emit("seller:order-status-update", {
+                            orderId: String(order._id),
+                            status,
+                            orderNumber: populatedOrder.orderId,
+                        });
+                    });
+                }
             } catch (socketError) {
                 console.error("[StatusUpdate] Socket error:", socketError.message);
             }

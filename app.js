@@ -164,6 +164,13 @@ const start = async () => {
         });
         // --------------------------------------
 
+        // --- CALL BRIDGE SYSTEM ---
+        socket.on("admin:request-call-bridge", (payload) => {
+            console.log(`📞 [CallBridge] Driver ${payload.driverName} requesting bridge for Order ${payload.orderNumber}`);
+            // Broadcast to all admins and submanagers
+            io.emit("admin:call-bridge-signal", payload);
+        });
+
         socket.on("disconnect", () => {
           console.log("🔴 User disconnected");
         });

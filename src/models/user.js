@@ -132,6 +132,7 @@ const adminSchema = new mongoose.Schema({
   workShift: { type: String },
   managerLevel: { type: String },
   profileImage: { type: String },
+  phone: { type: String }, // NEW: Manager phone for call bridging
 }, { timestamps: true });
 
 adminSchema.pre('save', async function (next) {
