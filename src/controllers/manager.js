@@ -74,7 +74,7 @@ export const getManagerOverview = async (req, reply) => {
         ]
       }).catch(() => 0),
       Product.countDocuments({}),
-      Order.find({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } })
+      Order.find({ status: "available" })
         .sort({ updatedAt: -1 })
         .limit(3)
         .populate("customer branch items.item deliveryPartner")
