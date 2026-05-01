@@ -100,6 +100,13 @@ export const createOrder = async (req, reply) => {
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
 
+        // --- STORE STATUS VALIDATION ---
+        const storeConfig = await StoreStatus.findOne({ key: "primary" });
+        if (storeConfig && storeConfig.acceptOrders === false) {
+            return reply.status(400).send({ message: "Store is currently not accepting new orders." });
+        }
+        // -------------------------------
+
         // FALLBACK: If no branchId provided or branch not found, pick the first available branch
         if (!branchData) {
             console.log("No valid branchId provided, falling back to first available branch");

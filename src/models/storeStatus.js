@@ -47,6 +47,26 @@ const storeStatusSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    acceptOrders: {
+      type: Boolean,
+      default: true,
+    },
+    showPrepTime: {
+      type: Boolean,
+      default: true,
+    },
+    storeName: {
+      type: String,
+      default: "SabJab Store",
+    },
+    phoneNumber: {
+      type: String,
+      default: "",
+    },
+    address: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

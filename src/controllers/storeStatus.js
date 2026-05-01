@@ -71,6 +71,30 @@ export const buildStoreStatusResponse = (config) => {
   let statusLabel = "Open";
   let minutesToBoundary = null;
 
+  // 🚨 GLOBAL OVERRIDE: If manager has manually disabled new orders
+  if (config.acceptOrders === false) {
+    return {
+      status: "closed",
+      statusLabel: "Store Closed (Not accepting orders)",
+      mode: config.mode,
+      openingTime: config.openingTime,
+      closingTime: config.closingTime,
+      alertBeforeMinutes: config.alertBeforeMinutes,
+      minutesToBoundary: null,
+      etaBoxColor: "#ef4444",
+      etaTextColor: "#ffffff",
+      etaBoxDarkColor: "#b91c1c",
+      etaTextDarkColor: "#ffffff",
+      note: config.note || "We are not accepting orders at the moment.",
+      acceptOrders: false,
+      showPrepTime: config.showPrepTime,
+      storeName: config.storeName,
+      phoneNumber: config.phoneNumber,
+      address: config.address,
+      updatedAt: config.updatedAt,
+    };
+  }
+
   if (config.mode === "manual_open") {
     status = "open";
     statusLabel = "Open";
@@ -133,6 +157,11 @@ export const buildStoreStatusResponse = (config) => {
     etaBoxDarkColor: config.etaBoxDarkColor || "#4F46E5",
     etaTextDarkColor: config.etaTextDarkColor || "#ffffff",
     note: config.note || "",
+    acceptOrders: config.acceptOrders !== false,
+    showPrepTime: config.showPrepTime !== false,
+    storeName: config.storeName || "SabJab Store",
+    phoneNumber: config.phoneNumber || "",
+    address: config.address || "",
     updatedAt: config.updatedAt,
   };
 };
@@ -157,6 +186,21 @@ export const updateStoreStatus = async (req, reply) => {
     }
     if (typeof payload.note === "string") {
       update.note = payload.note;
+    }
+    if (payload.acceptOrders !== undefined) {
+      update.acceptOrders = !!payload.acceptOrders;
+    }
+    if (payload.showPrepTime !== undefined) {
+      update.showPrepTime = !!payload.showPrepTime;
+    }
+    if (typeof payload.storeName === "string") {
+      update.storeName = payload.storeName;
+    }
+    if (typeof payload.phoneNumber === "string") {
+      update.phoneNumber = payload.phoneNumber;
+    }
+    if (typeof payload.address === "string") {
+      update.address = payload.address;
     }
 
     const setOnInsert = { ...DEFAULT_STORE_STATUS };
