@@ -10,7 +10,7 @@ const parseBool = (v) => String(v).toLowerCase() === "true";
 export const getManagerOverview = async (req, reply) => {
   try {
     await expireStaleAssignedOrders(req.server.io);
-    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, profitAgg, activeOccasion, lowStockCount, totalProducts] = await Promise.all([
+    const [totalOrders, activeOrders, deliveredOrders, customers, drivers, revenueAgg, profitAgg, activeOccasion, lowStockCount, totalProducts, availableOrders] = await Promise.all([
       Order.countDocuments({}),
       Order.countDocuments({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } }),
       Order.countDocuments({ status: "delivered" }),
@@ -57,8 +57,7 @@ export const getManagerOverview = async (req, reply) => {
           }
         }
       ]),
-      Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle").lean() ||
-      Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean(),
+      Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle").lean().then(res => res || Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean()),
       Product.countDocuments({
         $or: [
           { $expr: { $lte: ["$stock", "$lowStockThreshold"] } },
@@ -74,8 +73,43 @@ export const getManagerOverview = async (req, reply) => {
           }
         ]
       }).catch(() => 0),
-      Product.countDocuments({})
+      Product.countDocuments({}),
+      Order.find({ status: { $in: ["available", "assigned", "confirmed", "arriving", "at_location"] } })
+        .sort({ updatedAt: -1 })
+        .limit(3)
+        .populate("customer branch items.item deliveryPartner")
     ]);
+
+    // Fetch actual low stock items (top 5)
+    const lowStockItems = await Product.aggregate([
+      {
+        $addFields: {
+          isLow: {
+            $or: [
+              { $lte: ["$stock", "$lowStockThreshold"] },
+              {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $ifNull: ["$variations", []] },
+                        as: "v",
+                        cond: { $lte: ["$$v.stock", "$$v.lowStockThreshold"] }
+                      }
+                    }
+                  },
+                  0
+                ]
+              }
+            ]
+          }
+        }
+      },
+      { $match: { isLow: true } },
+      { $limit: 5 },
+      { $sort: { stock: 1 } }
+    ]);
+    const populatedLowStock = await Category.populate(lowStockItems, { path: "category" });
 
     // Use a more robust check for variations in overview
     const lowStockCountFinal = await Product.aggregate([
@@ -123,6 +157,8 @@ export const getManagerOverview = async (req, reply) => {
       inventoryProfit,
       lowStockCount: actualLowStockCount,
       totalProducts: totalProducts || 0,
+      availableOrders,
+      lowStockItems: populatedLowStock,
       themeEffect: activeOccasion?.themeEffect || "none",
       searchBarStyle: activeOccasion?.searchBarStyle || "standard",
     });
