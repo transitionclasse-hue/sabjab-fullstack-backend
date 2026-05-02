@@ -292,7 +292,10 @@ export const getHomeLayout = async (req, reply) => {
                 darkThemeColor: variation.darkThemeColor || null,
                 themeEffect: variation.themeEffect || 'none',
                 searchBarStyle: variation.searchBarStyle || 'standard',
+                searchAnimationType: variation.searchAnimationType || 'slide',
+                searchAnimationSpeed: variation.searchAnimationSpeed || 3000,
                 topBarStyle: variation.topBarStyle || 'standard',
+
                 nameAlignment: variation.nameAlignment || 'left',
                 showBanner: variation.showBanner,
                 banner: variation.banner,

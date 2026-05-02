@@ -71,6 +71,16 @@ const occasionSchema = new mongoose.Schema({
         enum: ["standard", "glassmorphic", "frosty", "neon", "pill", "standard_solo", "pill_solo"],
         default: "standard"
     },
+    searchAnimationType: { // NEW: Control how placeholders rotate
+        type: String,
+        enum: ["slide", "typewriter", "fade", "bullet"],
+        default: "slide"
+    },
+    searchAnimationSpeed: { // NEW: Duration in ms
+        type: Number,
+        default: 3000
+    },
+
     topBarStyle: { // NEW: Top bar variation
         type: String,
         enum: ["standard", "nostalgic", "weather", "scooty"],
