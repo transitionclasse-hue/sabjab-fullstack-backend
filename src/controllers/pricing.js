@@ -31,6 +31,14 @@ const DEFAULT_PRICING_CONFIG = {
   footerStyle: "standard",
   checkoutStyle: "standard",
   primaryColor: "#4CAF50",
+  deliverySlots: [
+    { label: "09:00 AM - 11:00 AM", isEnabled: true },
+    { label: "11:00 AM - 01:00 PM", isEnabled: true },
+    { label: "01:00 PM - 03:00 PM", isEnabled: true },
+    { label: "03:00 PM - 05:00 PM", isEnabled: true },
+    { label: "05:00 PM - 07:00 PM", isEnabled: true },
+    { label: "07:00 PM - 09:00 PM", isEnabled: true },
+  ],
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -275,6 +283,7 @@ export const updatePricingConfig = async (req, reply) => {
       footerStyle: body.footerStyle === "floating" ? "floating" : "standard",
       checkoutStyle: body.checkoutStyle === "unified" ? "unified" : "standard",
       primaryColor: body.primaryColor || "#4CAF50",
+      deliverySlots: body.deliverySlots || DEFAULT_PRICING_CONFIG.deliverySlots,
     };
 
     const config = await PricingConfig.findOneAndUpdate(

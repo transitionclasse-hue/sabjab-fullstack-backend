@@ -9,6 +9,14 @@ const customFeeSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const slotSchema = new mongoose.Schema(
+  {
+    label: { type: String, required: true },
+    isEnabled: { type: Boolean, default: true },
+  },
+  { _id: true }
+);
+
 const pricingConfigSchema = new mongoose.Schema(
   {
     key: { type: String, required: true, unique: true, default: "primary" },
@@ -50,6 +58,17 @@ const pricingConfigSchema = new mongoose.Schema(
     footerStyle: { type: String, enum: ['standard', 'floating'], default: 'standard' },
     checkoutStyle: { type: String, enum: ['standard', 'unified'], default: 'standard' },
     primaryColor: { type: String, default: '#4CAF50' },
+    deliverySlots: {
+      type: [slotSchema],
+      default: [
+        { label: "09:00 AM - 11:00 AM", isEnabled: true },
+        { label: "11:00 AM - 01:00 PM", isEnabled: true },
+        { label: "01:00 PM - 03:00 PM", isEnabled: true },
+        { label: "03:00 PM - 05:00 PM", isEnabled: true },
+        { label: "05:00 PM - 07:00 PM", isEnabled: true },
+        { label: "07:00 PM - 09:00 PM", isEnabled: true },
+      ],
+    },
   },
   { timestamps: true }
 );
