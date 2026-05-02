@@ -187,7 +187,10 @@ export const getPricingConfig = async (req, reply) => {
       { upsert: true, new: true }
     );
 
-    return reply.send(config);
+    // Merge with defaults to ensure new fields exist for old records
+    const mergedConfig = { ...DEFAULT_PRICING_CONFIG, ...config.toObject() };
+
+    return reply.send(mergedConfig);
   } catch (error) {
     return reply.status(500).send({
       message: "Failed to fetch pricing config",
