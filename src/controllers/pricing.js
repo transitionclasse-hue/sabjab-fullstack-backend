@@ -28,6 +28,7 @@ const DEFAULT_PRICING_CONFIG = {
   cartBarColor: "#1A1A1A",
   choiceCartBarColor: "#6D28D9",
   etaColor: "#1A1A1A",
+  footerStyle: "standard",
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -266,6 +267,7 @@ export const updatePricingConfig = async (req, reply) => {
       cartBarColor: String(body.cartBarColor || "#1A1A1A").trim(),
       choiceCartBarColor: String(body.choiceCartBarColor || "#6D28D9").trim(),
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
+      footerStyle: body.footerStyle === "floating" ? "floating" : "standard",
     };
 
     const config = await PricingConfig.findOneAndUpdate(
