@@ -398,8 +398,9 @@ export async function buildAdminRouter(app) {
           properties: {
             value: {
               type: 'mixed',
-              description: 'JSON Configuration. Safe Mode: {"isWebViewMode": bool, "webViewUrl": "string"}. Update: {"currentVersion": "1.0.0", "updateAvailable": bool}. Support: {"phone": "...", "email": "..."}',
+              description: 'JSON Configuration. Home: "HomeScreen" or "PremiumHomeScreen". Safe Mode: {"isWebViewMode": bool, "webViewUrl": "string"}. Update: {"currentVersion": "1.0.0", "updateAvailable": bool}. Support: {"phone": "...", "email": "..."}',
             },
+
             key: { isId: true, isReadOnly: true },
             description: { type: 'textarea' }
           }
