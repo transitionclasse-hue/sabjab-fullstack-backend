@@ -30,6 +30,7 @@ const DEFAULT_PRICING_CONFIG = {
   etaColor: "#1A1A1A",
   footerStyle: "standard",
   checkoutStyle: "standard",
+  primaryColor: "#4CAF50",
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -273,6 +274,7 @@ export const updatePricingConfig = async (req, reply) => {
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
       footerStyle: body.footerStyle === "floating" ? "floating" : "standard",
       checkoutStyle: body.checkoutStyle === "unified" ? "unified" : "standard",
+      primaryColor: body.primaryColor || "#4CAF50",
     };
 
     const config = await PricingConfig.findOneAndUpdate(
