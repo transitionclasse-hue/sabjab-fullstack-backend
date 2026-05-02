@@ -366,7 +366,23 @@ export async function buildAdminRouter(app) {
       },
       { upsert: true, new: true }
     );
+
+    // ✅ Seed Active Home Screen Config if not exists
+    await mongoose.models.GlobalConfig.findOneAndUpdate(
+      { key: "active_home_screen" },
+      {
+        $set: {
+            description: "Toggle between different Home Screen versions. Options: 'HomeScreen' (Original), 'PremiumHomeScreen' (Blinkit Style)"
+        },
+        $setOnInsert: {
+          key: "active_home_screen",
+          value: "HomeScreen"
+        }
+      },
+      { upsert: true, new: true }
+    );
   }
+
 
   console.log("🛠️ Building Admin Router... Models found:", Object.keys(mongoose.models).length);
   const resources = Object.values(mongoose.models).map((model) => {

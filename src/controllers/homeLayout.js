@@ -342,8 +342,12 @@ export const getActiveHomeVersion = async (req, reply) => {
                 await Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle topBarStyle ultraConfig").lean();
         }
 
+        // Fetch active home screen from GlobalConfig
+        const homeConfig = await GlobalConfig.findOne({ key: "active_home_screen" }).lean();
+        const homeScreenVersion = homeConfig?.value || "HomeScreen";
+
         return reply.send({
-            homeScreenVersion: "HomeScreen",
+            homeScreenVersion: homeScreenVersion,
             themeEffect: variation?.themeEffect || "none",
             searchBarStyle: variation?.searchBarStyle || "standard",
             ultraConfig: variation?.ultraConfig || {}
