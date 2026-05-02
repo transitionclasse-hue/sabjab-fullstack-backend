@@ -30,6 +30,7 @@ const DEFAULT_PRICING_CONFIG = {
   etaColor: "#1A1A1A",
   footerStyle: "standard",
   checkoutStyle: "standard",
+  choiceCheckoutStyle: "standard",
   primaryColor: "#4CAF50",
   deliverySlots: [
     { label: "09:00 AM - 11:00 AM", isEnabled: true },
@@ -282,6 +283,7 @@ export const updatePricingConfig = async (req, reply) => {
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
       footerStyle: body.footerStyle === "floating" ? "floating" : "standard",
       checkoutStyle: body.checkoutStyle === "unified" ? "unified" : "standard",
+      choiceCheckoutStyle: body.choiceCheckoutStyle === "unified" ? "unified" : "standard",
       primaryColor: body.primaryColor || "#4CAF50",
       deliverySlots: body.deliverySlots || DEFAULT_PRICING_CONFIG.deliverySlots,
     };
