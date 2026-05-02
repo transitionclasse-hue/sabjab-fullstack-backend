@@ -1530,6 +1530,38 @@ export const deleteManagerDriver = async (req, reply) => {
   }
 };
 
+export const getHomeScreenConfig = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "active_home_screen" }).lean();
+    return reply.send({ 
+      success: true, 
+      version: config?.value || "HomeScreen" 
+    });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch home screen config", error: error.message });
+  }
+};
+
+export const updateHomeScreenConfig = async (req, reply) => {
+  try {
+    const { version } = req.body;
+    if (!["HomeScreen", "PremiumHomeScreen"].includes(version)) {
+      return reply.status(400).send({ message: "Invalid home screen version" });
+    }
+
+    await GlobalConfig.findOneAndUpdate(
+      { key: "active_home_screen" },
+      { value: version },
+      { upsert: true }
+    );
+
+    return reply.send({ success: true, message: `Switched to ${version}` });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update home screen config", error: error.message });
+  }
+};
+
+
 export const getOrderMaskingConfig = async (req, reply) => {
   try {
     const config = await GlobalConfig.findOne({ key: "order_masking_config" });

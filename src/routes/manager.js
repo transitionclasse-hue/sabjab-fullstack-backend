@@ -47,7 +47,10 @@ import {
   updateOrderMaskingConfig,
   getHighValueOrderConfig,
   updateHighValueOrderConfig,
+  getHomeScreenConfig,
+  updateHomeScreenConfig,
 } from "../controllers/manager.js";
+
 import { updateProfileConfig } from "../controllers/profileConfig.js";
 import {
   getAllProducts,
@@ -158,6 +161,9 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/order-masking-config", AUTH, updateOrderMaskingConfig);
   fastify.get("/manager/high-value-config", AUTH, getHighValueOrderConfig);
   fastify.post("/manager/high-value-config", AUTH, updateHighValueOrderConfig);
+  fastify.get("/manager/home-screen-config", AUTH, getHomeScreenConfig);
+  fastify.post("/manager/home-screen-config", AUTH, updateHomeScreenConfig);
+
 
   // Driver CRUD for Manager
   fastify.post("/manager/drivers", AUTH, createManagerDriver);
