@@ -29,6 +29,7 @@ const DEFAULT_PRICING_CONFIG = {
   choiceCartBarColor: "#6D28D9",
   etaColor: "#1A1A1A",
   footerStyle: "standard",
+  checkoutStyle: "standard",
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -268,6 +269,7 @@ export const updatePricingConfig = async (req, reply) => {
       choiceCartBarColor: String(body.choiceCartBarColor || "#6D28D9").trim(),
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
       footerStyle: body.footerStyle === "floating" ? "floating" : "standard",
+      checkoutStyle: body.checkoutStyle === "unified" ? "unified" : "standard",
     };
 
     const config = await PricingConfig.findOneAndUpdate(
