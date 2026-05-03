@@ -123,6 +123,14 @@ const occasionSchema = new mongoose.Schema({
         searchBoxTextDarkColor: { type: String, default: "" }, // New: Color for text inside search (Dark)
         searchBoxIconColor: { type: String, default: "" }, // New: Color for search icon
         searchBoxPlaceholderColor: { type: String, default: "" }, // New: Color for placeholder text
+        // NEW: Migrated Appearance Settings
+        primaryColor: { type: String, default: "" },
+        cartBarColor: { type: String, default: "" },
+        choiceCartBarColor: { type: String, default: "" },
+        etaColor: { type: String, default: "" },
+        footerStyle: { type: String, enum: ["standard", "floating"], default: "standard" },
+        checkoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
+        choiceCheckoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
