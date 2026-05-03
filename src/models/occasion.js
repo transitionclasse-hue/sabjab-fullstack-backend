@@ -110,11 +110,19 @@ const occasionSchema = new mongoose.Schema({
         addressColor: { type: String, default: "" }, // New: Color for the address/location text
         addressDarkColor: { type: String, default: "" }, // New: Color for the address/location text in dark mode
         showOccasionStrip: { type: Boolean, default: true }, // NEW: Global toggle for occasion strip
+        hideIconBackground: { type: Boolean, default: false },
         stripBackgroundColor: { type: String, default: "" }, // New: Color for the horizontal strip background
         stripActiveColor: { type: String, default: "" }, // New: Color for the active category text/icon
         stripInactiveColor: { type: String, default: "" }, // New: Color for the inactive category text/icon
         topBarBackgroundColor: { type: String, default: "" }, // New: Custom solid color for top bar
         searchSectionBackgroundColor: { type: String, default: "" }, // New: Background color for search bar area
+        searchSectionBackgroundDarkColor: { type: String, default: "" }, // New: Background color for search bar area (Dark)
+        searchBoxBackgroundColor: { type: String, default: "" }, // New: Color inside search input
+        searchBoxBackgroundDarkColor: { type: String, default: "" }, // New: Color inside search input (Dark)
+        searchBoxTextColor: { type: String, default: "" }, // New: Color for text inside search
+        searchBoxTextDarkColor: { type: String, default: "" }, // New: Color for text inside search (Dark)
+        searchBoxIconColor: { type: String, default: "" }, // New: Color for search icon
+        searchBoxPlaceholderColor: { type: String, default: "" }, // New: Color for placeholder text
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,

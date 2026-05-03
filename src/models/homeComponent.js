@@ -93,6 +93,14 @@ const homeComponentSchema = new mongoose.Schema({
         enum: ["light", "dark", "glass", "snow", "rain", "autumn"],
         default: "glass",
     },
+    backgroundColor: { // NEW: Custom background for the whole component section
+        type: String,
+        default: null,
+    },
+    darkBackgroundColor: { // NEW: Custom background for dark mode
+        type: String,
+        default: null,
+    },
     sections: [
         {
             title: String,
