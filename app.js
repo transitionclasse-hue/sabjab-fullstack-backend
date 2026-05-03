@@ -152,7 +152,7 @@ const start = async () => {
               await DeliveryPartner.findByIdAndUpdate(data.driverId, updatePayload);
               
               // Broadcast to manager apps listening for all driver movements
-              app.io.emit("admin:driver-location-update", {
+              app.io.emit("admin:driver-location", {
                 driverId: data.driverId,
                 location: data.location,
                 batteryLevel: data.batteryLevel,

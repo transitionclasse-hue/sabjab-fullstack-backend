@@ -121,6 +121,23 @@ const homeComponentSchema = new mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true,
+    },
+    // Ultra Styling
+    borderRadius: {
+        type: Number,
+        default: null,
+    },
+    spacingTop: {
+        type: Number,
+        default: null,
+    },
+    spacingBottom: {
+        type: Number,
+        default: null,
+    },
+    isFullWidth: {
+        type: Boolean,
+        default: true,
     }
 });
 
