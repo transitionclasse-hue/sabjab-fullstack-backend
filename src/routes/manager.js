@@ -49,6 +49,8 @@ import {
   updateHighValueOrderConfig,
   getHomeScreenConfig,
   updateHomeScreenConfig,
+  getComponentPreviews,
+  updateComponentPreview,
 } from "../controllers/manager.js";
 
 import { updateProfileConfig } from "../controllers/profileConfig.js";
@@ -163,6 +165,8 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/high-value-config", AUTH, updateHighValueOrderConfig);
   fastify.get("/manager/home-screen-config", AUTH, getHomeScreenConfig);
   fastify.post("/manager/home-screen-config", AUTH, updateHomeScreenConfig);
+  fastify.get("/manager/previews", AUTH, getComponentPreviews);
+  fastify.post("/manager/previews", AUTH, updateComponentPreview);
 
 
   // Driver CRUD for Manager

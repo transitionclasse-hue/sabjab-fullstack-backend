@@ -1641,3 +1641,35 @@ export const updateHighValueOrderConfig = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to update high value order config", error: error.message });
   }
 };
+export const getComponentPreviews = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "component_previews" });
+    return reply.send({ success: true, data: config?.value || {} });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch component previews", error: error.message });
+  }
+};
+
+export const updateComponentPreview = async (req, reply) => {
+  try {
+    const { type, imageUrl } = req.body;
+    let config = await GlobalConfig.findOne({ key: "component_previews" });
+
+    if (!config) {
+      config = new GlobalConfig({
+        key: "component_previews",
+        value: { [type]: imageUrl },
+        description: "Mapping of component types to screenshot URLs for the Component Guide."
+      });
+    } else {
+      const newValue = { ...config.value, [type]: imageUrl };
+      config.value = newValue;
+      config.markModified('value');
+    }
+
+    await config.save();
+    return reply.send({ success: true, message: "Preview updated successfully", data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update component preview", error: error.message });
+  }
+};
