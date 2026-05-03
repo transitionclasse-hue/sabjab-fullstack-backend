@@ -1545,7 +1545,7 @@ export const getHomeScreenConfig = async (req, reply) => {
 export const updateHomeScreenConfig = async (req, reply) => {
   try {
     const { version } = req.body;
-    if (!["HomeScreen", "PremiumHomeScreen"].includes(version)) {
+    if (!["HomeScreen", "PremiumHomeScreen", "UltraPremiumHomeScreen"].includes(version)) {
       return reply.status(400).send({ message: "Invalid home screen version" });
     }
 

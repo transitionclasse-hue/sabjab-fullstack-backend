@@ -110,6 +110,10 @@ const occasionSchema = new mongoose.Schema({
         addressColor: { type: String, default: "" }, // New: Color for the address/location text
         addressDarkColor: { type: String, default: "" }, // New: Color for the address/location text in dark mode
         showOccasionStrip: { type: Boolean, default: true }, // NEW: Global toggle for occasion strip
+        stripBackgroundColor: { type: String, default: "" }, // New: Color for the horizontal strip background
+        stripActiveColor: { type: String, default: "" }, // New: Color for the active category text/icon
+        stripInactiveColor: { type: String, default: "" }, // New: Color for the inactive category text/icon
+        topBarBackgroundColor: { type: String, default: "" }, // New: Custom solid color for top bar
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
