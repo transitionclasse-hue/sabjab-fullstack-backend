@@ -112,8 +112,11 @@ const occasionSchema = new mongoose.Schema({
         showOccasionStrip: { type: Boolean, default: true }, // NEW: Global toggle for occasion strip
         hideIconBackground: { type: Boolean, default: false },
         stripBackgroundColor: { type: String, default: "" }, // New: Color for the horizontal strip background
+        stripBackgroundDarkColor: { type: String, default: "" }, 
         stripActiveColor: { type: String, default: "" }, // New: Color for the active category text/icon
+        stripActiveDarkColor: { type: String, default: "" },
         stripInactiveColor: { type: String, default: "" }, // New: Color for the inactive category text/icon
+        stripInactiveDarkColor: { type: String, default: "" },
         topBarBackgroundColor: { type: String, default: "" }, // New: Custom solid color for top bar
         searchSectionBackgroundColor: { type: String, default: "" }, // New: Background color for search bar area
         searchSectionBackgroundDarkColor: { type: String, default: "" }, // New: Background color for search bar area (Dark)
@@ -131,6 +134,8 @@ const occasionSchema = new mongoose.Schema({
         footerStyle: { type: String, enum: ["standard", "floating"], default: "standard" },
         checkoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
         choiceCheckoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
+        showSpecialOccasion: { type: Boolean, default: true }, // NEW: Display badge next to search bar
+        specialOccasionId: { type: String, default: "" }, // NEW: Link to category/layout ID
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
