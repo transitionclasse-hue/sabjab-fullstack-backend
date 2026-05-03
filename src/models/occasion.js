@@ -114,6 +114,7 @@ const occasionSchema = new mongoose.Schema({
         stripActiveColor: { type: String, default: "" }, // New: Color for the active category text/icon
         stripInactiveColor: { type: String, default: "" }, // New: Color for the inactive category text/icon
         topBarBackgroundColor: { type: String, default: "" }, // New: Custom solid color for top bar
+        searchSectionBackgroundColor: { type: String, default: "" }, // New: Background color for search bar area
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
