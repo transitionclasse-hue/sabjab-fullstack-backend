@@ -83,8 +83,8 @@ const occasionSchema = new mongoose.Schema({
 
     topBarStyle: { // NEW: Top bar variation
         type: String,
-        enum: ["standard", "nostalgic", "weather", "scooty"],
-        default: "standard"
+        enum: ["standard", "nostalgic", "weather", "scooty", "glass_modern", "search_focused"],
+        default: "glass_modern"
     },
     ultraConfig: { // Deep customization for any Occasion
         topGradientColor: { type: String, default: "" },
