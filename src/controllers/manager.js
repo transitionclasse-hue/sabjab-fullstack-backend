@@ -1236,6 +1236,21 @@ export const updateManagerOccasion = async (req, reply) => {
       await Occasion.updateMany({ _id: { $ne: id } }, { isDefault: false });
     }
 
+    if (updateData.components && Array.isArray(updateData.components)) {
+        const componentIds = [];
+        for (const comp of updateData.components) {
+            if (typeof comp === 'object' && comp._id) {
+                if (comp.isActive !== undefined) {
+                    await HomeComponent.findByIdAndUpdate(comp._id, { isActive: comp.isActive });
+                }
+                componentIds.push(comp._id);
+            } else {
+                componentIds.push(comp);
+            }
+        }
+        updateData.components = componentIds;
+    }
+
     const occasion = await Occasion.findByIdAndUpdate(id, updateData, { new: true }).populate("components");
     if (!occasion) return reply.status(404).send({ message: "Occasion not found" });
 
