@@ -111,6 +111,10 @@ const occasionSchema = new mongoose.Schema({
         addressDarkColor: { type: String, default: "" }, // New: Color for the address/location text in dark mode
         showOccasionStrip: { type: Boolean, default: true }, // NEW: Global toggle for occasion strip
         hideIconBackground: { type: Boolean, default: false },
+        showActiveLine: { type: Boolean, default: true }, // NEW: Toggle for Blinkit-style indicator
+        activeLineColor: { type: String, default: "" }, // NEW: Custom color for indicator
+        activeLineDarkColor: { type: String, default: "" }, // NEW: Dark mode color
+        activeLineWidth: { type: Number, default: 32 }, // NEW: Custom width for indicator
         stripBackgroundColor: { type: String, default: "" }, // New: Color for the horizontal strip background
         stripBackgroundDarkColor: { type: String, default: "" }, 
         stripActiveColor: { type: String, default: "" }, // New: Color for the active category text/icon
@@ -134,6 +138,8 @@ const occasionSchema = new mongoose.Schema({
         footerStyle: { type: String, enum: ["standard", "floating"], default: "standard" },
         checkoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
         choiceCheckoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
+        contentBackgroundColor: { type: String, default: "" }, // NEW: Color for the rounded product area
+        contentBackgroundDarkColor: { type: String, default: "" }, // NEW: Dark mode version
         showSpecialOccasion: { type: Boolean, default: true }, // NEW: Display badge next to search bar
         specialOccasionId: { type: String, default: "" }, // NEW: Link to category/layout ID
     },
