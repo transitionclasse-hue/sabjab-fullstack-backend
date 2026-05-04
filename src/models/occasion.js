@@ -73,7 +73,7 @@ const occasionSchema = new mongoose.Schema({
     },
     searchAnimationType: { // NEW: Control how placeholders rotate
         type: String,
-        enum: ["slide", "typewriter", "fade", "bullet"],
+        enum: ["slide", "typewriter", "fade", "bullet", "static", "smart_type", "slot"],
         default: "slide"
     },
     searchAnimationSpeed: { // NEW: Duration in ms
