@@ -4,6 +4,7 @@ import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import Referral from "../models/referral.js";
 import { expireStaleAssignedOrders, maskOrderForDriver } from "./order/order.js";
+import { sendPushNotification, broadcastPushNotification } from "../utils/notification.js";
 
 const parseBool = (v) => String(v).toLowerCase() === "true";
 
@@ -1687,5 +1688,29 @@ export const updateComponentPreview = async (req, reply) => {
     return reply.send({ success: true, message: "Preview updated successfully", data: config.value });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to update component preview", error: error.message });
+  }
+};
+
+export const sendManualNotification = async (req, reply) => {
+  try {
+    const { target, userId, title, body, userType, data } = req.body;
+
+    if (!title || !body) {
+      return reply.status(400).send({ message: "Title and Body are required" });
+    }
+
+    if (target === "individual") {
+      if (!userId) return reply.status(400).send({ message: "UserId is required for individual target" });
+      await sendPushNotification(userId, title, body, data || {}, userType || "Customer");
+      return reply.send({ success: true, message: "Individual notification sent successfully" });
+    } else if (target === "broadcast") {
+      await broadcastPushNotification(title, body, data || {}, userType || "Customer");
+      return reply.send({ success: true, message: `Broadcast sent to all ${userType}s` });
+    } else {
+      return reply.status(400).send({ message: "Invalid target. Use 'individual' or 'broadcast'" });
+    }
+  } catch (error) {
+    console.error("Manual Notification Error:", error);
+    return reply.status(500).send({ message: "Failed to send notification", error: error.message });
   }
 };
