@@ -58,6 +58,8 @@ const customerSchema = new mongoose.Schema({
     }
   ],
   sensitiveMode: { type: Boolean, default: true },
+  lastActive: { type: Date, default: Date.now },
+  appUninstalled: { type: Boolean, default: false },
 }, { timestamps: true });
 
 customerSchema.pre('save', async function (next) {

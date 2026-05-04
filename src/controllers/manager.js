@@ -606,11 +606,27 @@ export const getManagerCustomers = async (req, reply) => {
           ])
         ]);
 
+        let status = 'active';
+        const now = new Date();
+        const lastActive = customer.lastActive ? new Date(customer.lastActive) : null;
+        
+        if (customer.appUninstalled) {
+          status = 'uninstalled';
+        } else if (!lastActive) {
+          status = 'inactive';
+        } else {
+          const diffDays = Math.floor((now - lastActive) / (1000 * 60 * 60 * 24));
+          if (diffDays > 30) status = 'inactive';
+          else if (diffDays > 7) status = 'at_risk';
+        }
+
         return {
           ...customer,
           name: customer.name || customer.email || `Customer ${customer.phone || customer._id}`,
           totalOrders: totalOrders || 0,
           totalSpent: totalSpent[0]?.total || 0,
+          status,
+          lastActive: customer.lastActive
         };
       })
     );

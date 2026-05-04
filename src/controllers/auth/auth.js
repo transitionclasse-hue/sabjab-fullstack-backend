@@ -25,6 +25,11 @@ const generateTokens = (user) => {
     { expiresIn: isPrivileged ? '30d' : '7d' } // 30-day refresh for managers
   );
 
+  // Update last active for the user asynchronously
+  if (user.role === 'Customer') {
+    Customer.findByIdAndUpdate(user._id, { lastActive: new Date(), appUninstalled: false }).catch(err => console.error("Update lastActive error:", err));
+  }
+
   return { accessToken, refreshToken };
 };
 
