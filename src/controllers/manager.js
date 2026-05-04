@@ -168,6 +168,100 @@ export const getManagerOverview = async (req, reply) => {
   }
 };
 
+export const getFinanceStats = async (req, reply) => {
+  try {
+    const { timeframe = 'month' } = req.query;
+    let startDate = new Date();
+
+    if (timeframe === 'day') startDate.setHours(0, 0, 0, 0);
+    else if (timeframe === 'week') startDate.setDate(startDate.getDate() - 7);
+    else startDate.setDate(startDate.getDate() - 30);
+
+    const matchQuery = {
+      status: "delivered",
+      createdAt: { $gte: startDate }
+    };
+
+    const stats = await Order.aggregate([
+      { $match: matchQuery },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.item",
+          foreignField: "_id",
+          as: "productInfo"
+        }
+      },
+      { $unwind: { path: "$productInfo", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$_id",
+          totalPrice: { $first: "$totalPrice" },
+          discountAmount: { $first: "$discountAmount" },
+          driverEarning: { $first: "$driverEarning" },
+          totalCost: {
+            $sum: {
+              $multiply: [
+                { $ifNull: ["$productInfo.costPrice", 0] },
+                { $ifNull: ["$items.count", 1] }
+              ]
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          grossRevenue: { $sum: "$totalPrice" },
+          totalDiscounts: { $sum: "$discountAmount" },
+          totalCOGS: { $sum: "$totalCost" },
+          totalDriverEarnings: { $sum: "$driverEarning" },
+          orderCount: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const data = stats[0] || {
+      grossRevenue: 0,
+      totalDiscounts: 0,
+      totalCOGS: 0,
+      totalDriverEarnings: 0,
+      orderCount: 0
+    };
+
+    const grossProfit = data.grossRevenue - data.totalCOGS;
+    const ebitda = grossProfit - data.totalDriverEarnings; 
+    
+    // Monthly/Daily breakdown for chart
+    const dailyBreakdown = await Order.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          revenue: { $sum: "$totalPrice" },
+          profit: { $sum: { $subtract: ["$totalPrice", "$driverEarning"] } }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    return reply.send({
+      summary: {
+        ...data,
+        grossProfit,
+        ebitda,
+        netProfit: Math.round(ebitda * 0.85), // 15% estimated other costs
+      },
+      dailyBreakdown,
+      timeframe
+    });
+  } catch (error) {
+    console.error('Finance stats error:', error);
+    return reply.status(500).send({ message: 'Internal Server Error' });
+  }
+};
+
 export const getLowStockProducts = async (req, reply) => {
   try {
     const products = await Product.aggregate([

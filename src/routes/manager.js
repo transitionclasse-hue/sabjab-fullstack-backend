@@ -8,6 +8,7 @@ import {
   updateOrderStatusByManager,
   getLowStockProducts,
   getInventoryStats,
+  getFinanceStats,
   updateInventoryStock,
   getGreenPointsConfig,
   updateGreenPointsConfig,
@@ -154,6 +155,7 @@ export const managerRoutes = async (fastify) => {
 
   fastify.get("/manager/dispatch", AUTH, getManagerDispatchOrders);
   fastify.get("/manager/driver-rankings", AUTH, getManagerDriverRankings);
+  fastify.get("/manager/finance-stats", AUTH, getFinanceStats);
   fastify.get("/manager/finance-history", AUTH, getManagerFinanceHistory);
   fastify.get("/manager/driver-activity", AUTH, getManagerDriverActivity);
   fastify.post("/manager/customers/:customerId/wallet-adjustment", AUTH, adjustCustomerWallet);
