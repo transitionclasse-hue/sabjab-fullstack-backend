@@ -29,7 +29,8 @@ const homeComponentSchema = new mongoose.Schema({
             "MINI_VIDEO", // ✅ NEW: Floating mini video promotion
             "AISLE_2X2_GRID", // ✅ NEW: 2by2 style from design
             "PROMOTION_PAGINATION", // ✅ NEW: 4 pagination promo style
-            "GROCERY_LIST_2X3" // ✅ NEW: 2by3 category list style
+            "GROCERY_LIST_2X3", // ✅ NEW: 2by3 category list style
+            "TIME_BASED_SCROLLER" // ✅ NEW: Changes based on time of day
         ],
         required: true,
     },
@@ -68,6 +69,23 @@ const homeComponentSchema = new mongoose.Schema({
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "SubCategory",
+        }
+    ],
+    timeSlots: [ // ✅ NEW: For Time-Based Product Scroller
+        {
+            startTime: String, // HH:mm format
+            endTime: String,   // HH:mm format
+            title: String,
+            products: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Product",
+                }
+            ],
+            categoryId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "SubCategory",
+            }
         }
     ],
     bannerImage: {

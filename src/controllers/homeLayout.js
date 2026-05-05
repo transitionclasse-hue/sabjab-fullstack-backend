@@ -148,108 +148,102 @@ export const getHomeLayout = async (req, reply) => {
             .populate("products")
             .lean();
 
+        const hydrateHomeComponents = async (comps) => {
+            if (!comps || comps.length === 0) return [];
+            return await Promise.all(comps.map(async (comp) => {
+                if (comp.type === "BENTO_GRID") {
+                    const curated = [];
+                    if (isApprovedProduct(comp.bigDeal)) curated.push(comp.bigDeal);
+                    if (comp.miniDeals?.length) curated.push(...filterApprovedProducts(comp.miniDeals));
+                    const fallback = filterApprovedProducts(comp.products || []);
+                    const combined = [...curated, ...fallback];
+                    const seenIds = new Set();
+                    comp.resolvedProducts = combined.filter(p => {
+                        const id = String(p._id || p.id || p);
+                        if (!id || seenIds.has(id)) return false;
+                        seenIds.add(id);
+                        return true;
+                    });
+                } else if (comp.type === "TIME_BASED_SCROLLER") {
+                    if (comp.timeSlots?.length > 0) {
+                        comp.timeSlots = await Promise.all(comp.timeSlots.map(async (slot) => {
+                            if (slot.products?.length > 0) {
+                                slot.resolvedProducts = await Product.find({
+                                    _id: { $in: slot.products },
+                                    isApproved: true,
+                                    ...choiceProductFilter,
+                                    ...sellerVisibilityQuery,
+                                }).lean();
+                            }
+                            return slot;
+                        }));
+                    }
+                } else if (comp.type === "TRIPLE_SECTION_GRID") {
+                    if (comp.sections?.length > 0) {
+                        comp.sections = await Promise.all(comp.sections.map(async (sec) => {
+                            if (sec.products?.length > 0) {
+                                sec.products = await Product.find({
+                                    _id: { $in: sec.products },
+                                    isApproved: true,
+                                    ...choiceProductFilter,
+                                    ...sellerVisibilityQuery,
+                                }).lean();
+                            }
+                            return sec;
+                        }));
+                    }
+                } else if (comp.type === "CATEGORY_GRID_FOUR_IMAGES" || comp.type === "GROCERY_LIST_2X3") {
+                    if (comp.categories?.length > 0) {
+                        comp.resolvedCategories = await Promise.all(comp.categories.map(async (catModel) => {
+                            const itemId = catModel._id || catModel.id;
+                            const parentCatId = catModel.category?._id || catModel.category ||
+                                catModel.superCategory?._id || catModel.superCategory || null;
+                            const productQuery = {
+                                isAvailable: true,
+                                isApproved: true,
+                                ...choiceProductFilter,
+                                $and: [
+                                    sellerVisibilityQuery,
+                                    { $or: [{ category: itemId }, { subCategory: itemId }] },
+                                ],
+                            };
+                            const [count, products] = await Promise.all([
+                                Product.countDocuments(productQuery),
+                                Product.find(productQuery).sort({ createdAt: -1 }).limit(4).select("image").lean()
+                            ]);
+                            return { ...catModel, parentCategoryId: parentCatId, productCount: count, previewImages: products.map(p => p.image).filter(Boolean) };
+                        }));
+                    } else {
+                        comp.resolvedCategories = [];
+                    }
+                } else if (comp.type === "CATEGORY_STRIP") {
+                    comp.resolvedCategories = comp.categories || [];
+                } else if (comp.type === "FEATURED_DEALS") {
+                    comp.resolvedProducts = [
+                        ...(isApprovedProduct(comp.bigDeal) ? [comp.bigDeal] : []),
+                        ...filterApprovedProducts(comp.miniDeals || [])
+                    ];
+                } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "MINI_VIDEO", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "TIME_BASED_SCROLLER"].includes(comp.type)) {
+                    comp.resolvedProducts = filterApprovedProducts(comp.products || []);
+                }
+                return comp;
+            }));
+        };
+
+        const hydratedComponents = await hydrateHomeComponents(components);
+
         let specialOccasion = null;
         if (specialOccasions.length > 0) {
-            // Use the first one as primary data source but update display label
             specialOccasion = { ...specialOccasions[0] };
             if (specialOccasions.length === 1) {
                 specialOccasion.displayName = specialOccasions[0].name;
             } else {
                 specialOccasion.displayName = "Wow";
             }
-        }
-
-        const hydratedComponents = await Promise.all(components.map(async (comp) => {
-            if (comp.type === "BENTO_GRID") {
-                // HYBRID: Prioritize curated fields, then fill with generic products (deduplicated)
-                const curated = [];
-                if (isApprovedProduct(comp.bigDeal)) curated.push(comp.bigDeal);
-                if (comp.miniDeals?.length) curated.push(...filterApprovedProducts(comp.miniDeals));
-
-                const fallback = filterApprovedProducts(comp.products || []);
-                const combined = [...curated, ...fallback];
-
-                // Deduplicate by ID
-                const seenIds = new Set();
-                comp.resolvedProducts = combined.filter(p => {
-                    const id = String(p._id || p.id || p);
-                    if (!id || seenIds.has(id)) return false;
-                    seenIds.add(id);
-                    return true;
-                });
-            } else if (comp.type === "TRIPLE_SECTION_GRID") {
-                // Populate products within each section if they exists as IDs
-                if (comp.sections?.length > 0) {
-                    comp.sections = await Promise.all(comp.sections.map(async (sec) => {
-                        if (sec.products?.length > 0) {
-                            sec.products = await Product.find({
-                                _id: { $in: sec.products },
-                                isApproved: true,
-                                ...choiceProductFilter,
-                                ...sellerVisibilityQuery,
-                            }).lean();
-                        }
-                        return sec;
-                    }));
-                }
-            } else if (comp.type === "CATEGORY_GRID_FOUR_IMAGES" || comp.type === "GROCERY_LIST_2X3") {
-                if (comp.categories?.length > 0) {
-                    comp.resolvedCategories = await Promise.all(comp.categories.map(async (catModel) => {
-                        // catModel is a populated Category or SubCategory object
-                        const itemId = catModel._id || catModel.id;
-
-                        // Robust parent ID mapping:
-                        // 1. If it's a SubCategory, its parent is 'category'
-                        // 2. If it's a Category, its parent is 'superCategory'
-                        const parentCatId = catModel.category?._id || catModel.category ||
-                            catModel.superCategory?._id || catModel.superCategory || null;
-
-                        // Calculate product coverage for this exact item
-                        const productQuery = {
-                            isAvailable: true,
-                            isApproved: true,
-                            ...choiceProductFilter,
-                            $and: [
-                                sellerVisibilityQuery,
-                                { $or: [{ category: itemId }, { subCategory: itemId }] },
-                            ],
-                        };
-
-                        const [count, products] = await Promise.all([
-                            Product.countDocuments(productQuery),
-                            Product.find(productQuery)
-                                .sort({ createdAt: -1 })
-                                .limit(4)
-                                .select("image")
-                                .lean()
-                        ]);
-
-                        return {
-                            ...catModel,
-                            parentCategoryId: parentCatId,
-                            productCount: count,
-                            previewImages: products.map(p => p.image).filter(Boolean)
-                        };
-                    }));
-                } else {
-                    comp.resolvedCategories = [];
-                }
-            } else if (comp.type === "CATEGORY_STRIP") {
-                comp.resolvedCategories = comp.categories || [];
-            } else if (comp.type === "CATEGORY_CLUSTERS") {
-                // Also filter from clusters if needed (categories live in clusters)
-            } else if (comp.type === "FEATURED_DEALS") {
-                // Featured deals already populated bigDeal and miniDeals, 
-                // but we'll also put them in resolvedProducts just in case for generic scroller reuse
-                comp.resolvedProducts = [
-                    ...(isApprovedProduct(comp.bigDeal) ? [comp.bigDeal] : []),
-                    ...filterApprovedProducts(comp.miniDeals || [])
-                ];
-            } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "MINI_VIDEO", "AISLE_2X2_GRID", "PROMOTION_PAGINATION"].includes(comp.type)) {
-                comp.resolvedProducts = filterApprovedProducts(comp.products || []);
+            if (specialOccasion.components?.length > 0) {
+                specialOccasion.components = await hydrateHomeComponents(specialOccasion.components);
             }
-            return comp;
-        }));
+        }
 
         // 4. Fetch Occasions for the strip
         const isChoicePage = shouldFilterChoice || variation?.isChoice === true || variation?.name?.toLowerCase() === 'choice';

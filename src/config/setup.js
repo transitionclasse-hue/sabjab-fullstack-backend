@@ -1246,7 +1246,7 @@ export async function buildAdminRouter(app) {
           label: "Home Page Sections", // User friendly label
           sort: { sortBy: 'createdAt', direction: 'desc' },
           listProperties: ["title", "type", "isActive"],
-          editProperties: ["title", "subTitle", "type", "isActive", "sections", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "uploadVideo", "carouselImages", "buttonText", "themeColor", "darkThemeColor", "themeMode", "videoUrl", "videoThumbnail"],
+          editProperties: ["title", "subTitle", "type", "isActive", "sections", "timeSlots", "categories", "bigDeal", "miniDeals", "products", "uploadBanner", "uploadVideo", "carouselImages", "buttonText", "themeColor", "darkThemeColor", "themeMode", "videoUrl", "videoThumbnail"],
           actions: {
             new: { after: [replaceMediaKeysWithUrl] },
             edit: { after: [replaceMediaKeysWithUrl] },
@@ -1275,7 +1275,8 @@ export async function buildAdminRouter(app) {
                 { value: "MINI_VIDEO", label: "🎥 Floating Mini Video Promotion (New)" },
                 { value: "AISLE_2X2_GRID", label: "🛍️ Aisle 2x2 Product Grid (New)" },
                 { value: "PROMOTION_PAGINATION", label: "🏷️ Promo with 4-Dots Pagination (New)" },
-                { value: "GROCERY_LIST_2X3", label: "📋 Grocery List 2x3 Category Grid (New)" }
+                { value: "GROCERY_LIST_2X3", label: "📋 Grocery List 2x3 Category Grid (New)" },
+                { value: "TIME_BASED_SCROLLER", label: "🕒 Time-Based Product Scroller (Automatic)" }
               ],
             },
             sections: {
@@ -1283,12 +1284,33 @@ export async function buildAdminRouter(app) {
               label: "Grid Sections (Exactly 3 screens)",
               description: "Manage the title, color, and products for each of the 3 side-by-side screens. Each section is a separate screen in the pager."
             },
+            timeSlots: {
+              isVisible: (context) => context.record?.params?.type === "TIME_BASED_SCROLLER",
+              label: "Time Slots (Morning, Evening, etc.)",
+              description: "Define time ranges (e.g., 06:00 to 11:00) and the products to show during that time."
+            },
+            "timeSlots.startTime": {
+              label: "Start Time (HH:mm)",
+              helpText: "24-hour format, e.g., 06:00 for 6 AM"
+            },
+            "timeSlots.endTime": {
+              label: "End Time (HH:mm)",
+              helpText: "24-hour format, e.g., 11:00 for 11 AM"
+            },
+            "timeSlots.title": {
+              label: "Slot Title (e.g., Breakfast Specials)"
+            },
+            "timeSlots.products": {
+              label: "Products for this slot",
+              remote: true, // Enables full database search
+              helpText: "Search and select products for this specific time window."
+            },
             subTitle: {
               label: "Secondary Text (e.g. 'Upto 50% Off')",
               helpText: "Appears below the main title. Type 'Dove' to search anytime!",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3", "MINI_VIDEO"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3", "MINI_VIDEO", "TIME_BASED_SCROLLER"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
@@ -1297,7 +1319,7 @@ export async function buildAdminRouter(app) {
               helpText: "Text for the action button.",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "PROMO_BANNER", "BENTO_GRID", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3", "TIME_BASED_SCROLLER"];
                 return !!(type && visibleTypes.includes(type));
               }
             },
