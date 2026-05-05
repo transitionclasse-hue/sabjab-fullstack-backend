@@ -485,7 +485,7 @@ export const registerDriverDetails = async (req, reply) => {
 
 export const updateCustomerProfile = async (req, reply) => {
   try {
-    const { name, dateOfBirth, email, notificationsEnabled, pushToken, password, sensitiveMode } = req.body;
+    const { name, dateOfBirth, email, notificationsEnabled, pushToken, password, sensitiveMode, liveLocation, address } = req.body;
     const userId = req.user.userId;
 
     const customer = await Customer.findById(userId);
@@ -521,6 +521,14 @@ export const updateCustomerProfile = async (req, reply) => {
         customer.dateOfBirth = new Date(dateOfBirth);
       }
     }
+
+    if (liveLocation) {
+        customer.liveLocation = {
+            latitude: Number(liveLocation.latitude || liveLocation.lat),
+            longitude: Number(liveLocation.longitude || liveLocation.lng)
+        };
+    }
+    if (address) customer.address = address;
 
     await customer.save();
 
