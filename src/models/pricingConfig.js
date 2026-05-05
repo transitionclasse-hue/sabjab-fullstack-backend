@@ -70,6 +70,9 @@ const pricingConfigSchema = new mongoose.Schema(
         { label: "07:00 PM - 09:00 PM", isEnabled: true },
       ],
     },
+    // Payment Collection Config
+    companyUpiId: { type: String, default: "" },
+    companyName: { type: String, default: "SabJab" },
   },
   { timestamps: true }
 );

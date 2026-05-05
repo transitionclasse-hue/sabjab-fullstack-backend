@@ -40,6 +40,8 @@ const DEFAULT_PRICING_CONFIG = {
     { label: "05:00 PM - 07:00 PM", isEnabled: true },
     { label: "07:00 PM - 09:00 PM", isEnabled: true },
   ],
+  companyUpiId: "",
+  companyName: "SabJab",
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -286,6 +288,8 @@ export const updatePricingConfig = async (req, reply) => {
       choiceCheckoutStyle: body.choiceCheckoutStyle === "unified" ? "unified" : "standard",
       primaryColor: body.primaryColor || "#4CAF50",
       deliverySlots: body.deliverySlots || DEFAULT_PRICING_CONFIG.deliverySlots,
+      companyUpiId: String(body.companyUpiId || "").trim(),
+      companyName: String(body.companyName || "SabJab").trim(),
     };
 
     const config = await PricingConfig.findOneAndUpdate(
