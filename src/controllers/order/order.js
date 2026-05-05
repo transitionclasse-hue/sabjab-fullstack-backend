@@ -5,6 +5,10 @@ import { getDistanceKm, isValidLatLng } from "../../utils/geo.js";
 
 const ORDER_STATUS = {
     AVAILABLE: "available",
+    WAREHOUSE_PROCESSING: "warehouse_processing",
+    DISPATCHED: "dispatched",
+    IN_TRANSIT: "in_transit",
+    REACHED_AT_BRANCH: "reached_at_branch",
     ASSIGNED: "assigned",
     CONFIRMED: "confirmed",
     ARRIVING: "arriving",
@@ -15,6 +19,10 @@ const ORDER_STATUS = {
 const ASSIGNMENT_TIMEOUT_MS = 5 * 60 * 1000;
 
 const VALID_DRIVER_STATUSES = new Set([
+    ORDER_STATUS.WAREHOUSE_PROCESSING,
+    ORDER_STATUS.DISPATCHED,
+    ORDER_STATUS.IN_TRANSIT,
+    ORDER_STATUS.REACHED_AT_BRANCH,
     ORDER_STATUS.CONFIRMED,
     ORDER_STATUS.ARRIVING,
     ORDER_STATUS.AT_LOCATION,
