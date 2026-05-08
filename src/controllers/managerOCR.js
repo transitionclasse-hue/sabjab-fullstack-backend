@@ -86,11 +86,45 @@ export const handleProductExtraction = async (request, reply) => {
             return reply.code(400).send({ success: false, message: "Image content is empty." });
         }
 
-        const info = await extractProductInfoFromImage(buffer);
+        const { data: { text } } = await Tesseract.recognize(buffer, 'eng');
         
+        // Price extraction - Look for patterns like Rs. 100, ₹100, 100.00
+        const priceRegex = /(?:rs\.?|₹|inr)\s?(\d+(?:\.\d{2})?)|\b(\d+\.\d{2})\b|\b(\d{2,5})\b/gi;
+        const prices = [];
+        let match;
+        while ((match = priceRegex.exec(text)) !== null) {
+            const val = parseFloat(match[1] || match[2] || match[3]);
+            if (val > 1 && !prices.includes(val)) {
+                prices.push(val);
+            }
+        }
+
+        // Sort prices to find MRP (highest) and Selling Price
+        prices.sort((a, b) => b - a); // Descending
+
+        let mrp = 0;
+        let sellingPrice = 0;
+
+        if (prices.length >= 2) {
+            mrp = prices[0];
+            sellingPrice = prices[1];
+        } else if (prices.length === 1) {
+            sellingPrice = prices[0];
+            mrp = prices[0]; // Fallback to same if only one found
+        }
+
+        // Clean name (remove prices and special chars)
+        let name = text.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 5 && !line.includes('Rs') && !line.includes('₹') && !/^\d+$/.test(line))[0] || '';
+
         return reply.send({
             success: true,
-            data: info
+            data: {
+                name: name.substring(0, 100),
+                mrp: mrp,
+                price: sellingPrice
+            }
         });
     } catch (error) {
         return reply.code(500).send({
