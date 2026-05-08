@@ -1,3 +1,4 @@
+import { v2 as cloudinary } from 'cloudinary';
 import Product from "../../models/products.js";
 import SubCategory from "../../models/subCategory.js";
 import { Seller } from "../../models/user.js";
@@ -170,11 +171,24 @@ export const updateProduct = async (req, reply) => {
 export const deleteProduct = async (req, reply) => {
     try {
         const { id } = req.params;
-        const product = await Product.findByIdAndDelete(id);
+        const product = await Product.findById(id);
         if (!product) {
             return reply.code(404).send({ message: "Product not found" });
         }
-        return reply.send({ message: "Product deleted successfully" });
+
+        // Delete image from Cloudinary if exists
+        if (product.image) {
+            try {
+                const publicId = product.image.split('/').pop().split('.')[0];
+                await cloudinary.uploader.destroy(`sabjab_manager/${publicId}`);
+                console.log(`✅ Deleted image from Cloudinary: ${publicId}`);
+            } catch (err) {
+                console.error("❌ Failed to delete image from Cloudinary:", err);
+            }
+        }
+
+        await Product.findByIdAndDelete(id);
+        return reply.send({ message: "Product and its media deleted successfully" });
     } catch (error) {
         return reply.code(500).send({ message: "An error occurred deleting product", error });
     }

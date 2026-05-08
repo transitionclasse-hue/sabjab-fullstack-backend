@@ -181,6 +181,11 @@ export const managerRoutes = async (fastify) => {
   fastify.patch("/manager/drivers/:id/status", AUTH, updateManagerDriver);
   fastify.delete("/manager/drivers/:id", AUTH, deleteManagerDriver);
 
-  // OCR & Bulk Products
+import { getMediaLibrary, deleteMedia } from "../controllers/mediaController.js";
+...
+  // Media Library
+  fastify.get("/manager/media", AUTH, getMediaLibrary);
+  fastify.post("/manager/media/delete", AUTH, deleteMedia);
+
   fastify.post("/manager/bulk-products", AUTH, createBulkProducts);
 };
