@@ -1,136 +1,121 @@
 import Tesseract from 'tesseract.js';
 
 /**
- * Extracts product information (Name, MRP) from an image buffer using OCR.
- * @param {Buffer} buffer - The image buffer to process.
- * @returns {Promise<{name: string, price: string}>}
+ * Universal OCR Extraction Engine
+ * This controller is now generic. It extracts all potential data points 
+ * and applies selection 'rules' passed from the frontend.
  */
-export const extractProductInfoFromImage = async (buffer) => {
-    try {
-        console.log("🔍 Starting OCR Processing...");
-        const { data: { text } } = await Tesseract.recognize(
-            buffer,
-            'eng',
-            { logger: m => console.log(m.status + ': ' + m.progress) }
-        );
 
-        console.log("📝 OCR Text Extracted:", text);
-
-        // Basic parsing logic
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        
-        let mrp = "";
-        let productName = "";
-
-        // 1. Try to find MRP
-        // Patterns: MRP: 50, Rs. 50, Price 50, etc.
-        const mrpRegex = /(?:MRP|M\.R\.P\.|Rs\.|PRICE|₹)\s*:?\s*(\d+(?:\.\d{2})?)/i;
-        for (const line of lines) {
-            const match = line.match(mrpRegex);
-            if (match && match[1]) {
-                mrp = match[1];
-                break;
-            }
-        }
-
-        // 2. Try to find Product Name
-        // Usually, the product name is in the first few lines and is relatively short.
-        // We avoid lines that look like numbers or dates.
-        const nonProductPatterns = [/^\d+$/, /\d{2}\/\d{2}\/\d{4}/, /BATCH/i, /MFD/i, /EXP/i, /USE BY/i, /NET WT/i, /GRAMS/i, /KG/i];
-        
-        for (let i = 0; i < Math.min(lines.length, 5); i++) {
-            const line = lines[i];
-            const isTechnicalLine = nonProductPatterns.some(p => p.test(line));
-            const isPriceLine = line.match(mrpRegex);
-
-            if (!isTechnicalLine && !isPriceLine && line.length > 3) {
-                productName = line;
-                break;
-            }
-        }
-
-        return {
-            name: productName || "Unknown Product",
-            price: mrp || "0"
-        };
-    } catch (error) {
-        console.error("❌ OCR Extraction Error:", error);
-        throw error;
+const extractRawData = (text) => {
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    // Extract all potential prices
+    const priceRegex = /(?:rs\.?|₹|inr)\s?(\d+(?:\.\d{2})?)|\b(\d+\.\d{2})\b|\b(\d{2,5})\b/gi;
+    const prices = [];
+    let match;
+    while ((match = priceRegex.exec(text)) !== null) {
+        const val = parseFloat(match[1] || match[2] || match[3]);
+        if (val > 1 && !prices.includes(val)) prices.push(val);
     }
+    const sortedPrices = [...prices].sort((a, b) => b - a); // Highest first (MRP)
+
+    // Extract unit patterns
+    const unitRegex = /(\d+\s*(?:ml|l|g|kg|unit|pack|pc|lb|oz))/gi;
+    const units = text.match(unitRegex) || [];
+
+    // Extract discount patterns
+    const discountRegex = /(\d+%\s*OFF)/gi;
+    const discounts = text.match(discountRegex) || [];
+
+    return { lines, sortedPrices, units, discounts };
+};
+
+const applyRules = (rawData, rules = {}) => {
+    const { lines, sortedPrices, units, discounts } = rawData;
+    const {
+        nameStrategy = 'first_valid', // 'first_valid' | 'line_index'
+        nameIndex = 0,
+        priceStrategy = 'highest_is_mrp', // 'highest_is_mrp' | 'lowest_is_selling'
+        captureUnits = true,
+        captureDiscounts = true
+    } = rules;
+
+    let name = "";
+    if (nameStrategy === 'line_index') {
+        name = lines[nameIndex] || "";
+    } else {
+        // Skip purely numeric lines or lines with currency symbols for name
+        name = lines.find(l => l.length > 3 && !/^\d+$/.test(l) && !l.includes('₹')) || "";
+    }
+
+    let mrp = 0;
+    let sellingPrice = 0;
+
+    if (sortedPrices.length >= 2) {
+        // Standard: Higher is MRP, Lower is Selling
+        mrp = sortedPrices[0];
+        sellingPrice = sortedPrices[1];
+    } else if (sortedPrices.length === 1) {
+        mrp = sortedPrices[0];
+        sellingPrice = sortedPrices[0];
+    }
+
+    const descriptionParts = [];
+    if (captureUnits && units.length > 0) descriptionParts.push(units[0]);
+    if (captureDiscounts && discounts.length > 0) descriptionParts.push(discounts[0]);
+
+    return {
+        name: name.substring(0, 100),
+        mrp,
+        price: sellingPrice,
+        description: descriptionParts.join(' | '),
+        raw: { lines, prices: sortedPrices, units, discounts } // Return raw for frontend debugging
+    };
 };
 
 export const handleProductExtraction = async (request, reply) => {
     try {
         let data = request.body?.file || request.body?.image;
+        
+        // Rules can now be passed from frontend to define 'Style'
+        const rules = typeof request.body?.rules === 'string' 
+            ? JSON.parse(request.body.rules) 
+            : (request.body?.rules || {});
 
-        if (Array.isArray(data)) {
-            data = data[0];
-        }
-
-        if (!data) {
-            return reply.code(400).send({ success: false, message: "No image provided for OCR." });
-        }
+        if (Array.isArray(data)) data = data[0];
+        if (!data) return reply.code(400).send({ success: false, message: "No image provided." });
 
         let buffer = data._buf || data.buffer;
-        if (!buffer && typeof data.toBuffer === 'function') {
-            buffer = await data.toBuffer();
-        }
-
+        if (!buffer && typeof data.toBuffer === 'function') buffer = await data.toBuffer();
         if (!buffer && data.file) {
             const chunks = [];
             for await (const chunk of data.file) { chunks.push(chunk); }
             buffer = Buffer.concat(chunks);
         }
 
-        if (!buffer || buffer.length === 0) {
-            return reply.code(400).send({ success: false, message: "Image content is empty." });
-        }
+        if (!buffer || buffer.length === 0) return reply.code(400).send({ success: false, message: "Empty image." });
 
         const { data: { text } } = await Tesseract.recognize(buffer, 'eng');
         
-        // Price extraction - Look for patterns like Rs. 100, ₹100, 100.00
-        const priceRegex = /(?:rs\.?|₹|inr)\s?(\d+(?:\.\d{2})?)|\b(\d+\.\d{2})\b|\b(\d{2,5})\b/gi;
-        const prices = [];
-        let match;
-        while ((match = priceRegex.exec(text)) !== null) {
-            const val = parseFloat(match[1] || match[2] || match[3]);
-            if (val > 1 && !prices.includes(val)) {
-                prices.push(val);
-            }
-        }
-
-        // Sort prices to find MRP (highest) and Selling Price
-        prices.sort((a, b) => b - a); // Descending
-
-        let mrp = 0;
-        let sellingPrice = 0;
-
-        if (prices.length >= 2) {
-            mrp = prices[0];
-            sellingPrice = prices[1];
-        } else if (prices.length === 1) {
-            sellingPrice = prices[0];
-            mrp = prices[0]; // Fallback to same if only one found
-        }
-
-        // Clean name (remove prices and special chars)
-        let name = text.split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 5 && !line.includes('Rs') && !line.includes('₹') && !/^\d+$/.test(line))[0] || '';
+        const rawData = extractRawData(text);
+        const result = applyRules(rawData, rules);
 
         return reply.send({
             success: true,
-            data: {
-                name: name.substring(0, 100),
-                mrp: mrp,
-                price: sellingPrice
-            }
+            data: result
         });
     } catch (error) {
+        console.error("Universal OCR Error:", error);
         return reply.code(500).send({
             success: false,
-            message: "Failed to extract product info",
+            message: "Extraction failed",
             details: error.message
         });
     }
+};
+
+// Compatibility export
+export const extractProductInfoFromImage = async (buffer) => {
+    const { data: { text } } = await Tesseract.recognize(buffer, 'eng');
+    return applyRules(extractRawData(text));
 };
