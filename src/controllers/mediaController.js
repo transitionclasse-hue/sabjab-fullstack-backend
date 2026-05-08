@@ -2,9 +2,14 @@ import { v2 as cloudinary } from 'cloudinary';
 
 export const getMediaLibrary = async (req, reply) => {
     try {
-        // Fetch last 100 images from the manager folder
+        const { folder } = req.query;
+        
+        // Default to manager folder if not specified
+        const searchFolder = folder || 'sabjab_manager';
+        
+        // Fetch images from the specified folder (default 100)
         const result = await cloudinary.search
-            .expression('folder:sabjab_manager')
+            .expression(`folder:${searchFolder}`)
             .sort_by('created_at', 'desc')
             .max_results(100)
             .execute();
