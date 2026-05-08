@@ -86,10 +86,19 @@ import {
 } from "../controllers/product/superCategory.js";
 import { getOrderById } from "../controllers/order/order.js";
 import { verifyManager } from "../middleware/auth.js";
+import fastifyMultipart from '@fastify/multipart';
 
 const AUTH = { preHandler: [verifyManager] };
 
 export const managerRoutes = async (fastify) => {
+  // Register multipart locally to handle OCR image uploads
+  await fastify.register(fastifyMultipart, {
+    attachFieldsToBody: true,
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB
+    }
+  });
+
   fastify.get("/manager/overview", AUTH, getManagerOverview);
   fastify.get("/manager/analytics", AUTH, getManagerAnalytics);
   fastify.get("/manager/orders", AUTH, getManagerOrders);
