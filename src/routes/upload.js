@@ -11,7 +11,8 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-import { verifyToken } from '../middleware/auth.js';
+import { verifyToken, verifyManager } from '../middleware/auth.js';
+import { handleProductExtraction } from '../controllers/managerOCR.js';
 
 export const uploadRoutes = async (fastify, options) => {
     // Register multipart locally to avoid conflicts with global AdminJS config
@@ -21,6 +22,8 @@ export const uploadRoutes = async (fastify, options) => {
             fileSize: 50 * 1024 * 1024, // 50MB
         }
     });
+
+    fastify.post('/manager/extract-product-info', { preHandler: [verifyManager] }, handleProductExtraction);
 
     fastify.post('/upload', { preHandler: [verifyToken] }, async (request, reply) => {
         try {
