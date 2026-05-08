@@ -35,6 +35,10 @@ export const uploadRoutes = async (fastify, options) => {
             // Log body keys to see what actually arrived
             if (request.body) {
                 console.log("📦 Body Keys:", Object.keys(request.body));
+                if (request.body.folder) {
+                    console.log("📁 Folder Field Type:", typeof request.body.folder);
+                    console.log("📁 Folder Field Value:", request.body.folder.value || request.body.folder);
+                }
             } else {
                 console.log("📦 Body is NULL or UNDEFINED");
             }
@@ -75,8 +79,21 @@ export const uploadRoutes = async (fastify, options) => {
 
             const base64File = `data:${mimetype};base64,${buffer.toString('base64')}`;
 
+            // Get folder from request body or use default
+            // When attachFieldsToBody is true, fields are objects with a .value property
+            let folderParam = 'sabjab_manager';
+            if (request.body?.folder) {
+                if (typeof request.body.folder === 'object' && request.body.folder.value) {
+                    folderParam = request.body.folder.value;
+                } else if (typeof request.body.folder === 'string') {
+                    folderParam = request.body.folder;
+                }
+            }
+            
+            console.log(`📁 FINAL Cloudinary destination folder: "${folderParam}"`);
+            
             const result = await cloudinary.uploader.upload(base64File, {
-                folder: 'sabjab_manager',
+                folder: folderParam,
                 resource_type: 'auto'
             });
 

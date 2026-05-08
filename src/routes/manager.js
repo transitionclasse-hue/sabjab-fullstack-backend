@@ -55,7 +55,7 @@ import {
   sendManualNotification,
 } from "../controllers/manager.js";
 
-import { getMediaLibrary, deleteMedia } from "../controllers/mediaController.js";
+import { getMediaLibrary, deleteMedia, bulkDeleteMedia } from "../controllers/mediaController.js";
 import { updateProfileConfig } from "../controllers/profileConfig.js";
 import {
   getAllProducts,
@@ -185,6 +185,7 @@ export const managerRoutes = async (fastify) => {
   // Media Library
   fastify.get("/manager/media", AUTH, getMediaLibrary);
   fastify.post("/manager/media/delete", AUTH, deleteMedia);
+  fastify.post("/manager/media/bulk-delete", AUTH, bulkDeleteMedia);
 
   fastify.post("/manager/bulk-products", AUTH, createBulkProducts);
 };

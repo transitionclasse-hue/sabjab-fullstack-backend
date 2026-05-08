@@ -41,3 +41,24 @@ export const deleteMedia = async (req, reply) => {
         return reply.code(500).send({ success: false, message: error.message });
     }
 };
+
+export const bulkDeleteMedia = async (req, reply) => {
+    try {
+        const { public_ids } = req.body;
+        if (!Array.isArray(public_ids) || public_ids.length === 0) {
+            return reply.code(400).send({ message: "public_ids array required" });
+        }
+
+        // Cloudinary API supports bulk deletion (up to 100 at once)
+        const result = await cloudinary.api.delete_resources(public_ids);
+        
+        return reply.send({ 
+            success: true, 
+            result,
+            message: `Successfully deleted ${public_ids.length} items`
+        });
+    } catch (error) {
+        console.error("Bulk delete error:", error);
+        return reply.code(500).send({ success: false, message: error.message });
+    }
+};
