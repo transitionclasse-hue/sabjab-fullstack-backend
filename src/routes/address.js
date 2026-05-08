@@ -10,16 +10,26 @@ export const addressRoutes = async (fastify) => {
         const userId = request.user.userId;
         const { house, street, city, pincode, recipientName, recipientPhone, address, latitude, longitude } = request.body;
 
-        // basic validation
-        if (!address || !latitude || !longitude) {
-          return reply.status(400).send({
-            message: "Missing required Location fields",
-          });
+        // ⚡ IDEMPOTENCY CHECK: Prevent duplicate addresses
+        const existing = await Address.findOne({
+          customer: userId,
+          houseNo: house,
+          area: street,
+          pincode: pincode
+        });
+
+        if (existing) {
+          console.log("ℹ️ Address already exists, returning existing entry.");
+          return {
+            success: true,
+            message: "Address already exists in your book",
+            data: existing,
+          };
         }
 
         const newAddress = new Address({
           customer: userId,
-          label: address, // Map 'address' key from frontend to 'label'
+          label: address || "Other", // Map 'address' key from frontend to 'label'
           houseNo: house,
           area: street,
           landmark: city,
@@ -77,6 +87,9 @@ export const addressRoutes = async (fastify) => {
       try {
         const userId = request.user.userId;
         const { id } = request.params;
+        if (!id || id === "undefined") {
+          return reply.status(400).send({ success: false, message: "Invalid Address ID" });
+        }
 
         // Find the address and verify ownership
         const address = await Address.findOne({ _id: id, customer: userId });
@@ -88,7 +101,7 @@ export const addressRoutes = async (fastify) => {
           });
         }
 
-        await Address.findByIdAndDelete(id);
+        await Address.deleteOne({ _id: id });
 
         return {
           success: true,

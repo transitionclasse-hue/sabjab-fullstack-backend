@@ -193,3 +193,22 @@ export const updateProductStatus = async (req, reply) => {
         return reply.code(500).send({ message: "An error occurred updating product status", error });
     }
 };
+
+export const createBulkProducts = async (req, reply) => {
+    try {
+        const products = req.body; // Expecting an array of products
+        if (!Array.isArray(products)) {
+            return reply.code(400).send({ message: "Invalid data format. Expected an array of products." });
+        }
+        
+        const results = await Product.insertMany(products);
+        return reply.code(201).send({
+            success: true,
+            count: results.length,
+            message: `${results.length} products created successfully.`
+        });
+    } catch (error) {
+        console.error("Bulk creation error:", error);
+        return reply.code(500).send({ message: "An error occurred during bulk product creation", error: error.message });
+    }
+};

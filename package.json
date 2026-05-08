@@ -35,7 +35,8 @@
     "nodemailer": "^6.9.13",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.3",
-    "streamifier": "^0.1.1"
+    "streamifier": "^0.1.1",
+    "tesseract.js": "^7.0.0"
   },
   "overrides": {
     "fastify": "^5.2.1",

@@ -63,7 +63,9 @@ import {
   updateProduct,
   deleteProduct,
   updateProductStatus,
+  createBulkProducts,
 } from "../controllers/product/product.js";
+import { handleProductExtraction } from "../controllers/managerOCR.js";
 import {
   getAllCategories,
   createCategory,
@@ -178,4 +180,8 @@ export const managerRoutes = async (fastify) => {
   fastify.put("/manager/drivers/:id", AUTH, updateManagerDriver);
   fastify.patch("/manager/drivers/:id/status", AUTH, updateManagerDriver);
   fastify.delete("/manager/drivers/:id", AUTH, deleteManagerDriver);
+
+  // OCR & Bulk Products
+  fastify.post("/manager/extract-product-info", AUTH, handleProductExtraction);
+  fastify.post("/manager/bulk-products", AUTH, createBulkProducts);
 };
