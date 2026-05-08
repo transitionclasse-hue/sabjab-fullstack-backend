@@ -1,5 +1,4 @@
 import { v2 as cloudinary } from 'cloudinary';
-import { verifyManager } from "../middleware/auth.js";
 
 export const getMediaLibrary = async (req, reply) => {
     try {
