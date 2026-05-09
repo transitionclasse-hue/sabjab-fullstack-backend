@@ -58,7 +58,7 @@ const occasionSchema = new mongoose.Schema({
     },
     nameAlignment: { // New: Controls name position in UI
         type: String,
-        enum: ["left", "right"],
+        enum: ["left", "right", "center"],
         default: "left"
     },
     themeEffect: { // UNIFIED: Replaces old themeMode + weatherEffect
