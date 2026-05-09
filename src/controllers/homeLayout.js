@@ -250,7 +250,10 @@ export const getHomeLayout = async (req, reply) => {
         const occasions = await Occasion.find({
             isActive: true,
             isChoice: isChoicePage ? true : { $ne: true },
-            isSpecialOccasion: { $ne: true } // 🔥 EXCLUDE from main list
+            $or: [
+                { isSpecialOccasion: { $ne: true } },
+                { isDefault: true } // 🔥 ALWAYS show the default/main variation in the strip
+            ]
         }).select("-components").sort({ order: 1 }).lean();
 
         // 7. Fetch the baseline categories and products that the app needs initially
