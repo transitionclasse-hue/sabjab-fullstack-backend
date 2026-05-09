@@ -1202,7 +1202,7 @@ export const getManagerHomeComponents = async (req, reply) => {
 
 export const createManagerOccasion = async (req, reply) => {
   try {
-    const { name, icon, banner, themeColor, themeMode, nameAlignment, isDefault } = req.body;
+    const { name, icon, banner, themeColor, themeMode, nameAlignment, isDefault, ultraConfig } = req.body;
 
     // If setting as default, unset others
     if (isDefault) {
@@ -1217,6 +1217,11 @@ export const createManagerOccasion = async (req, reply) => {
       themeMode,
       nameAlignment,
       isDefault,
+      ultraConfig: {
+        ...(ultraConfig || {}),
+        showSearchGap: ultraConfig?.showSearchGap !== false,
+        showSpecialOccasion: ultraConfig?.showSpecialOccasion !== false,
+      },
       order: (await Occasion.countDocuments({})) + 1
     });
 

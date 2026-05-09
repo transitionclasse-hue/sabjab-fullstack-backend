@@ -112,6 +112,7 @@ const occasionSchema = new mongoose.Schema({
         addressColor: { type: String, default: "" }, // New: Color for the address/location text
         addressDarkColor: { type: String, default: "" }, // New: Color for the address/location text in dark mode
         showOccasionStrip: { type: Boolean, default: true }, // NEW: Global toggle for occasion strip
+        showSearchGap: { type: Boolean, default: true }, // NEW: Add spacing after the search area when topbar is visible
         hideIconBackground: { type: Boolean, default: false },
         showActiveLine: { type: Boolean, default: true }, // NEW: Toggle for Blinkit-style indicator
         activeLineColor: { type: String, default: "" }, // NEW: Custom color for indicator
