@@ -96,6 +96,8 @@ const occasionSchema = new mongoose.Schema({
         gradientStops: { type: String, default: "0,0.5,1" },
         titleFontSize: { type: Number, default: 24 },
         borderRadiusGlobal: { type: Number, default: 16 },
+        borderRadiusBody: { type: Number, default: 24 }, // NEW: Top curvature for the main body
+        isBodyTransparent: { type: Boolean, default: false }, // NEW: Transparency toggle
         hideTopBar: { type: Boolean, default: false },
         topBarColor: { type: String, default: "#ffffff" },
         topBarDarkColor: { type: String, default: "" }, // New: Top bar color in dark mode

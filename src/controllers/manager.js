@@ -58,7 +58,7 @@ export const getManagerOverview = async (req, reply) => {
           }
         }
       ]),
-      Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle").lean().then(res => res || Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle").lean()),
+      Occasion.findOne({ isDefault: true }).select("themeEffect searchBarStyle ultraConfig").lean().then(res => res || Occasion.findOne({ isActive: true }).sort({ order: 1 }).select("themeEffect searchBarStyle ultraConfig").lean()),
       Product.countDocuments({
         $or: [
           { $expr: { $lte: ["$stock", "$lowStockThreshold"] } },
@@ -1251,7 +1251,16 @@ export const updateManagerOccasion = async (req, reply) => {
         updateData.components = componentIds;
     }
 
-    const occasion = await Occasion.findByIdAndUpdate(id, updateData, { new: true }).populate("components");
+    if (updateData.ultraConfig) {
+        // Use dot notation to avoid overwriting the entire ultraConfig object
+        const ultraConfig = updateData.ultraConfig;
+        delete updateData.ultraConfig;
+        Object.keys(ultraConfig).forEach(key => {
+            updateData[`ultraConfig.${key}`] = ultraConfig[key];
+        });
+    }
+
+    const occasion = await Occasion.findByIdAndUpdate(id, { $set: updateData }, { new: true }).populate("components");
     if (!occasion) return reply.status(404).send({ message: "Occasion not found" });
 
     return reply.send(occasion);
@@ -1500,7 +1509,7 @@ export const getManagerFinanceHistory = async (req, reply) => {
 
 export const getManagerDriverActivity = async (req, reply) => {
   try {
-    const drivers = await DeliveryPartner.find({}, "name email phone isOnline lastSeen batteryLevel").lean();
+    const drivers = await DeliveryPartner.find({}, "name email phone isOnline lastSeen batteryLevel liveLocation branch").populate("branch").lean();
     return reply.send(drivers);
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch driver activity", error: error.message });

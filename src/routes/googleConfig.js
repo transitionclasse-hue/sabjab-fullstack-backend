@@ -119,7 +119,10 @@ export const googleConfigRoutes = async (fastify) => {
           locality,
         ].filter((val, idx, self) => val && self.indexOf(val) === idx);
 
-        const area = areaParts.length > 0 ? areaParts.join(", ") : result.formatted_address;
+        let area = areaParts.length > 0 ? areaParts.join(", ") : result.formatted_address;
+        if (area.length > 35) {
+          area = area.split(',')[0].substring(0, 35);
+        }
 
         // Landmark
         const establishment = data.results.find(r => r.types.includes("establishment") || r.types.includes("point_of_interest"));
