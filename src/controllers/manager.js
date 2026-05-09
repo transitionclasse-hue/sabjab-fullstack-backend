@@ -1221,6 +1221,9 @@ export const createManagerOccasion = async (req, reply) => {
         ...(ultraConfig || {}),
         showSearchGap: ultraConfig?.showSearchGap !== false,
         showSpecialOccasion: ultraConfig?.showSpecialOccasion !== false,
+        isTopBarTransparent: ultraConfig?.isTopBarTransparent || false,
+        isSearchTransparent: ultraConfig?.isSearchTransparent || false,
+        isOccasionTransparent: ultraConfig?.isOccasionTransparent || false,
       },
       order: (await Occasion.countDocuments({})) + 1
     });
