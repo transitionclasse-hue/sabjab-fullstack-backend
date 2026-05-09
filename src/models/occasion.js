@@ -145,6 +145,10 @@ const occasionSchema = new mongoose.Schema({
         contentBackgroundDarkColor: { type: String, default: "" }, // NEW: Dark mode version
         showSpecialOccasion: { type: Boolean, default: true }, // NEW: Display badge next to search bar
         specialOccasionId: { type: String, default: "" }, // NEW: Link to category/layout ID
+        isTopBarTransparent: { type: Boolean, default: false }, // NEW: Transparency toggle for header
+        isSearchTransparent: { type: Boolean, default: false }, // NEW: Transparency toggle for search bar
+        isOccasionTransparent: { type: Boolean, default: false }, // NEW: Transparency toggle for category strip
+        showSearchGap: { type: Boolean, default: true }, // NEW: Add spacing after the search area
     },
     components: [{ // MODULAR: Ordered list of reusable components
         type: mongoose.Schema.Types.ObjectId,
