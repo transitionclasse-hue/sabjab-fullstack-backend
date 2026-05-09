@@ -24,6 +24,7 @@ export const uploadRoutes = async (fastify, options) => {
     });
 
     fastify.post('/manager/extract-product-info', { preHandler: [verifyManager] }, handleProductExtraction);
+    fastify.post('/seller/extract-product-info', { preHandler: [verifyToken] }, handleProductExtraction);
 
     fastify.post('/upload', { preHandler: [verifyToken] }, async (request, reply) => {
         try {

@@ -2,8 +2,7 @@ import Tesseract from 'tesseract.js';
 
 /**
  * PURE OCR SERVICE
- * This controller is now a 'Dumb Service'. It only extracts raw lines and prices.
- * The 'Intelligence' (Styles/Rules) now lives entirely in the Manager Website.
+ * Now hardened to capture ALL prices and lines, especially useful for variants.
  */
 
 export const handleProductExtraction = async (request, reply) => {
@@ -22,22 +21,21 @@ export const handleProductExtraction = async (request, reply) => {
 
         if (!buffer || buffer.length === 0) return reply.code(400).send({ success: false, message: "Empty image." });
 
-        console.log(`🔍 Executing Pure OCR Extraction...`);
+        console.log(`🔍 Variant-Aware OCR Extraction...`);
         const { data: { text } } = await Tesseract.recognize(buffer, 'eng');
         
-        // 1. Raw Lines
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         
-        // 2. All identified prices
-        const priceRegex = /(?:rs\.?|₹|inr)\s?(\d+(?:\.\d{1,2})?)|\b(\d+\.\d{2})\b|\b(\d{2,5})\b/gi;
+        // Robust price extraction: capturing all instances of ₹XXX and MRP ₹YYY
+        // We use a global match to ensure we get prices from all variant boxes
+        const priceRegex = /(?:rs\.?|₹|inr|mrp)\s*:?\s?(\d+[,.]?\d*)/gi;
         const prices = [];
         let match;
         while ((match = priceRegex.exec(text)) !== null) {
-            const val = match[1] || match[2] || match[3];
-            if (val && !prices.includes(val)) prices.push(val.replace(',', ''));
+            const val = match[1].replace(',', '');
+            if (parseFloat(val) > 1) prices.push(val);
         }
 
-        // Return everything to the frontend
         return reply.send({
             success: true,
             data: {
@@ -47,7 +45,7 @@ export const handleProductExtraction = async (request, reply) => {
             }
         });
     } catch (error) {
-        console.error("Pure OCR Error:", error);
+        console.error("Variant OCR Error:", error);
         return reply.code(500).send({
             success: false,
             message: "OCR service failed",
@@ -56,7 +54,6 @@ export const handleProductExtraction = async (request, reply) => {
     }
 };
 
-// Legacy support
 export const extractProductInfoFromImage = async (buffer) => {
     const { data: { text } } = await Tesseract.recognize(buffer, 'eng');
     const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
