@@ -1,5 +1,40 @@
 import { v2 as cloudinary } from 'cloudinary';
 
+const CLOUDINARY_DELETE_BATCH_SIZE = 100;
+
+const normalizePublicIds = (ids) => {
+    const list = Array.isArray(ids) ? ids : [ids];
+    return [...new Set(
+        list
+            .filter(id => typeof id === 'string')
+            .map(id => id.trim())
+            .filter(Boolean)
+    )];
+};
+
+const deleteCloudinaryResources = async (publicIds) => {
+    const deleted = {};
+    const errors = [];
+
+    for (let index = 0; index < publicIds.length; index += CLOUDINARY_DELETE_BATCH_SIZE) {
+        const batch = publicIds.slice(index, index + CLOUDINARY_DELETE_BATCH_SIZE);
+        try {
+            const result = await cloudinary.api.delete_resources(batch, {
+                resource_type: 'image',
+                invalidate: true,
+            });
+            Object.assign(deleted, result.deleted || {});
+        } catch (error) {
+            errors.push({
+                public_ids: batch,
+                message: error.message,
+            });
+        }
+    }
+
+    return { deleted, errors };
+};
+
 export const getMediaLibrary = async (req, reply) => {
     try {
         const { folder } = req.query;
@@ -32,30 +67,31 @@ export const getMediaLibrary = async (req, reply) => {
 
 export const deleteMedia = async (req, reply) => {
     try {
-        const { public_id } = req.body;
-        if (!public_id) return reply.code(400).send({ message: "public_id required" });
+        const publicIds = normalizePublicIds(req.body?.public_id);
+        if (publicIds.length === 0) return reply.code(400).send({ message: "public_id required" });
 
-        const result = await cloudinary.uploader.destroy(public_id);
-        return reply.send({ success: true, result });
+        const result = await deleteCloudinaryResources(publicIds);
+        return reply.send({ success: result.errors.length === 0, result });
     } catch (error) {
+        console.error("Media delete error:", error);
         return reply.code(500).send({ success: false, message: error.message });
     }
 };
 
 export const bulkDeleteMedia = async (req, reply) => {
     try {
-        const { public_ids } = req.body;
-        if (!Array.isArray(public_ids) || public_ids.length === 0) {
+        const publicIds = normalizePublicIds(req.body?.public_ids);
+        if (publicIds.length === 0) {
             return reply.code(400).send({ message: "public_ids array required" });
         }
 
-        // Cloudinary API supports bulk deletion (up to 100 at once)
-        const result = await cloudinary.api.delete_resources(public_ids);
+        const result = await deleteCloudinaryResources(publicIds);
+        const deletedCount = Object.values(result.deleted).filter(status => status === 'deleted').length;
         
         return reply.send({ 
-            success: true, 
+            success: result.errors.length === 0, 
             result,
-            message: `Successfully deleted ${public_ids.length} items`
+            message: `Deleted ${deletedCount} of ${publicIds.length} items`
         });
     } catch (error) {
         console.error("Bulk delete error:", error);
