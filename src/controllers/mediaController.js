@@ -18,13 +18,41 @@ const deleteCloudinaryResources = async (publicIds) => {
 
     for (let index = 0; index < publicIds.length; index += CLOUDINARY_DELETE_BATCH_SIZE) {
         const batch = publicIds.slice(index, index + CLOUDINARY_DELETE_BATCH_SIZE);
+        
         try {
-            const result = await cloudinary.api.delete_resources(batch, {
+            // 1. Try deleting as images (most common)
+            console.log(`📤 Deleting batch of ${batch.length} resources [Attempt 1: image]`);
+            const imgResult = await cloudinary.api.delete_resources(batch, {
                 resource_type: 'image',
                 invalidate: true,
             });
-            Object.assign(deleted, result.deleted || {});
+            Object.assign(deleted, imgResult.deleted || {});
+
+            // 2. Identify those that were not found (could be video or raw)
+            const notFound = batch.filter(id => deleted[id] === 'not_found');
+            
+            if (notFound.length > 0) {
+                console.log(`⚠️ ${notFound.length} resources not found as image. Retrying as video/raw...`);
+                
+                // Try as video
+                const vidResult = await cloudinary.api.delete_resources(notFound, {
+                    resource_type: 'video',
+                    invalidate: true,
+                });
+                Object.assign(deleted, vidResult.deleted || {});
+
+                // Still not found? Try as raw
+                const remainingNotFound = notFound.filter(id => deleted[id] === 'not_found');
+                if (remainingNotFound.length > 0) {
+                    const rawResult = await cloudinary.api.delete_resources(remainingNotFound, {
+                        resource_type: 'raw',
+                        invalidate: true,
+                    });
+                    Object.assign(deleted, rawResult.deleted || {});
+                }
+            }
         } catch (error) {
+            console.error(`❌ Cloudinary Delete Error:`, error.message);
             errors.push({
                 public_ids: batch,
                 message: error.message,
@@ -32,6 +60,7 @@ const deleteCloudinaryResources = async (publicIds) => {
         }
     }
 
+    console.log(`✅ Deletion Summary: ${Object.keys(deleted).length} processed`);
     return { deleted, errors };
 };
 
@@ -41,8 +70,7 @@ export const getMediaLibrary = async (req, reply) => {
         
         // Default to manager folder if not specified
         const searchFolder = folder || 'sabjab_manager';
-        
-        // Fetch images from the specified folder (default 100)
+        console.log(`🔍 Fetching media library for folder: "${searchFolder}"`);
         const result = await cloudinary.search
             .expression(`folder:${searchFolder}`)
             .sort_by('created_at', 'desc')
@@ -56,7 +84,8 @@ export const getMediaLibrary = async (req, reply) => {
                 url: r.secure_url,
                 created_at: r.created_at,
                 format: r.format,
-                bytes: r.bytes
+                bytes: r.bytes,
+                resource_type: r.resource_type || 'image'
             }))
         });
     } catch (error) {
@@ -86,12 +115,18 @@ export const bulkDeleteMedia = async (req, reply) => {
         }
 
         const result = await deleteCloudinaryResources(publicIds);
-        const deletedCount = Object.values(result.deleted).filter(status => status === 'deleted').length;
         
+        // Count actual deletions
+        const deletedEntries = Object.entries(result.deleted);
+        const deletedCount = deletedEntries.filter(([_, status]) => status === 'deleted').length;
+        const notFoundCount = deletedEntries.filter(([_, status]) => status === 'not_found').length;
+
+        console.log(`📊 Bulk Delete Results: ${deletedCount} deleted, ${notFoundCount} not found, ${result.errors.length} batch errors`);
+
         return reply.send({ 
             success: result.errors.length === 0, 
             result,
-            message: `Deleted ${deletedCount} of ${publicIds.length} items`
+            message: `Deleted ${deletedCount} items. ${notFoundCount > 0 ? `${notFoundCount} were not found.` : ''}`
         });
     } catch (error) {
         console.error("Bulk delete error:", error);
