@@ -108,6 +108,7 @@ export const deleteMedia = async (req, reply) => {
 };
 
 export const bulkDeleteMedia = async (req, reply) => {
+    console.log("🚀 BULK DELETE CALLED - Body:", JSON.stringify(req.body));
     try {
         const publicIds = normalizePublicIds(req.body?.public_ids);
         if (publicIds.length === 0) {
