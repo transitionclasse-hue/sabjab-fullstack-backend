@@ -186,6 +186,7 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/media", AUTH, getMediaLibrary);
   fastify.post("/manager/media/delete", AUTH, deleteMedia);
   fastify.post("/manager/media/bulk-delete", AUTH, bulkDeleteMedia);
+  fastify.post("/manager/media/bulk-cleanup", AUTH, bulkDeleteMedia);
 
   fastify.post("/manager/bulk-products", AUTH, createBulkProducts);
 };

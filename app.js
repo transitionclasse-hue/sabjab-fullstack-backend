@@ -56,9 +56,12 @@ const start = async () => {
     // ---------------- COOKIE + SESSION ----------------
 
     await app.register(fastifyCors, {
-      origin: true, // For production, you might want to specify allowed origins
+      origin: true,
       credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+      preflightContinue: false,
+      optionsSuccessStatus: 204
     });
 
 
