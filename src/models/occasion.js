@@ -139,6 +139,15 @@ const occasionSchema = new mongoose.Schema({
         choiceCartBarColor: { type: String, default: "" },
         etaColor: { type: String, default: "" },
         footerStyle: { type: String, enum: ["standard", "floating", "minimal", "premium", "ultra"], default: "standard" },
+        footerIconCount: { type: Number, enum: [3, 4, 5], default: 5 },
+        footerItems: {
+            type: [{
+                routeName: { type: String, enum: ["Home", "Orders", "Choice", "Categories", "ReOrder"], default: "Home" },
+                label: { type: String, default: "" },
+                icon: { type: String, default: "" },
+            }],
+            default: []
+        },
         checkoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
         choiceCheckoutStyle: { type: String, enum: ["standard", "unified"], default: "standard" },
         contentBackgroundColor: { type: String, default: "" }, // NEW: Color for the rounded product area
