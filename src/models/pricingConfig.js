@@ -55,7 +55,7 @@ const pricingConfigSchema = new mongoose.Schema(
     cartBarColor: { type: String, default: "#1A1A1A" },
     choiceCartBarColor: { type: String, default: "#6D28D9" },
     etaColor: { type: String, default: "#1A1A1A" },
-    footerStyle: { type: String, enum: ['standard', 'floating'], default: 'standard' },
+    footerStyle: { type: String, enum: ['standard', 'floating', 'minimal', 'premium', 'ultra'], default: 'standard' },
     checkoutStyle: { type: String, enum: ['standard', 'unified'], default: 'standard' },
     choiceCheckoutStyle: { type: String, enum: ['standard', 'unified'], default: 'standard' },
     primaryColor: { type: String, default: '#4CAF50' },

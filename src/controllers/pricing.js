@@ -44,6 +44,13 @@ const DEFAULT_PRICING_CONFIG = {
   companyName: "SabJab",
 };
 
+const FOOTER_STYLES = new Set(["standard", "floating", "minimal", "premium", "ultra"]);
+
+const sanitizeFooterStyle = (value) => {
+  const footerStyle = String(value || "standard").trim();
+  return FOOTER_STYLES.has(footerStyle) ? footerStyle : "standard";
+};
+
 const toNumber = (v, fallback = 0) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : fallback;
@@ -283,7 +290,7 @@ export const updatePricingConfig = async (req, reply) => {
       cartBarColor: String(body.cartBarColor || "#1A1A1A").trim(),
       choiceCartBarColor: String(body.choiceCartBarColor || "#6D28D9").trim(),
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
-      footerStyle: body.footerStyle === "floating" ? "floating" : "standard",
+      footerStyle: sanitizeFooterStyle(body.footerStyle),
       checkoutStyle: body.checkoutStyle === "unified" ? "unified" : "standard",
       choiceCheckoutStyle: body.choiceCheckoutStyle === "unified" ? "unified" : "standard",
       primaryColor: body.primaryColor || "#4CAF50",
@@ -307,4 +314,3 @@ export const updatePricingConfig = async (req, reply) => {
     });
   }
 };
-
