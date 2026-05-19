@@ -57,6 +57,7 @@ const pricingConfigSchema = new mongoose.Schema(
     etaColor: { type: String, default: "#1A1A1A" },
     footerStyle: { type: String, enum: ['standard', 'floating', 'minimal', 'premium', 'ultra'], default: 'standard' },
     cartBarAnimationStyle: { type: String, enum: ["snappy", "spring_low_mass", "overshoot", "spring_legacy"], default: "snappy" },
+    cartBarStyle: { type: String, enum: ["standard", "bumpy_pill"], default: "standard" },
     checkoutStyle: { type: String, enum: ['standard', 'unified'], default: 'standard' },
     choiceCheckoutStyle: { type: String, enum: ['standard', 'unified'], default: 'standard' },
     primaryColor: { type: String, default: '#4CAF50' },

@@ -140,6 +140,7 @@ const occasionSchema = new mongoose.Schema({
         etaColor: { type: String, default: "" },
         footerStyle: { type: String, enum: ["standard", "floating", "minimal", "premium", "ultra"], default: "standard" },
         cartBarAnimationStyle: { type: String, enum: ["snappy", "spring_low_mass", "overshoot", "spring_legacy"], default: "snappy" },
+        cartBarStyle: { type: String, enum: ["standard", "bumpy_pill"], default: "standard" },
         footerIconCount: { type: Number, enum: [3, 4, 5], default: 5 },
         footerShowHome: { type: Boolean, default: true },
         footerShowOrders: { type: Boolean, default: true },

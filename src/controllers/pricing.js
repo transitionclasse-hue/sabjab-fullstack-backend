@@ -30,6 +30,7 @@ const DEFAULT_PRICING_CONFIG = {
   etaColor: "#1A1A1A",
   footerStyle: "standard",
   cartBarAnimationStyle: "snappy",
+  cartBarStyle: "standard",
   checkoutStyle: "standard",
   choiceCheckoutStyle: "standard",
   primaryColor: "#4CAF50",
@@ -57,6 +58,13 @@ const ANIMATION_STYLES = new Set(["snappy", "spring_low_mass", "overshoot", "spr
 const sanitizeAnimationStyle = (value) => {
   const style = String(value || "snappy").trim();
   return ANIMATION_STYLES.has(style) ? style : "snappy";
+};
+
+const BAR_STYLES = new Set(["standard", "bumpy_pill"]);
+
+const sanitizeCartBarStyle = (value) => {
+  const style = String(value || "standard").trim();
+  return BAR_STYLES.has(style) ? style : "standard";
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -300,6 +308,7 @@ export const updatePricingConfig = async (req, reply) => {
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
       footerStyle: sanitizeFooterStyle(body.footerStyle),
       cartBarAnimationStyle: sanitizeAnimationStyle(body.cartBarAnimationStyle),
+      cartBarStyle: sanitizeCartBarStyle(body.cartBarStyle),
       checkoutStyle: body.checkoutStyle === "unified" ? "unified" : "standard",
       choiceCheckoutStyle: body.choiceCheckoutStyle === "unified" ? "unified" : "standard",
       primaryColor: body.primaryColor || "#4CAF50",
