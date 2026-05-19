@@ -108,8 +108,13 @@ const homeComponentSchema = new mongoose.Schema({
     },
     themeMode: { // ✅ NEW: Per-component theme variations
         type: String,
-        enum: ["light", "dark", "glass", "snow", "rain", "heavyrain", "rainspecialeffect", "cinematicstorm", "autumn"],
+        enum: ["light", "dark", "glass"],
         default: "glass",
+    },
+    weatherEffect: { // ✅ NEW: Per-component weather overlay (snow, rain, autumn, etc.)
+        type: String,
+        enum: ["none", "snow", "rain", "heavyrain", "rainspecialeffect", "cinematicstorm", "autumn"],
+        default: "none",
     },
     backgroundColor: { // NEW: Custom background for the whole component section
         type: String,
