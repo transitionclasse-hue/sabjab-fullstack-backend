@@ -57,6 +57,10 @@ const productSchema = new mongoose.Schema({
       image: { type: String },
       isAvailable: { type: Boolean, default: true },
       rake: { type: String, default: "" }, // Variation-specific location
+      isInOffer: { type: Boolean, default: false },
+      offerPrice: { type: Number, default: 0 },
+      offerQtyLimit: { type: Number, default: 0 },
+      offerMinPurchase: { type: Number, default: 0 },
     },
   ],
   isSensitive: { type: Boolean, default: false },
@@ -66,6 +70,10 @@ const productSchema = new mongoose.Schema({
   shippingCost: { type: Number, default: 0, min: 0 }, // Seller logistics cost
   rtoCost: { type: Number, default: 0, min: 0 },      // Return to Origin cost
   returnWindow: { type: Number, default: 0 }, // Duration in hours
+  isInOffer: { type: Boolean, default: false },
+  offerPrice: { type: Number, default: 0 },
+  offerQtyLimit: { type: Number, default: 0 },
+  offerMinPurchase: { type: Number, default: 0 },
 
   // Seller System Fields
   isApproved: { type: Boolean, default: true }, // Defaults to true for Admin created products. Sellers will explicitly create with false

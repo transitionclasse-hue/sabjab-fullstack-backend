@@ -162,20 +162,56 @@ export const createOrder = async (req, reply) => {
         // -----------------------------
 
         // --- STOCK VALIDATION & ATOMIC UPDATES ---
-        const stockUpdates = [];
+        let orderStandardSubtotal = 0;
+        const resolvedItems = [];
+
+        // 1. Initial pass: resolve products and standard prices to compute standard subtotal
         for (const item of items) {
             const pid = item._id || item.id;
             const product = await Product.findById(pid);
-
             if (!product) {
                 return reply.status(404).send({ message: `Product ${pid} not found` });
             }
 
+            const requestedCount = item.qty || item.quantity || item.count || 1;
+            const variationId = item.variationId || item.variation?._id || item.variation?.id;
+
+            let stdPrice = product.discountPrice || product.price;
+            let targetObj = product;
+
+            if (variationId || item.variation?.name) {
+                let variation = null;
+                if (variationId) {
+                    variation = product.variations.id(variationId);
+                }
+                if (!variation && item.variation?.name) {
+                    variation = product.variations.find(v => v.name === item.variation.name);
+                }
+                if (variation) {
+                    stdPrice = variation.discountPrice || variation.price;
+                    targetObj = variation;
+                }
+            }
+
+            orderStandardSubtotal += stdPrice * requestedCount;
+            resolvedItems.push({
+                item,
+                product,
+                targetObj,
+                stdPrice,
+                requestedCount,
+                variationId
+            });
+        }
+
+        const stockUpdates = [];
+        // 2. Second pass: perform stock validation, compute dynamic offer pricing, and prepare stock updates
+        for (const resolved of resolvedItems) {
+            const { item, product, targetObj, stdPrice, requestedCount, variationId } = resolved;
+
             if (!product.isAvailable) {
                 return reply.status(400).send({ message: `${product.name} is currently unavailable` });
             }
-
-            const requestedCount = item.qty || item.quantity || item.count || 1;
 
             // NEW: User Stock Limit per Product check
             if (product.userStockLimit && requestedCount > product.userStockLimit) {
@@ -185,27 +221,9 @@ export const createOrder = async (req, reply) => {
                 });
             }
 
-            const variationId = item.variationId || item.variation?._id || item.variation?.id;
-
-            let price = product.price;
             let variationData = null;
-
-            if (variationId || item.variation?.name) {
-                // Try to find variation by ID first, then fallback to Name matching
-                let variation = null;
-                if (variationId) {
-                    variation = product.variations.id(variationId);
-                }
-
-                if (!variation && item.variation?.name) {
-                    console.log(`[Order] ID match failed for ${product.name}, falling back to Name: ${item.variation.name}`);
-                    variation = product.variations.find(v => v.name === item.variation.name);
-                }
-
-                if (!variation) {
-                    return reply.status(400).send({ message: `Variation not found for ${product.name}` });
-                }
-
+            if (targetObj !== product) { // variation
+                const variation = targetObj;
                 if (!variation.isAvailable) {
                     return reply.status(400).send({ message: `Variation ${variation.name} of ${product.name} is unavailable` });
                 }
@@ -216,7 +234,7 @@ export const createOrder = async (req, reply) => {
                         shortage: true
                     });
                 }
-                price = variation.price;
+
                 variationData = {
                     name: variation.name,
                     price: variation.price,
@@ -238,7 +256,25 @@ export const createOrder = async (req, reply) => {
                 };
             }
 
-            item.itemPrice = price; // Store for total calculation
+            // Dynamic Price calculation with Conditional Offer
+            let finalPrice = stdPrice;
+            if (targetObj.isInOffer) {
+                const meetMinPurchase = !targetObj.offerMinPurchase || (orderStandardSubtotal >= targetObj.offerMinPurchase);
+                if (meetMinPurchase) {
+                    const offerPrice = targetObj.offerPrice || 0;
+                    const limit = targetObj.offerQtyLimit || 0;
+                    if (limit > 0) {
+                        const offerQty = Math.min(requestedCount, limit);
+                        const standardQty = Math.max(0, requestedCount - limit);
+                        const totalCost = (offerQty * offerPrice) + (standardQty * stdPrice);
+                        finalPrice = totalCost / requestedCount; // average price per unit
+                    } else {
+                        finalPrice = offerPrice;
+                    }
+                }
+            }
+
+            item.itemPrice = finalPrice; // Store for total calculation
             item.variationData = variationData;
             item.isChoice = product.isChoice;
             item.deliveryDays = product.deliveryDays || 0;
