@@ -29,6 +29,7 @@ const DEFAULT_PRICING_CONFIG = {
   choiceCartBarColor: "#6D28D9",
   etaColor: "#1A1A1A",
   footerStyle: "standard",
+  cartBarAnimationStyle: "snappy",
   checkoutStyle: "standard",
   choiceCheckoutStyle: "standard",
   primaryColor: "#4CAF50",
@@ -49,6 +50,13 @@ const FOOTER_STYLES = new Set(["standard", "floating", "minimal", "premium", "ul
 const sanitizeFooterStyle = (value) => {
   const footerStyle = String(value || "standard").trim();
   return FOOTER_STYLES.has(footerStyle) ? footerStyle : "standard";
+};
+
+const ANIMATION_STYLES = new Set(["snappy", "spring_low_mass", "overshoot", "spring_legacy"]);
+
+const sanitizeAnimationStyle = (value) => {
+  const style = String(value || "snappy").trim();
+  return ANIMATION_STYLES.has(style) ? style : "snappy";
 };
 
 const toNumber = (v, fallback = 0) => {
@@ -291,6 +299,7 @@ export const updatePricingConfig = async (req, reply) => {
       choiceCartBarColor: String(body.choiceCartBarColor || "#6D28D9").trim(),
       etaColor: String(body.etaColor || "#1A1A1A").trim(),
       footerStyle: sanitizeFooterStyle(body.footerStyle),
+      cartBarAnimationStyle: sanitizeAnimationStyle(body.cartBarAnimationStyle),
       checkoutStyle: body.checkoutStyle === "unified" ? "unified" : "standard",
       choiceCheckoutStyle: body.choiceCheckoutStyle === "unified" ? "unified" : "standard",
       primaryColor: body.primaryColor || "#4CAF50",
