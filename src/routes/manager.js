@@ -57,6 +57,7 @@ import {
 
 import { getMediaLibrary, deleteMedia, bulkDeleteMedia } from "../controllers/mediaController.js";
 import { updateProfileConfig } from "../controllers/profileConfig.js";
+import { getSupportConfig, updateSupportConfig } from "../controllers/support.js";
 import {
   getAllProducts,
   getProductById,
@@ -175,6 +176,9 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/previews", AUTH, updateComponentPreview);
   fastify.post("/manager/send-notification", AUTH, sendManualNotification);
 
+  // Support Contact Configuration
+  fastify.get("/manager/support-config", AUTH, getSupportConfig);
+  fastify.put("/manager/support-config", AUTH, updateSupportConfig);
 
   // Driver CRUD for Manager
   fastify.post("/manager/drivers", AUTH, createManagerDriver);
