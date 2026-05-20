@@ -14,7 +14,8 @@ import {
     requestDriverOtp,
     verifyDriverOtp,
     registerDriverDetails,
-    updateDriverProfile
+    updateDriverProfile,
+    checkDriverPhone
 } from "../controllers/auth/auth.js";
 import { verifyToken, verifyDeliveryPartner } from "../middleware/auth.js";
 import {
@@ -33,11 +34,11 @@ export const authRoutes = async (fastify) => {
     fastify.post("/customer/check-phone", checkPhone);
     fastify.post("/customer/login-password", loginPassword);
 
-    // Delivery Partner Endpoint
     fastify.post("/delivery/login", loginDeliveryPartner);
     fastify.post("/delivery/request-otp", requestDriverOtp);
     fastify.post("/delivery/verify-otp", verifyDriverOtp);
     fastify.post("/delivery/register-details", registerDriverDetails);
+    fastify.post("/delivery/check-phone", checkDriverPhone);
     fastify.put("/delivery/update-profile", { preHandler: [verifyToken, verifyDeliveryPartner] }, updateDriverProfile);
     
     fastify.post("/auth/login", loginAdmin); // For Manager App

@@ -237,6 +237,34 @@ export const checkPhone = async (req, reply) => {
 };
 
 /* =====================================================
+   CHECK DRIVER PHONE
+===================================================== */
+export const checkDriverPhone = async (req, reply) => {
+  try {
+    const { phone: rawPhone } = req.body;
+    if (!rawPhone) {
+      return reply.status(400).send({ message: "Phone is required." });
+    }
+    const phoneStr = String(rawPhone).replace(/[^0-9]/g, "").slice(-10);
+    const phone = Number(phoneStr);
+
+    const driver = await DeliveryPartner.findOne({ phone, role: "DeliveryPartner" });
+
+    return reply.send({
+      exists: !!driver,
+      hasPassword: !!driver && !!driver.password,
+      hasEmail: !!driver && !!driver.email,
+      name: driver ? driver.name : null,
+      email: driver ? driver.email : null,
+      phone: driver ? driver.phone : null,
+    });
+  } catch (error) {
+    console.error("Error in checkDriverPhone:", error);
+    return reply.status(500).send({ message: "Error checking driver identity" });
+  }
+};
+
+/* =====================================================
    LOGIN WITH PASSWORD
 ===================================================== */
 
@@ -272,14 +300,24 @@ export const loginPassword = async (req, reply) => {
 export const loginDeliveryPartner = async (req, reply) => {
   try {
     const rawEmail = req.body.email || '';
+    const rawPhone = req.body.phone || '';
     const rawPassword = req.body.password || '';
 
-    const email = String(rawEmail).trim().toLowerCase();
     const password = String(rawPassword).trim();
 
-    const driver = await DeliveryPartner.findOne({ email, role: "DeliveryPartner" });
+    let query = { role: "DeliveryPartner" };
+    if (rawEmail) {
+      query.email = String(rawEmail).trim().toLowerCase();
+    } else if (rawPhone) {
+      const phoneStr = String(rawPhone).replace(/[^0-9]/g, "").slice(-10);
+      query.phone = Number(phoneStr);
+    } else {
+      return reply.code(400).send({ message: "Email or Phone is required" });
+    }
 
-    if (!driver || !await bcrypt.compare(password, driver.password)) {
+    const driver = await DeliveryPartner.findOne(query);
+
+    if (!driver || !driver.password || !await bcrypt.compare(password, driver.password)) {
       return reply.code(401).send({ message: "Invalid driver credentials" });
     }
 
