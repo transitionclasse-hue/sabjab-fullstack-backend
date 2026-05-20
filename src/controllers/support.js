@@ -62,3 +62,33 @@ export const sendSupportMessage = async (req, reply) => {
         return reply.status(500).send({ message: "Failed to send message" });
     }
 };
+
+export const updateSupportConfig = async (req, reply) => {
+    try {
+        const { phone, email } = req.body;
+
+        if (!phone || !email) {
+            return reply.status(400).send({ message: "Phone and email are required" });
+        }
+
+        const config = await GlobalConfig.findOneAndUpdate(
+            { key: "support_contact" },
+            {
+                $set: {
+                    value: { phone, email },
+                    description: "Support contact details. Expected: { phone, email }"
+                }
+            },
+            { upsert: true, new: true }
+        );
+
+        return reply.send({
+            success: true,
+            message: "Support config updated successfully",
+            support: config.value
+        });
+    } catch (error) {
+        console.error("Update Support Config Error:", error);
+        return reply.status(500).send({ message: "Failed to update support config" });
+    }
+};
