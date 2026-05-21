@@ -567,6 +567,14 @@ export const updateOrderStatusByManager = async (req, reply) => {
     }
 
     const oldStatus = order.status;
+
+    if (status === "cancelled") {
+      const restrictedStatuses = ["dispatched", "in_transit", "arriving", "at_location", "reached_location", "delivered"];
+      if (restrictedStatuses.includes(oldStatus)) {
+        return reply.code(400).send({ message: "Order cannot be cancelled as it is already out for delivery or delivered" });
+      }
+    }
+
     order.status = status;
 
     if (status === "assigned" && oldStatus !== "assigned") {
