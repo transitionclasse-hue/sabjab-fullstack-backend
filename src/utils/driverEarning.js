@@ -2,6 +2,27 @@ import { getDistanceKm, isValidLatLng } from "./geo.js";
 
 const roundMoney = (value) => Math.round(Math.max(0, Number(value) || 0) * 100) / 100;
 
+const toMinutes = (timeStr, fallback = 0) => {
+  const value = String(timeStr || "").trim();
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value);
+  if (!match) return fallback;
+  const hh = Number(match[1]);
+  const mm = Number(match[2]);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+    return fallback;
+  }
+  return hh * 60 + mm;
+};
+
+const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
+  if (startMinutes === endMinutes) return true;
+  if (endMinutes > startMinutes) {
+    return nowMinutes >= startMinutes && nowMinutes < endMinutes;
+  }
+  // overnight window
+  return nowMinutes >= startMinutes || nowMinutes < endMinutes;
+};
+
 /** Distance from store/pickup to customer delivery point (km). */
 export const getOrderDeliveryDistanceKm = (order) => {
   if (!order) return null;
@@ -31,9 +52,30 @@ export const getOrderDeliveryDistanceKm = (order) => {
  */
 export const computeDriverEarning = (config, order = null) => {
   const flat = Number(config?.defaultDriverEarning ?? 30);
-  const incentive = config?.driverIncentiveEnabled
-    ? Number(config?.driverIncentiveAmount ?? 0)
-    : 0;
+  
+  let incentive = 0;
+  if (config?.driverIncentiveEnabled) {
+    let matchedSlotAmount = null;
+    const slots = Array.isArray(config?.driverIncentiveSlots) ? config.driverIncentiveSlots : [];
+    
+    const targetDate = order?.createdAt ? new Date(order.createdAt) : new Date();
+    const nowMinutes = targetDate.getHours() * 60 + targetDate.getMinutes();
+    
+    for (const slot of slots) {
+      if (slot?.isEnabled && slot?.startTime && slot?.endTime) {
+        const startMinutes = toMinutes(slot.startTime, -1);
+        const endMinutes = toMinutes(slot.endTime, -1);
+        if (startMinutes !== -1 && endMinutes !== -1) {
+          if (isWithinTimeWindow(startMinutes, endMinutes, nowMinutes)) {
+            matchedSlotAmount = Number(slot.amount ?? 0);
+            break;
+          }
+        }
+      }
+    }
+    
+    incentive = matchedSlotAmount !== null ? matchedSlotAmount : Number(config?.driverIncentiveAmount ?? 0);
+  }
 
   if (String(config?.driverEarningMode || "flat") !== "distance") {
     return roundMoney(flat + incentive);

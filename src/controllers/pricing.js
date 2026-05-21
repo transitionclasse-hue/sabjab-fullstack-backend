@@ -52,6 +52,7 @@ const DEFAULT_PRICING_CONFIG = {
   ],
   companyUpiId: "",
   companyName: "SabJab",
+  driverIncentiveSlots: [],
 };
 
 const FOOTER_STYLES = new Set(["standard", "floating", "minimal", "premium", "ultra"]);
@@ -222,6 +223,19 @@ const sanitizeCustomFees = (fees) => {
     .filter((fee) => fee.name.length > 0);
 };
 
+const sanitizeIncentiveSlots = (slots) => {
+  if (!Array.isArray(slots)) return [];
+  return slots
+    .map((slot) => ({
+      name: String(slot?.name || "").trim(),
+      startTime: String(slot?.startTime || "00:00").trim(),
+      endTime: String(slot?.endTime || "00:00").trim(),
+      amount: Math.max(0, toNumber(slot?.amount, 0)),
+      isEnabled: slot?.isEnabled !== false,
+    }))
+    .filter((slot) => slot.name.length > 0);
+};
+
 export const getPricingConfig = async (req, reply) => {
   try {
     const config = await PricingConfig.findOneAndUpdate(
@@ -315,6 +329,7 @@ export const updatePricingConfig = async (req, reply) => {
       driverMaxEarning: Math.max(0, toNumber(body.driverMaxEarning, 0)),
       driverIncentiveEnabled: Boolean(body.driverIncentiveEnabled),
       driverIncentiveAmount: Math.max(0, toNumber(body.driverIncentiveAmount, 0)),
+      driverIncentiveSlots: sanitizeIncentiveSlots(body.driverIncentiveSlots),
       rewardCoinsEnabled: body.rewardCoinsEnabled !== undefined ? Boolean(body.rewardCoinsEnabled) : true,
       rewardCoinsPercentage: Math.max(0, toNumber(body.rewardCoinsPercentage, 1)),
       minAmountForCoins: Math.max(0, toNumber(body.minAmountForCoins, 1)),

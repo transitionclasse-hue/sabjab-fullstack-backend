@@ -17,6 +17,17 @@ const slotSchema = new mongoose.Schema(
   { _id: true }
 );
 
+const incentiveSlotSchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true },
+    startTime: { type: String, required: true },
+    endTime: { type: String, required: true },
+    amount: { type: Number, required: true, min: 0 },
+    isEnabled: { type: Boolean, default: true },
+  },
+  { _id: true }
+);
+
 const pricingConfigSchema = new mongoose.Schema(
   {
     key: { type: String, required: true, unique: true, default: "primary" },
@@ -55,6 +66,7 @@ const pricingConfigSchema = new mongoose.Schema(
     driverMaxEarning: { type: Number, default: 0, min: 0 },
     driverIncentiveEnabled: { type: Boolean, default: false },
     driverIncentiveAmount: { type: Number, default: 0, min: 0 },
+    driverIncentiveSlots: { type: [incentiveSlotSchema], default: [] },
 
     // Reward Rules (SabJab Coins)
     rewardCoinsEnabled: { type: Boolean, default: true },
