@@ -1,5 +1,6 @@
 import {
   assignDriverByManager,
+  getSuggestedDriverEarning,
   getManagerBranches,
   getManagerCustomers,
   getManagerDrivers,
@@ -122,6 +123,7 @@ export const managerRoutes = async (fastify) => {
   fastify.put("/manager/products/:id", AUTH, updateProduct);
   fastify.delete("/manager/products/:id", AUTH, deleteProduct);
   fastify.patch("/manager/products/:id/status", AUTH, updateProductStatus);
+  fastify.get("/manager/orders/:orderId/suggested-driver-earning", AUTH, getSuggestedDriverEarning);
   fastify.post("/manager/orders/:orderId/assign-driver", AUTH, assignDriverByManager);
   fastify.patch("/manager/orders/:orderId/status", AUTH, updateOrderStatusByManager);
   fastify.get("/manager/inventory/low-stock", AUTH, getLowStockProducts);

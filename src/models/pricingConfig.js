@@ -46,6 +46,16 @@ const pricingConfigSchema = new mongoose.Schema(
     defaultDriverEarning: { type: Number, default: 30, min: 0 },
     defaultDriverCodLimit: { type: Number, default: 2000, min: 0 }, // NEW: Fallback COD limit
 
+    // Driver pay: flat or distance-based (store → customer)
+    driverEarningMode: { type: String, enum: ["flat", "distance"], default: "flat" },
+    driverRateAmount: { type: Number, default: 0, min: 0 },
+    driverRateUnit: { type: String, enum: ["km", "100m"], default: "km" },
+    driverBaseEarning: { type: Number, default: 0, min: 0 },
+    driverMinEarning: { type: Number, default: 0, min: 0 },
+    driverMaxEarning: { type: Number, default: 0, min: 0 },
+    driverIncentiveEnabled: { type: Boolean, default: false },
+    driverIncentiveAmount: { type: Number, default: 0, min: 0 },
+
     // Reward Rules (SabJab Coins)
     rewardCoinsEnabled: { type: Boolean, default: true },
     rewardCoinsPercentage: { type: Number, default: 1, min: 0, max: 100 }, // X% of purchase

@@ -450,6 +450,31 @@ export const updateGlobalCodLimit = async (req, reply) => {
   }
 };
 
+export const getSuggestedDriverEarning = async (req, reply) => {
+  try {
+    const order = await Order.findById(req.params.orderId).populate("branch");
+    if (!order) return reply.status(404).send({ message: "Order not found" });
+
+    const config = await PricingConfig.findOne({ key: "primary" });
+    const { computeDriverEarning, getOrderDeliveryDistanceKm } = await import(
+      "../utils/driverEarning.js"
+    );
+    const distanceKm = getOrderDeliveryDistanceKm(order);
+
+    return reply.send({
+      earning: computeDriverEarning(config, order),
+      distanceKm: distanceKm != null ? Number(distanceKm.toFixed(2)) : null,
+      mode: config?.driverEarningMode || "flat",
+      unit: config?.driverRateUnit || "km",
+    });
+  } catch (error) {
+    return reply.status(500).send({
+      message: "Failed to calculate suggested driver earning",
+      error: error.message,
+    });
+  }
+};
+
 export const assignDriverByManager = async (req, reply) => {
   try {
     const { orderId } = req.params;
@@ -467,12 +492,14 @@ export const assignDriverByManager = async (req, reply) => {
     order.status = "assigned";
     order.assignedAt = new Date();
 
-    // Set custom driver earning if provided from manager
-    if (deliveryFee !== undefined && deliveryFee !== null) {
+    // Set custom driver earning if provided from manager, else auto-calculate
+    if (deliveryFee !== undefined && deliveryFee !== null && deliveryFee !== "") {
       order.driverEarning = Number(deliveryFee);
     } else {
+      const { computeDriverEarning } = await import("../utils/driverEarning.js");
       const config = await PricingConfig.findOne({ key: "primary" });
-      order.driverEarning = config?.defaultDriverEarning || 30;
+      const populated = await Order.findById(orderId).populate("branch");
+      order.driverEarning = computeDriverEarning(config, populated || order);
     }
 
     order.deliveryPersonLocation = {
@@ -558,7 +585,7 @@ export const updateOrderStatusByManager = async (req, reply) => {
         // Preserve custom earning if set
         if (!order.driverEarning || order.driverEarning <= 0) {
           const calculateDriverEarning = (await import("./order/order.js")).calculateDriverEarning;
-          order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
+          order.driverEarning = await calculateDriverEarning(order);
         }
 
         if (order.deliveryPartner && order.driverEarning > 0) {

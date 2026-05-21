@@ -2,6 +2,7 @@ import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints,
 import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
 import { getDistanceKm, isValidLatLng } from "../../utils/geo.js";
+import { computeDriverEarning } from "../../utils/driverEarning.js";
 
 const ORDER_STATUS = {
     AVAILABLE: "available",
@@ -50,10 +51,12 @@ export const maskOrderForDriver = async (order, role) => {
     return order;
 };
 
-export const calculateDriverEarning = async (orderTotal = 0) => {
+/** @param {object|number} orderOrTotal - Order doc (preferred) or legacy order total number */
+export const calculateDriverEarning = async (orderOrTotal = 0) => {
     const config = await PricingConfig.findOne({ key: "primary" });
-    const driverFee = config?.defaultDriverEarning ?? 30; // UPDATED: Use defaultDriverEarning config
-    return driverFee;
+    const order =
+        orderOrTotal && typeof orderOrTotal === "object" ? orderOrTotal : null;
+    return computeDriverEarning(config, order);
 };
 
 const isAssignmentExpired = (assignedAt) =>
@@ -413,7 +416,7 @@ export const createOrder = async (req, reply) => {
             console.error("[OrderRewards] Calculation failed:", rewardError.message);
         }
         // --------------------------------
-        newOrder.driverEarning = await calculateDriverEarning(Number(totalAmount));
+        newOrder.driverEarning = await calculateDriverEarning(newOrder);
 
         const savedOrder = await newOrder.save();
         const populatedOrder = await Order.findById(savedOrder._id).populate(
@@ -649,7 +652,7 @@ export const updateOrderStatus = async (req, reply) => {
                 // Driver Earning Logic - Update BEFORE creating transaction
                 // Preserve custom earning if set by manager
                 if (!order.driverEarning || order.driverEarning <= 0) {
-                    order.driverEarning = await calculateDriverEarning(order.totalPrice || 0);
+                    order.driverEarning = await calculateDriverEarning(order);
                 }
 
                 // Handle Driver Earnings Transaction

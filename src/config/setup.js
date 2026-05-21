@@ -106,14 +106,16 @@ const assignDriverToOrder = async (order, driver, driverEarning = null) => {
   } else if (!order.driverEarning) {
     try {
       const PricingConfig = mongoose.models.PricingConfig;
+      const Branch = mongoose.models.Branch;
+      const { computeDriverEarning } = await import("../utils/driverEarning.js");
       const config = await PricingConfig.findOne({ key: "primary" });
-      const baseFee = config?.baseDeliveryFee ?? 20;
-      const freeThreshold = config?.freeDeliveryThreshold ?? 199;
-      const freeEnabled = config?.freeDeliveryEnabled ?? true;
-      const itemsTotal = order.totalPrice || 0;
-      order.driverEarning = freeEnabled && itemsTotal >= freeThreshold ? 0 : baseFee;
+      if (!order.branch?.location && order.branch && Branch) {
+        const branchId = typeof order.branch === "object" ? order.branch._id : order.branch;
+        order.branch = await Branch.findById(branchId).lean();
+      }
+      order.driverEarning = computeDriverEarning(config, order);
     } catch (e) {
-      order.driverEarning = 20; // Fallback
+      order.driverEarning = 30;
     }
   }
 
