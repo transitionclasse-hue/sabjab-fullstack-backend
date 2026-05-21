@@ -12,6 +12,14 @@ const profileConfigSchema = new mongoose.Schema({
     isVersionVisible: { type: Boolean, default: true },
     isQuickActionsVisible: { type: Boolean, default: true },
     
+    // SabJab Samachar
+    isSamacharVisible: { type: Boolean, default: true },
+    samacharUrl: { type: String, default: "https://sabjab.com/news" },
+    samacharTitle: { type: String, default: "SabJab Samachar" },
+    samacharSubtitle: { type: String, default: "Get the latest local updates, deals, & stories directly in the app!" },
+    samacharBadge: { type: String, default: "News" },
+    samacharColor: { type: String, default: "#FEF3C7" },
+    
     // Light Mode Styles
     backgroundColor: { type: String, default: "#F8FAFC" },
     onBackgroundTextColor: { type: String, default: "#0F172A" },
