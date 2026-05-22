@@ -105,6 +105,7 @@ const deliveryPartnerSchema = new mongoose.Schema({
   walletBalance: { type: Number, default: 0 },
   cashInHand: { type: Number, default: 0 },
   codLimit: { type: Number, default: null }, // NEW: Falls back to global PricingConfig
+  fleetPoints: { type: Number, default: 0 },
 }, { timestamps: true });
 
 deliveryPartnerSchema.pre('save', async function (next) {

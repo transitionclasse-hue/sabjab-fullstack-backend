@@ -89,6 +89,10 @@ import {
 } from "../controllers/product/superCategory.js";
 import { getOrderById } from "../controllers/order/order.js";
 import { verifyManager } from "../middleware/auth.js";
+import {
+  getManagerGigSchedules,
+  evaluateGigSchedule,
+} from "../controllers/gigSchedule.js";
 
 const AUTH = { preHandler: [verifyManager] };
 
@@ -195,4 +199,8 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/media/bulk-cleanup", AUTH, bulkDeleteMedia);
 
   fastify.post("/manager/bulk-products", AUTH, createBulkProducts);
+
+  // Gig Schedules Management
+  fastify.get("/manager/gig-schedules", AUTH, getManagerGigSchedules);
+  fastify.post("/manager/gig-schedules/:id/evaluate", AUTH, evaluateGigSchedule);
 };

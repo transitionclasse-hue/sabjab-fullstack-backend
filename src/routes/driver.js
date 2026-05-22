@@ -9,6 +9,10 @@ import {
   updateNotificationSettings,
   toggleOnlineStatus,
 } from "../controllers/driver.js";
+import {
+  saveDriverGigSchedule,
+  getTodayGigSchedule,
+} from "../controllers/gigSchedule.js";
 import { verifyToken } from "../middleware/auth.js";
 
 export const driverRoutes = async (fastify) => {
@@ -29,4 +33,6 @@ export const driverRoutes = async (fastify) => {
   fastify.put("/driver/update-push-token", updatePushToken);
   fastify.put("/driver/notification-settings", updateNotificationSettings);
   fastify.put("/driver/toggle-online", toggleOnlineStatus);
+  fastify.post("/driver/gig-schedule", saveDriverGigSchedule);
+  fastify.get("/driver/gig-schedule/today", getTodayGigSchedule);
 };

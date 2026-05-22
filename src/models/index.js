@@ -19,6 +19,7 @@ import Occasion from "./occasion.js";
 import Ticket from "./ticket.js";
 import SupportMessage from "./supportMessage.js";
 import GlobalConfig from "./globalConfig.js";
+import GigSchedule from "./gigSchedule.js";
 
 export {
   Order,
@@ -45,4 +46,5 @@ export {
   Ticket,
   SupportMessage,
   GlobalConfig,
+  GigSchedule,
 };

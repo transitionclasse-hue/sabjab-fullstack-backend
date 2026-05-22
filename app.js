@@ -116,7 +116,47 @@ const start = async () => {
         socket.on("join", (userId) => {
           if (userId) {
             socket.join(String(userId));
+            socket.userId = String(userId);
             console.log(`👥 User ${userId} joined room`);
+          }
+        });
+
+        socket.on("driverOnline", async (driverId) => {
+          const id = driverId || socket.userId;
+          if (!id) return;
+          socket.userId = String(id);
+          try {
+            const { DeliveryPartner } = await import("./src/models/user.js");
+            await DeliveryPartner.findByIdAndUpdate(id, { isOnline: true });
+            
+            // Broadcast status update to all listening manager dashboards
+            app.io.emit("admin:driver-status-update", {
+              driverId: id,
+              isOnline: true,
+              lastSeen: new Date(),
+            });
+            console.log(`🟢 Socket: Driver ${id} is Online`);
+          } catch (err) {
+            console.error("Error setting driver online via socket:", err);
+          }
+        });
+
+        socket.on("driverOffline", async (driverId) => {
+          const id = driverId || socket.userId;
+          if (!id) return;
+          try {
+            const { DeliveryPartner } = await import("./src/models/user.js");
+            await DeliveryPartner.findByIdAndUpdate(id, { isOnline: false });
+            
+            // Broadcast status update to all listening manager dashboards
+            app.io.emit("admin:driver-status-update", {
+              driverId: id,
+              isOnline: false,
+              lastSeen: new Date(),
+            });
+            console.log(`🔴 Socket: Driver ${id} is Offline`);
+          } catch (err) {
+            console.error("Error setting driver offline via socket:", err);
           }
         });
 
@@ -178,8 +218,26 @@ const start = async () => {
             app.io.emit("admin:call-bridge-signal", payload);
         });
 
-        socket.on("disconnect", () => {
-          console.log("🔴 User disconnected");
+        socket.on("disconnect", async () => {
+          console.log("🔴 User disconnected:", socket.id);
+          if (socket.userId) {
+            try {
+              const { DeliveryPartner } = await import("./src/models/user.js");
+              const driver = await DeliveryPartner.findById(socket.userId);
+              if (driver) {
+                driver.isOnline = false;
+                await driver.save();
+                app.io.emit("admin:driver-status-update", {
+                  driverId: socket.userId,
+                  isOnline: false,
+                  lastSeen: new Date(),
+                });
+                console.log(`🔴 Socket disconnect auto-offline: Driver ${socket.userId}`);
+              }
+            } catch (err) {
+              console.error("Error during socket disconnect cleanup:", err);
+            }
+          }
         });
 
       });
