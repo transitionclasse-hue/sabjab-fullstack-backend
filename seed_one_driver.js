@@ -6,6 +6,7 @@
  */
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import bcrypt from "bcrypt";
 import { DeliveryPartner } from "./src/models/index.js";
 
 dotenv.config();
@@ -14,19 +15,21 @@ const MONGO_URI =
   process.env.MONGO_URI ||
   "mongodb+srv://transitionclasse_db_user:devu1234@cluster0.7chsse0.mongodb.net/sabjab12?retryWrites=true&w=majority&appName=Cluster00";
 
-const TEST_DRIVER = {
-  name: "Ravi Kumar",
-  email: "ravi.driver@sabjab.mock",
-  phone: 9000000011,
-  password: "mockdriver123",
-  role: "DeliveryPartner",
-  isActivated: true,
-  liveLocation: { latitude: 28.6139, longitude: 77.209 },
-  address: "Test address",
-};
-
 async function run() {
   await mongoose.connect(MONGO_URI);
+
+  const hashedPassword = await bcrypt.hash("mockdriver123", 10);
+
+  const TEST_DRIVER = {
+    name: "Ravi Kumar",
+    email: "ravi.driver@sabjab.mock",
+    phone: 9000000011,
+    password: hashedPassword,
+    role: "DeliveryPartner",
+    isActivated: true,
+    liveLocation: { latitude: 28.6139, longitude: 77.209 },
+    address: "Test address",
+  };
 
   const existing = await DeliveryPartner.findOne({ email: TEST_DRIVER.email });
   if (existing) {
