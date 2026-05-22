@@ -167,9 +167,94 @@ const afterEditOrderHook = async (originalResponse, request, context, app) => {
     }
   }
 
+  const oldStatus = context.record?.params?.status;
+  const newStatus = dbOrder.status;
+
+  if (newStatus === "delivered" && oldStatus !== "delivered") {
+    console.log(`[AdminEditUpdate] BUSINESS LOGIC: Processing delivery for ${orderId}`);
+    dbOrder.deliveredAt = new Date();
+
+    // Calculate return expiry for each item
+    if (dbOrder.items && dbOrder.items.length > 0) {
+      dbOrder.items.forEach(item => {
+        if (item.returnWindow > 0) {
+          item.returnExpiresAt = new Date(dbOrder.deliveredAt.getTime() + (item.returnWindow * 3600000));
+        }
+        if (dbOrder.orderType === "choice") {
+          item.deliveryStatus = "delivered";
+        }
+      });
+    }
+
+    // Keep legacy top-level expiry for backward compatibility
+    if (dbOrder.returnWindow > 0) {
+      dbOrder.returnExpiresAt = new Date(dbOrder.deliveredAt.getTime() + (dbOrder.returnWindow * 3600000));
+    }
+
+    try {
+      const WalletTransaction = mongoose.models.WalletTransaction;
+      
+      // Calculate Driver Earning if not set
+      if (!dbOrder.driverEarning || dbOrder.driverEarning <= 0) {
+        const { calculateDriverEarning } = await import("../controllers/order/order.js");
+        dbOrder.driverEarning = await calculateDriverEarning(dbOrder);
+      }
+
+      // Handle Driver Earnings Transaction
+      if (dbOrder.deliveryPartner && dbOrder.driverEarning > 0) {
+        const feeTxn = await WalletTransaction.create({
+          deliveryPartner: dbOrder.deliveryPartner,
+          order: dbOrder._id,
+          amount: dbOrder.driverEarning,
+          type: "credit",
+          txnType: "delivery_fee",
+          description: `Delivery fee for order #${dbOrder.orderId} (via Admin website)`,
+          status: "completed"
+        });
+        console.log(`[AdminEditUpdate] SUCCESS: Created delivery fee transaction ${feeTxn._id}`);
+      }
+
+      // COD collection transaction
+      if (dbOrder.paymentMethod === "COD" && dbOrder.totalPrice > 0) {
+        dbOrder.codCollected = dbOrder.totalPrice;
+        if (dbOrder.deliveryPartner) {
+          const codTxn = await WalletTransaction.create({
+            deliveryPartner: dbOrder.deliveryPartner,
+            order: dbOrder._id,
+            amount: dbOrder.totalPrice,
+            type: "debit",
+            txnType: "cod_collection",
+            description: `COD collected for order #${dbOrder.orderId} (via Admin website)`,
+            status: "completed"
+          });
+          console.log(`[AdminEditUpdate] SUCCESS: Created COD collection transaction ${codTxn._id}`);
+        }
+      }
+
+      changed = true;
+
+      // Send Push Notification to Driver
+      if (dbOrder.deliveryPartner) {
+        await sendPushNotification(
+          String(dbOrder.deliveryPartner),
+          "Order Delivered! ✅",
+          `You earned ₹${dbOrder.driverEarning || 0} for delivering order #${dbOrder.orderId}.`,
+          { orderId: String(dbOrder._id), type: 'ORDER_DELIVERED' },
+          'DeliveryPartner'
+        ).catch(e => console.error("Driver delivery notification error:", e.message));
+      }
+    } catch (calcError) {
+      console.error("[AdminEditUpdate] Order delivery logic failed:", calcError.message);
+    }
+  }
+
   if (changed) {
     await dbOrder.save();
     context.record.params.status = dbOrder.status; // Sync for AdminJS response
+    // Sync other parameters to response
+    context.record.params.deliveredAt = dbOrder.deliveredAt;
+    context.record.params.driverEarning = dbOrder.driverEarning;
+    context.record.params.codCollected = dbOrder.codCollected;
   }
 
   const populatedOrder = await hydrateOrderForTracking(orderId);

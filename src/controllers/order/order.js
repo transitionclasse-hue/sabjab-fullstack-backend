@@ -781,6 +781,17 @@ export const updateOrderStatus = async (req, reply) => {
 
                     // Green Points & Referral (Only on Delivered)
                     if (status === ORDER_STATUS.DELIVERED && oldStatus !== ORDER_STATUS.DELIVERED) {
+                        // 🆕 NEW: Notify Driver of Delivery Earning
+                        if (order.deliveryPartner) {
+                            await sendPushNotification(
+                                String(order.deliveryPartner),
+                                "Order Delivered! ✅",
+                                `You earned ₹${order.driverEarning || 0} for delivering order #${order.orderId}.`,
+                                { orderId: String(order._id), type: 'ORDER_DELIVERED' },
+                                'DeliveryPartner'
+                            ).catch(e => console.error("Driver delivery notification error:", e.message));
+                        }
+
                         // 🆕 NEW: Notify Admins of Delivery
                         const admins = await Admin.find({ pushToken: { $ne: null } });
                         for (const admin of admins) {

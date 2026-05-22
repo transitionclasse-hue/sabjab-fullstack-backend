@@ -625,6 +625,17 @@ export const updateOrderStatusByManager = async (req, reply) => {
           }
         }
         await order.save();
+
+        // Send push notification to the driver
+        if (order.deliveryPartner) {
+          await sendPushNotification(
+            String(order.deliveryPartner),
+            "Order Delivered! ✅",
+            `You earned ₹${order.driverEarning || 0} for delivering order #${order.orderId}.`,
+            { orderId: String(order._id), type: 'ORDER_DELIVERED' },
+            'DeliveryPartner'
+          ).catch(e => console.error("Driver delivery notification error:", e.message));
+        }
       } catch (calcError) {
         console.error("[ManagerUpdate] Order delivery logic failed:", calcError.message);
       }
