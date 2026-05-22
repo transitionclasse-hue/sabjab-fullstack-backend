@@ -38,8 +38,8 @@ const gigScheduleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// A driver can only schedule one shift per day
-gigScheduleSchema.index({ deliveryPartner: 1, date: 1 }, { unique: true });
+// Allow multiple shifts per driver per day by making the index non-unique
+gigScheduleSchema.index({ deliveryPartner: 1, date: 1 });
 
 const GigSchedule = mongoose.model("GigSchedule", gigScheduleSchema);
 export default GigSchedule;

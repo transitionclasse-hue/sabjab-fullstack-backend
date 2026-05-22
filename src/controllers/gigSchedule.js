@@ -8,11 +8,15 @@ const getLocalDateStr = () => {
 
 export const saveDriverGigSchedule = async (req, reply) => {
   try {
-    const { date, startTime, endTime } = req.body;
+    const { id, date, startTime, endTime } = req.body;
     const driverId = req.user.userId;
 
     if (!date || !startTime || !endTime) {
       return reply.status(400).send({ message: "Date, start time, and end time are required" });
+    }
+
+    if (startTime >= endTime) {
+      return reply.status(400).send({ message: "Start time must be strictly before end time" });
     }
 
     const todayStr = getLocalDateStr();
@@ -22,11 +26,28 @@ export const saveDriverGigSchedule = async (req, reply) => {
       return reply.status(400).send({ message: "Cannot schedule gigs for past dates" });
     }
 
-    // Find if a schedule already exists for this driver and date
-    let schedule = await GigSchedule.findOne({ deliveryPartner: driverId, date });
+    // Overlap validation: check all other shifts on this date for this driver
+    const query = { deliveryPartner: driverId, date };
+    if (id) {
+      query._id = { $ne: id };
+    }
+    const existingShifts = await GigSchedule.find(query);
 
-    if (schedule) {
-      // If it exists, check its status
+    for (const shift of existingShifts) {
+      // Overlap formula: (newStart < existingEnd) && (newEnd > existingStart)
+      if (startTime < shift.endTime && endTime > shift.startTime) {
+        return reply.status(400).send({ 
+          message: `This slot overlaps with an existing shift today: ${shift.startTime} - ${shift.endTime}` 
+        });
+      }
+    }
+
+    let schedule;
+    if (id) {
+      schedule = await GigSchedule.findOne({ _id: id, deliveryPartner: driverId });
+      if (!schedule) {
+        return reply.status(404).send({ message: "Gig schedule not found" });
+      }
       if (schedule.status !== "pending") {
         return reply.status(400).send({ message: "Cannot modify a schedule that has already been evaluated" });
       }
@@ -53,20 +74,43 @@ export const saveDriverGigSchedule = async (req, reply) => {
 export const getTodayGigSchedule = async (req, reply) => {
   try {
     const driverId = req.user.userId;
-    const todayStr = getLocalDateStr();
+    const { date } = req.query;
+    const targetDate = date || getLocalDateStr();
 
-    const schedule = await GigSchedule.findOne({ deliveryPartner: driverId, date: todayStr });
+    const schedules = await GigSchedule.find({ deliveryPartner: driverId, date: targetDate }).sort({ startTime: 1 });
     
     // Fetch driver profile to return current points balance too
     const driver = await DeliveryPartner.findById(driverId).select("fleetPoints");
 
     return reply.status(200).send({ 
-      schedule: schedule || null, 
+      schedules: schedules || [], 
       fleetPoints: driver?.fleetPoints || 0 
     });
   } catch (error) {
     console.error("getTodayGigSchedule error:", error);
-    return reply.status(500).send({ message: "Failed to fetch today's gig schedule", error: error.message });
+    return reply.status(500).send({ message: "Failed to fetch gig schedules", error: error.message });
+  }
+};
+
+export const deleteDriverGigSchedule = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const driverId = req.user.userId;
+
+    const schedule = await GigSchedule.findOne({ _id: id, deliveryPartner: driverId });
+    if (!schedule) {
+      return reply.status(404).send({ message: "Gig schedule not found" });
+    }
+
+    if (schedule.status !== "pending") {
+      return reply.status(400).send({ message: "Cannot delete a schedule that has already been evaluated" });
+    }
+
+    await GigSchedule.deleteOne({ _id: id });
+    return reply.status(200).send({ message: "Gig schedule deleted successfully" });
+  } catch (error) {
+    console.error("deleteDriverGigSchedule error:", error);
+    return reply.status(500).send({ message: "Failed to delete gig schedule", error: error.message });
   }
 };
 

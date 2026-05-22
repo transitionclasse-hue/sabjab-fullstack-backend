@@ -12,6 +12,7 @@ import {
 import {
   saveDriverGigSchedule,
   getTodayGigSchedule,
+  deleteDriverGigSchedule,
 } from "../controllers/gigSchedule.js";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -35,4 +36,5 @@ export const driverRoutes = async (fastify) => {
   fastify.put("/driver/toggle-online", toggleOnlineStatus);
   fastify.post("/driver/gig-schedule", saveDriverGigSchedule);
   fastify.get("/driver/gig-schedule/today", getTodayGigSchedule);
+  fastify.delete("/driver/gig-schedule/:id", deleteDriverGigSchedule);
 };
