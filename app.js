@@ -152,14 +152,18 @@ const start = async () => {
               if (data.batteryLevel !== undefined) {
                 updatePayload.batteryLevel = data.batteryLevel;
               }
-              await DeliveryPartner.findByIdAndUpdate(data.driverId, updatePayload);
+              const driver = await DeliveryPartner.findByIdAndUpdate(data.driverId, updatePayload);
               
-              // Broadcast to manager apps listening for all driver movements
-              app.io.emit("admin:driver-location", {
+              const broadcastPayload = {
                 driverId: data.driverId,
+                driverName: driver?.name || "Driver",
                 location: data.location,
                 batteryLevel: data.batteryLevel,
-              });
+              };
+
+              // Broadcast to manager apps listening for all driver movements
+              app.io.emit("admin:driver-location", broadcastPayload);
+              app.io.emit("admin:driver-location-update", broadcastPayload);
             } catch (err) {
               console.error("Error updating driver location via socket:", err);
             }

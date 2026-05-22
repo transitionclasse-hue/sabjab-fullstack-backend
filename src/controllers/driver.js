@@ -300,6 +300,19 @@ export const toggleOnlineStatus = async (req, reply) => {
       return reply.status(400).send({ message: "isOnline (boolean) is required" });
     }
 
+    // Block going offline if driver has active orders
+    if (!isOnline) {
+      const activeOrder = await Order.findOne({
+        deliveryPartner: userId,
+        status: { $in: ["assigned", "confirmed", "arriving", "at_location"] }
+      });
+      if (activeOrder) {
+        return reply.status(400).send({
+          message: "Cannot go offline while you have active or running orders"
+        });
+      }
+    }
+
     const driver = await DeliveryPartner.findByIdAndUpdate(
       userId,
       { isOnline, lastSeen: new Date() },
@@ -310,7 +323,8 @@ export const toggleOnlineStatus = async (req, reply) => {
       req.server.io.emit("admin:driver-status-update", {
         driverId: String(driver._id),
         isOnline: driver.isOnline,
-        lastSeen: driver.lastSeen
+        lastSeen: driver.lastSeen,
+        batteryLevel: driver.batteryLevel
       });
     }
 
