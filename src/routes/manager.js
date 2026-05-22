@@ -92,6 +92,7 @@ import { verifyManager } from "../middleware/auth.js";
 import {
   getManagerGigSchedules,
   evaluateGigSchedule,
+  getWeeklyGigSchedules,
 } from "../controllers/gigSchedule.js";
 
 const AUTH = { preHandler: [verifyManager] };
@@ -202,5 +203,6 @@ export const managerRoutes = async (fastify) => {
 
   // Gig Schedules Management
   fastify.get("/manager/gig-schedules", AUTH, getManagerGigSchedules);
+  fastify.get("/manager/gig-schedules/weekly", AUTH, getWeeklyGigSchedules);
   fastify.post("/manager/gig-schedules/:id/evaluate", AUTH, evaluateGigSchedule);
 };

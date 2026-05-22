@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig } from "../models/index.js";
+import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule } from "../models/index.js";
 import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
@@ -148,6 +148,60 @@ export const getManagerOverview = async (req, reply) => {
     const profitData = profitAgg[0] || { totalRevenue: 0, totalCost: 0, totalDriverEarnings: 0 };
     const inventoryProfit = Math.round(profitData.totalRevenue - profitData.totalCost - profitData.totalDriverEarnings);
 
+    // Calculate driver availability stats (real-time vs scheduled)
+    const localDateObj = new Date(Date.now() + 5.5 * 60 * 60 * 1000);
+    const todayStr = localDateObj.toISOString().split("T")[0];
+    const hours = String(localDateObj.getUTCHours()).padStart(2, '0');
+    const minutes = String(localDateObj.getUTCMinutes()).padStart(2, '0');
+    const currentTimeStr = `${hours}:${minutes}`;
+
+    const [allDrivers, schedulesToday] = await Promise.all([
+      DeliveryPartner.find({}).select("isOnline").lean(),
+      GigSchedule.find({ date: todayStr }).lean()
+    ]);
+
+    const driverSchedules = new Map();
+    for (const s of schedulesToday) {
+      if (!s.deliveryPartner) continue;
+      const driverId = s.deliveryPartner.toString();
+      if (!driverSchedules.has(driverId)) {
+        driverSchedules.set(driverId, []);
+      }
+      driverSchedules.get(driverId).push(s);
+    }
+
+    let scheduledCount = 0;
+    let activeAndScheduledCount = 0;
+    let activeButUnscheduledCount = 0;
+    let offlineAndScheduledCount = 0;
+
+    for (const driver of allDrivers) {
+      const driverId = driver._id.toString();
+      const schedules = driverSchedules.get(driverId) || [];
+      const isScheduledNow = schedules.some(s => currentTimeStr >= s.startTime && currentTimeStr <= s.endTime);
+      const isOnlineNow = !!driver.isOnline;
+
+      if (isScheduledNow) {
+        scheduledCount++;
+        if (isOnlineNow) {
+          activeAndScheduledCount++;
+        } else {
+          offlineAndScheduledCount++;
+        }
+      } else {
+        if (isOnlineNow) {
+          activeButUnscheduledCount++;
+        }
+      }
+    }
+
+    const driverAvailability = {
+      scheduledCount,
+      activeAndScheduledCount,
+      activeButUnscheduledCount,
+      offlineAndScheduledCount
+    };
+
     return reply.send({
       totalOrders,
       activeOrders,
@@ -162,6 +216,7 @@ export const getManagerOverview = async (req, reply) => {
       lowStockItems: populatedLowStock,
       themeEffect: activeOccasion?.themeEffect || "none",
       searchBarStyle: activeOccasion?.searchBarStyle || "standard",
+      driverAvailability,
     });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to fetch overview", error: error.message });

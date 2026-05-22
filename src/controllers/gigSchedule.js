@@ -192,3 +192,31 @@ export const evaluateGigSchedule = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to evaluate gig schedule", error: error.message });
   }
 };
+
+export const getWeeklyGigSchedules = async (req, reply) => {
+  try {
+    const { startDate } = req.query;
+    const start = startDate || getLocalDateStr();
+    
+    // Calculate endDate as start date + 6 days (7 days total)
+    const startObj = new Date(start);
+    const endObj = new Date(startObj.getTime() + 6 * 24 * 60 * 60 * 1000);
+    const end = endObj.toISOString().split("T")[0];
+
+    const schedules = await GigSchedule.find({
+      date: { $gte: start, $lte: end }
+    })
+    .populate({
+      path: "deliveryPartner",
+      select: "name phone email branch fleetPoints isOnline batteryLevel",
+      populate: { path: "branch", select: "name" }
+    })
+    .sort({ date: 1, startTime: 1 })
+    .lean();
+
+    return reply.status(200).send(schedules);
+  } catch (error) {
+    console.error("getWeeklyGigSchedules error:", error);
+    return reply.status(500).send({ message: "Failed to fetch weekly gig schedules", error: error.message });
+  }
+};
