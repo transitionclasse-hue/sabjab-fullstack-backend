@@ -243,6 +243,14 @@ const afterEditOrderHook = async (originalResponse, request, context, app) => {
           'DeliveryPartner'
         ).catch(e => console.error("Driver delivery notification error:", e.message));
       }
+
+      // NEW: Process Reel Commissions
+      try {
+        const { processReelCommission } = await import("../utils/commission.js");
+        await processReelCommission(dbOrder._id);
+      } catch (commError) {
+        console.error("[AdminEditUpdate] Reel commission processing failed:", commError.message);
+      }
     } catch (calcError) {
       console.error("[AdminEditUpdate] Order delivery logic failed:", calcError.message);
     }
@@ -2211,6 +2219,16 @@ export async function buildAdminRouter(app) {
           navigation: { name: "Delivery Management", icon: "Truck" },
           sort: { sortBy: 'createdAt', direction: 'desc' },
         },
+      };
+    }
+
+    if (model.modelName === "Reel") {
+      return {
+        resource: model,
+        options: {
+          navigation: { name: "Marketing", icon: "Video" },
+          sort: { sortBy: 'createdAt', direction: 'desc' },
+        }
       };
     }
 

@@ -20,6 +20,7 @@ import Ticket from "./ticket.js";
 import SupportMessage from "./supportMessage.js";
 import GlobalConfig from "./globalConfig.js";
 import GigSchedule from "./gigSchedule.js";
+import Reel from "./reel.js";
 
 export {
   Order,
@@ -47,4 +48,5 @@ export {
   SupportMessage,
   GlobalConfig,
   GigSchedule,
+  Reel,
 };

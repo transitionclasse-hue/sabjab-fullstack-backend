@@ -757,6 +757,14 @@ export const updateOrderStatus = async (req, reply) => {
                         }
                     }
                 }
+
+                // NEW: Process Reel Commissions
+                try {
+                    const { processReelCommission } = await import("../../utils/commission.js");
+                    await processReelCommission(order._id);
+                } catch (commError) {
+                    console.error("[OrderUpdate] Reel commission processing failed:", commError.message);
+                }
             } catch (calcError) {
                 console.error("[StatusUpdate] Order delivery logic failed:", calcError.message);
             }

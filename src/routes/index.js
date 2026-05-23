@@ -25,6 +25,7 @@ import { suggestionRoutes } from "./suggestion.js";
 import { ticketRoutes } from "./ticket.js";
 import profileConfigRoutes from "./profileConfig.js";
 import { sellerRoutes } from "./seller.js";
+import { reelsRoutes } from "./reels.js";
 
 const prefix = "/api";
 
@@ -98,4 +99,7 @@ export const registerRoutes = async (fastify) => {
 
   // Seller Dashboard logic
   fastify.register(sellerRoutes, { prefix });
+
+  // Reels Feed & Commission Systems
+  fastify.register(reelsRoutes, { prefix });
 };

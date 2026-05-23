@@ -56,6 +56,16 @@ const orderSchema = new mongoose.Schema({
         default: "pending",
       },
       expectedDate: { type: Date },
+      referredByReel: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Reel",
+        default: null,
+      },
+      referrer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Customer",
+        default: null,
+      },
     },
   ],
 
