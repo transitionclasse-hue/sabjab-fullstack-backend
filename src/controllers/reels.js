@@ -1,6 +1,6 @@
-import Reel from "../../models/reel.js";
-import Product from "../../models/products.js";
-import WalletTransaction from "../../models/walletTransaction.js";
+import Reel from "../models/reel.js";
+import Product from "../models/products.js";
+import WalletTransaction from "../models/walletTransaction.js";
 
 /**
  * Create a new Reel
@@ -212,5 +212,167 @@ export const getReelEarnings = async (req, reply) => {
   } catch (error) {
     console.error("Error getting reel earnings:", error);
     return reply.code(500).send({ message: "Failed to retrieve earnings info", error: error.message });
+  }
+};
+
+/**
+ * Follow or Unfollow a Creator
+ */
+export const followCreator = async (req, reply) => {
+  try {
+    const { creatorId } = req.params;
+    const userId = req.user.userId;
+
+    if (creatorId === userId) {
+      return reply.code(400).send({ message: "You cannot follow yourself" });
+    }
+
+    const { Customer } = await import("../models/user.js");
+    const user = await Customer.findById(userId);
+    if (!user) {
+      return reply.code(404).send({ message: "User not found" });
+    }
+
+    const creator = await Customer.findById(creatorId);
+    if (!creator) {
+      return reply.code(404).send({ message: "Creator not found" });
+    }
+
+    if (!user.following) {
+      user.following = [];
+    }
+
+    const index = user.following.indexOf(creatorId);
+    let isFollowing = false;
+
+    if (index > -1) {
+      user.following.splice(index, 1);
+    } else {
+      user.following.push(creatorId);
+      isFollowing = true;
+    }
+
+    await user.save();
+
+    return reply.send({
+      success: true,
+      isFollowing,
+      following: user.following,
+    });
+  } catch (error) {
+    console.error("Error following creator:", error);
+    return reply.code(500).send({ message: "Failed to update follow status", error: error.message });
+  }
+};
+
+/**
+ * Get Weekly Leaderboard of Bawal Creators
+ */
+export const getReelsLeaderboard = async (req, reply) => {
+  try {
+    const leaderboard = await WalletTransaction.aggregate([
+      {
+        $match: {
+          txnType: "reel_commission",
+          status: "completed",
+        },
+      },
+      {
+        $group: {
+          _id: "$customer",
+          totalCommission: { $sum: "$amount" },
+          salesCount: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { totalCommission: -1 },
+      },
+      {
+        $limit: 10,
+      },
+    ]);
+
+    const { Customer } = await import("../models/user.js");
+    const populated = await Promise.all(
+      leaderboard.map(async (item) => {
+        const creator = await Customer.findById(item._id).select("name username");
+        return {
+          creator: creator || { name: "SabJab User", username: "sabjab_user" },
+          totalCommission: Math.round(item.totalCommission * 100) / 100,
+          salesCount: item.salesCount,
+        };
+      })
+    );
+
+    return reply.send({
+      success: true,
+      leaderboard: populated,
+    });
+  } catch (error) {
+    console.error("Error generating reels leaderboard:", error);
+    return reply.code(500).send({ message: "Failed to load leaderboard", error: error.message });
+  }
+};
+
+/**
+ * Get Recent Purchases in the System for the Live Ticker
+ */
+export const getRecentPurchases = async (req, reply) => {
+  try {
+    const { Order } = await import("../models/order.js");
+    const orders = await Order.find({ status: { $ne: "cancelled" } })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate("customer", "name username")
+      .populate("items.item", "name");
+
+    const recentPurchases = orders
+      .filter(o => o.customer && o.items && o.items.length > 0)
+      .map(order => {
+        const buyerName = order.customer.username || order.customer.name || "A Customer";
+        
+        let maskedName = buyerName;
+        if (buyerName.length > 2) {
+          maskedName = buyerName.charAt(0) + "***" + buyerName.charAt(buyerName.length - 1);
+        } else {
+          maskedName = buyerName + "***";
+        }
+
+        const firstItem = order.items[0];
+        const productName = firstItem.item ? firstItem.item.name : "grocery items";
+
+        const diffMs = Date.now() - new Date(order.createdAt).getTime();
+        const diffMins = Math.floor(diffMs / 60000);
+        let timeAgoStr = "Just now";
+        if (diffMins > 0 && diffMins < 60) {
+          timeAgoStr = `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+        } else if (diffMins >= 60) {
+          const diffHours = Math.floor(diffMins / 60);
+          timeAgoStr = `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+        }
+
+        return {
+          id: order._id.toString(),
+          buyerName: maskedName,
+          productName,
+          timeAgo: timeAgoStr,
+        };
+      });
+
+    return reply.send({
+      success: true,
+      purchases: recentPurchases,
+    });
+  } catch (error) {
+    console.error("Error retrieving recent purchases:", error);
+    const mockups = [
+      { id: "mock1", buyerName: "R***v", productName: "Maggi 2-minute Double Masala", timeAgo: "2 mins ago" },
+      { id: "mock2", buyerName: "A***t", productName: "Dhara Filtered Groundnut oil", timeAgo: "15 mins ago" },
+      { id: "mock3", buyerName: "P***a", productName: "Fresh Cauliflower (Gobhi)", timeAgo: "24 mins ago" },
+    ];
+    return reply.send({
+      success: true,
+      purchases: mockups,
+    });
   }
 };

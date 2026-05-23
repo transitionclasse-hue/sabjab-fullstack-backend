@@ -6,6 +6,9 @@ import {
   shareReel,
   getMyReels,
   getReelEarnings,
+  followCreator,
+  getReelsLeaderboard,
+  getRecentPurchases,
 } from "../controllers/reels.js";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -30,4 +33,13 @@ export const reelsRoutes = async (fastify, options) => {
 
   // Get creator's referral earnings dashboard stats
   fastify.get("/reels/earnings", { preHandler: [verifyToken] }, getReelEarnings);
+
+  // Follow/Unfollow creator
+  fastify.post("/reels/follow/:creatorId", { preHandler: [verifyToken] }, followCreator);
+
+  // Get weekly leaderboard of creators
+  fastify.get("/reels/leaderboard", getReelsLeaderboard);
+
+  // Get recent purchases for live ticker
+  fastify.get("/reels/recent-purchases", getRecentPurchases);
 };

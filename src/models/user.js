@@ -57,6 +57,12 @@ const customerSchema = new mongoose.Schema({
       ref: "Recipe",
     }
   ],
+  following: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+    }
+  ],
   sensitiveMode: { type: Boolean, default: true },
   lastActive: { type: Date, default: Date.now },
   appUninstalled: { type: Boolean, default: false },
