@@ -147,9 +147,10 @@ const occasionSchema = new mongoose.Schema({
         footerShowChoice: { type: Boolean, default: true },
         footerShowCategories: { type: Boolean, default: true },
         footerShowReOrder: { type: Boolean, default: true },
+        footerShowReels: { type: Boolean, default: true },
         footerItems: {
             type: [{
-                routeName: { type: String, enum: ["Home", "Orders", "Choice", "Categories", "ReOrder"], default: "Home" },
+                routeName: { type: String, enum: ["Home", "Orders", "Choice", "Categories", "ReOrder", "Reels"], default: "Home" },
                 label: { type: String, default: "" },
                 icon: { type: String, default: "" },
             }],
