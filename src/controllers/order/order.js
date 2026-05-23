@@ -59,11 +59,20 @@ export const calculateDriverEarning = async (orderOrTotal = 0) => {
     return computeDriverEarning(config, order);
 };
 
-const isAssignmentExpired = (assignedAt) =>
-    Boolean(assignedAt) && (Date.now() - new Date(assignedAt).getTime() >= ASSIGNMENT_TIMEOUT_MS);
+const isAssignmentExpired = (assignedAt, timeoutMs = ASSIGNMENT_TIMEOUT_MS) =>
+    Boolean(assignedAt) && (Date.now() - new Date(assignedAt).getTime() >= timeoutMs);
 
 export const expireStaleAssignedOrders = async (io = null) => {
-    const cutoff = new Date(Date.now() - ASSIGNMENT_TIMEOUT_MS);
+    let timeoutMs = ASSIGNMENT_TIMEOUT_MS;
+    try {
+        const config = await GlobalConfig.findOne({ key: "assignment_timeout_config" });
+        if (config?.value?.minutes) {
+            timeoutMs = config.value.minutes * 60 * 1000;
+        }
+    } catch (err) {
+        console.error("Error reading assignment timeout config in expireStaleAssignedOrders:", err.message);
+    }
+    const cutoff = new Date(Date.now() - timeoutMs);
     const staleOrders = await Order.find({
         status: ORDER_STATUS.ASSIGNED,
         assignedAt: { $lte: cutoff },
@@ -500,7 +509,17 @@ export const confirmOrder = async (req, reply) => {
             return reply.status(404).send({ message: "Order not found" }); //
         }
 
-        if (order.status === ORDER_STATUS.ASSIGNED && isAssignmentExpired(order.assignedAt)) {
+        let timeoutMs = ASSIGNMENT_TIMEOUT_MS;
+        try {
+            const config = await GlobalConfig.findOne({ key: "assignment_timeout_config" });
+            if (config?.value?.minutes) {
+                timeoutMs = config.value.minutes * 60 * 1000;
+            }
+        } catch (err) {
+            console.error("Error reading assignment timeout config in confirmOrder:", err.message);
+        }
+
+        if (order.status === ORDER_STATUS.ASSIGNED && isAssignmentExpired(order.assignedAt, timeoutMs)) {
             order.status = ORDER_STATUS.AVAILABLE;
             order.deliveryPartner = undefined;
             order.assignedAt = undefined;

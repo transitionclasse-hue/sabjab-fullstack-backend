@@ -1941,3 +1941,46 @@ export const sendManualNotification = async (req, reply) => {
     return reply.status(500).send({ message: "Failed to send notification", error: error.message });
   }
 };
+
+export const getAssignmentTimeoutConfig = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "assignment_timeout_config" });
+    if (!config) {
+      return reply.send({
+        success: true,
+        data: {
+          minutes: 5
+        }
+      });
+    }
+    return reply.send({ success: true, data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch assignment timeout config", error: error.message });
+  }
+};
+
+export const updateAssignmentTimeoutConfig = async (req, reply) => {
+  try {
+    const { minutes } = req.body;
+    if (typeof minutes !== 'number' || minutes <= 0) {
+      return reply.status(400).send({ message: "Invalid minutes value. Must be a positive number." });
+    }
+    let config = await GlobalConfig.findOne({ key: "assignment_timeout_config" });
+
+    if (!config) {
+      config = new GlobalConfig({
+        key: "assignment_timeout_config",
+        value: { minutes },
+        description: "Timeout duration (in minutes) for a driver to confirm an assigned order before it returns to Available status."
+      });
+    } else {
+      config.value = { minutes };
+    }
+
+    await config.save();
+    return reply.send({ success: true, message: "Assignment timeout config updated successfully", data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update assignment timeout config", error: error.message });
+  }
+};
+

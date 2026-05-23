@@ -54,6 +54,8 @@ import {
   getComponentPreviews,
   updateComponentPreview,
   sendManualNotification,
+  getAssignmentTimeoutConfig,
+  updateAssignmentTimeoutConfig,
 } from "../controllers/manager.js";
 
 import { getMediaLibrary, deleteMedia, bulkDeleteMedia } from "../controllers/mediaController.js";
@@ -175,6 +177,8 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/safe-mode-config", AUTH, updateSafeModeConfig);
   fastify.get("/manager/order-masking-config", AUTH, getOrderMaskingConfig);
   fastify.post("/manager/order-masking-config", AUTH, updateOrderMaskingConfig);
+  fastify.get("/manager/assignment-timeout-config", AUTH, getAssignmentTimeoutConfig);
+  fastify.post("/manager/assignment-timeout-config", AUTH, updateAssignmentTimeoutConfig);
   fastify.get("/manager/high-value-config", AUTH, getHighValueOrderConfig);
   fastify.post("/manager/high-value-config", AUTH, updateHighValueOrderConfig);
   fastify.get("/manager/home-screen-config", AUTH, getHomeScreenConfig);

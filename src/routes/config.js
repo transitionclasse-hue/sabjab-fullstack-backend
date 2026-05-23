@@ -48,4 +48,17 @@ export const configRoutes = async (fastify) => {
     }
   });
 
+  fastify.get("/config/assignment-timeout", async (req, reply) => {
+    try {
+      const config = await GlobalConfig.findOne({ key: "assignment_timeout_config" }).lean();
+      if (!config) {
+        return reply.send({ minutes: 5 });
+      }
+      return reply.send(config.value);
+    } catch (error) {
+      console.error("ASSIGNMENT TIMEOUT API ERROR:", error);
+      return reply.send({ minutes: 5 });
+    }
+  });
+
 };
