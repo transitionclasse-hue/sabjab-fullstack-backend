@@ -124,6 +124,7 @@ export const renderCheckoutWebView = async (req, reply) => {
       theme: {
         color: "#FF8C00"
       },
+      webview_intent: true,
       handler: function (response) {
         const data = {
           event: "success",
