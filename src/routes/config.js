@@ -61,4 +61,17 @@ export const configRoutes = async (fastify) => {
     }
   });
 
+  fastify.get("/config/bawal", async (req, reply) => {
+    try {
+      const config = await GlobalConfig.findOne({ key: "bawal_config" }).lean();
+      if (!config) {
+        return reply.send({ success: true, enabled: true });
+      }
+      return reply.send({ success: true, enabled: config.value.enabled !== false });
+    } catch (error) {
+      console.error("PUBLIC BAWAL CONFIG API ERROR:", error);
+      return reply.send({ success: true, enabled: true });
+    }
+  });
+
 };

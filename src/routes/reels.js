@@ -17,6 +17,18 @@ import {
 import { verifyToken } from "../middleware/auth.js";
 
 export const reelsRoutes = async (fastify, options) => {
+  fastify.addHook('preHandler', async (req, reply) => {
+    const GlobalConfig = (await import("../models/globalConfig.js")).default;
+    const config = await GlobalConfig.findOne({ key: "bawal_config" }).lean();
+    if (config && config.value?.enabled === false) {
+      return reply.code(403).send({
+        success: false,
+        disabled: true,
+        message: "Bawal (Reels) system is currently disabled by the administrator."
+      });
+    }
+  });
+
   // Create Reel
   fastify.post("/reels", { preHandler: [verifyToken] }, createReel);
 

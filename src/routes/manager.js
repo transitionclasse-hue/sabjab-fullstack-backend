@@ -56,6 +56,8 @@ import {
   sendManualNotification,
   getAssignmentTimeoutConfig,
   updateAssignmentTimeoutConfig,
+  getBawalConfig,
+  updateBawalConfig,
 } from "../controllers/manager.js";
 
 import { getMediaLibrary, deleteMedia, bulkDeleteMedia } from "../controllers/mediaController.js";
@@ -186,6 +188,8 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/previews", AUTH, getComponentPreviews);
   fastify.post("/manager/previews", AUTH, updateComponentPreview);
   fastify.post("/manager/send-notification", AUTH, sendManualNotification);
+  fastify.get("/manager/bawal-config", AUTH, getBawalConfig);
+  fastify.post("/manager/bawal-config", AUTH, updateBawalConfig);
 
   // Support Contact Configuration
   fastify.get("/manager/support-config", AUTH, getSupportConfig);

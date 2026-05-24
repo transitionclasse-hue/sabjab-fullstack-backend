@@ -13,6 +13,14 @@ export const processReelCommission = async (orderId) => {
   try {
     console.log(`[Commission] Processing reel commissions for Order: ${orderId}`);
     
+    // Check if Bawal is enabled
+    const GlobalConfig = (await import("../models/globalConfig.js")).default;
+    const bawalConfig = await GlobalConfig.findOne({ key: "bawal_config" }).lean();
+    if (bawalConfig && bawalConfig.value?.enabled === false) {
+      console.log(`[Commission] Bawal/Reels are disabled. Skipping commission processing.`);
+      return;
+    }
+    
     // Fetch the order
     const order = await Order.findById(orderId);
     if (!order) {

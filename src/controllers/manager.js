@@ -1984,3 +1984,43 @@ export const updateAssignmentTimeoutConfig = async (req, reply) => {
   }
 };
 
+export const getBawalConfig = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "bawal_config" }).lean();
+    if (!config) {
+      return reply.send({
+        success: true,
+        data: {
+          enabled: true
+        }
+      });
+    }
+    return reply.send({ success: true, data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch Bawal config", error: error.message });
+  }
+};
+
+export const updateBawalConfig = async (req, reply) => {
+  try {
+    const { enabled } = req.body;
+    let config = await GlobalConfig.findOne({ key: "bawal_config" });
+
+    if (!config) {
+      config = new GlobalConfig({
+        key: "bawal_config",
+        value: { enabled },
+        description: "Controls whether the Reels / Bawal system is enabled globally"
+      });
+    } else {
+      config.value = { enabled };
+    }
+
+    await config.save();
+    return reply.send({ success: true, message: "Bawal config updated successfully", data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update Bawal config", error: error.message });
+  }
+};
+
+
