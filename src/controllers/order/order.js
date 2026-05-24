@@ -3,6 +3,7 @@ import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
 import { getDistanceKm, isValidLatLng } from "../../utils/geo.js";
 import { computeDriverEarning } from "../../utils/driverEarning.js";
+import crypto from "crypto";
 
 const ORDER_STATUS = {
     AVAILABLE: "available",
@@ -115,7 +116,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -126,6 +127,25 @@ export const createOrder = async (req, reply) => {
             return reply.status(400).send({ message: "Store is currently not accepting new orders." });
         }
         // -------------------------------
+
+        // --- ONLINE PAYMENT SIGNATURE VERIFICATION ---
+        if (paymentMethod === "Online") {
+            if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
+                return reply.status(400).send({ message: "Online payment details are missing." });
+            }
+            const text = razorpay_order_id + "|" + razorpay_payment_id;
+            const generated_signature = crypto
+                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "mockSecret123")
+                .update(text)
+                .digest("hex");
+
+            if (generated_signature !== razorpay_signature) {
+                console.error(`[Razorpay] Verification failed for Order: ${razorpay_order_id}`);
+                return reply.status(400).send({ message: "Payment verification failed. Invalid signature." });
+            }
+            console.log(`[Razorpay] Verified payment ${razorpay_payment_id} for order ${razorpay_order_id}`);
+        }
+        // ----------------------------------------------
 
         // FALLBACK: If no branchId provided or branch not found, pick the first available branch
         if (!branchData) {
@@ -370,6 +390,10 @@ export const createOrder = async (req, reply) => {
             branch: resolvedBranchId,
             totalPrice: Number(totalAmount),
             paymentMethod: paymentMethod || "COD",
+            paymentStatus: paymentMethod === "Online" ? "Paid" : "Pending",
+            razorpay_payment_id,
+            razorpay_order_id,
+            razorpay_signature,
             couponCode: validatedCouponCode,
             discountAmount: discountAmount,
             returnWindow: orderReturnWindow, // SNAPSHOT the return window

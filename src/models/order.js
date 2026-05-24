@@ -131,6 +131,16 @@ const orderSchema = new mongoose.Schema({
     default: "Pending",
   },
 
+  razorpay_payment_id: {
+    type: String,
+  },
+  razorpay_order_id: {
+    type: String,
+  },
+  razorpay_signature: {
+    type: String,
+  },
+
   driverEarning: { type: Number, default: 0 },
   codCollected: { type: Number, default: 0 },
   rewardCoinsEarned: { type: Number, default: 0 }, // Amount of SabJab Coins earned from this order

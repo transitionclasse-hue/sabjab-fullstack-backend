@@ -26,6 +26,7 @@ import { ticketRoutes } from "./ticket.js";
 import profileConfigRoutes from "./profileConfig.js";
 import { sellerRoutes } from "./seller.js";
 import { reelsRoutes } from "./reels.js";
+import { paymentRoutes } from "./payment.js";
 
 const prefix = "/api";
 
@@ -102,4 +103,7 @@ export const registerRoutes = async (fastify) => {
 
   // Reels Feed & Commission Systems
   fastify.register(reelsRoutes, { prefix });
+
+  // Razorpay Gateway Operations
+  fastify.register(paymentRoutes, { prefix });
 };
