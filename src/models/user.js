@@ -63,6 +63,17 @@ const customerSchema = new mongoose.Schema({
       ref: "Customer",
     }
   ],
+  recommendedProducts: [
+    {
+      product: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+      category: { type: String },
+      recommendedAt: { type: Date, default: Date.now }
+    }
+  ],
   sensitiveMode: { type: Boolean, default: true },
   lastActive: { type: Date, default: Date.now },
   appUninstalled: { type: Boolean, default: false },

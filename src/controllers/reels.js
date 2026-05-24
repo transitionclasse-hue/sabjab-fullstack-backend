@@ -376,3 +376,83 @@ export const getRecentPurchases = async (req, reply) => {
     });
   }
 };
+
+/**
+ * Add a Recommended Product (must be purchased by user)
+ */
+export const addRecommendedProduct = async (req, reply) => {
+  try {
+    const { productId, category } = req.body;
+    const userId = req.user.userId;
+
+    if (!productId) {
+      return reply.code(400).send({ message: "Product ID is required" });
+    }
+
+    const Product = (await import("../models/products.js")).default;
+    const product = await Product.findById(productId);
+    if (!product) {
+      return reply.code(404).send({ message: "Product not found" });
+    }
+
+    const { Order } = await import("../models/order.js");
+    const pastOrder = await Order.findOne({
+      customer: userId,
+      "items.item": productId,
+      status: "delivered"
+    });
+
+    if (!pastOrder) {
+      return reply.code(403).send({ message: "You can only recommend products you have purchased and received." });
+    }
+
+    const { Customer } = await import("../models/user.js");
+    const user = await Customer.findById(userId);
+
+    const alreadyRecommended = user.recommendedProducts?.some(r => r.product.toString() === productId);
+    if (alreadyRecommended) {
+      return reply.code(400).send({ message: "You have already recommended this product." });
+    }
+
+    if (!user.recommendedProducts) user.recommendedProducts = [];
+    user.recommendedProducts.push({
+      product: productId,
+      category: category || product.category || "General",
+    });
+
+    await user.save();
+
+    return reply.send({ success: true, message: "Product added to recommendations" });
+  } catch (error) {
+    console.error("Error adding recommended product:", error);
+    return reply.code(500).send({ message: "Failed to add recommendation", error: error.message });
+  }
+};
+
+/**
+ * Get Creator's Recommended Products
+ */
+export const getCreatorRecommendations = async (req, reply) => {
+  try {
+    const { creatorId } = req.params;
+
+    const { Customer } = await import("../models/user.js");
+    const creator = await Customer.findById(creatorId).populate({
+      path: "recommendedProducts.product",
+      select: "name price discountPrice image isAvailable stock category"
+    }).select("-password -otp");
+
+    if (!creator) {
+      return reply.code(404).send({ message: "Creator not found" });
+    }
+
+    return reply.send({ 
+      success: true, 
+      creator: { name: creator.name, username: creator.username, profileImage: creator.profileImage },
+      recommendedProducts: creator.recommendedProducts || [] 
+    });
+  } catch (error) {
+    console.error("Error fetching recommended products:", error);
+    return reply.code(500).send({ message: "Failed to fetch recommendations", error: error.message });
+  }
+};

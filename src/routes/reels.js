@@ -9,6 +9,8 @@ import {
   followCreator,
   getReelsLeaderboard,
   getRecentPurchases,
+  addRecommendedProduct,
+  getCreatorRecommendations,
 } from "../controllers/reels.js";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -42,4 +44,10 @@ export const reelsRoutes = async (fastify, options) => {
 
   // Get recent purchases for live ticker
   fastify.get("/reels/recent-purchases", getRecentPurchases);
+
+  // Add recommended product (must be purchased)
+  fastify.post("/reels/recommendations", { preHandler: [verifyToken] }, addRecommendedProduct);
+
+  // Get creator's recommended products
+  fastify.get("/reels/recommendations/:creatorId", getCreatorRecommendations);
 };
