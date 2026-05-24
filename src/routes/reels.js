@@ -11,6 +11,8 @@ import {
   getRecentPurchases,
   addRecommendedProduct,
   getCreatorRecommendations,
+  getProductInfluencers,
+  getTopCategoryRecommendations,
 } from "../controllers/reels.js";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -50,4 +52,10 @@ export const reelsRoutes = async (fastify, options) => {
 
   // Get creator's recommended products
   fastify.get("/reels/recommendations/:creatorId", getCreatorRecommendations);
+
+  // Get influencers who recommended a product
+  fastify.get("/reels/product-influencers/:productId", getProductInfluencers);
+
+  // Get top 10 recommended products in a category
+  fastify.get("/reels/top-category-recommendations/:category", getTopCategoryRecommendations);
 };

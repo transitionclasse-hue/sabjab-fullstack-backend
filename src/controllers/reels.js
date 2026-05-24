@@ -456,3 +456,63 @@ export const getCreatorRecommendations = async (req, reply) => {
     return reply.code(500).send({ message: "Failed to fetch recommendations", error: error.message });
   }
 };
+
+/**
+ * Get influencers who recommended a specific product
+ */
+export const getProductInfluencers = async (req, reply) => {
+  try {
+    const { productId } = req.params;
+    const { Customer } = await import("../models/user.js");
+
+    const influencers = await Customer.find({
+      "recommendedProducts.product": productId
+    }).select("name username profileImage").limit(10);
+
+    return reply.send({ success: true, influencers });
+  } catch (error) {
+    console.error("Error fetching product influencers:", error);
+    return reply.code(500).send({ message: "Failed to fetch influencers", error: error.message });
+  }
+};
+
+/**
+ * Get top 10 recommended products in a category
+ */
+export const getTopCategoryRecommendations = async (req, reply) => {
+  try {
+    const { category } = req.params;
+    const { Customer } = await import("../models/user.js");
+
+    const pipeline = [
+      { $unwind: "$recommendedProducts" },
+      { $match: { "recommendedProducts.category": category } },
+      { 
+        $group: { 
+          _id: "$recommendedProducts.product", 
+          recommendationCount: { $sum: 1 } 
+        } 
+      },
+      { $sort: { recommendationCount: -1 } },
+      { $limit: 10 }
+    ];
+
+    const results = await Customer.aggregate(pipeline);
+
+    const Product = (await import("../models/products.js")).default;
+    const productIds = results.map(r => r._id);
+    const products = await Product.find({ _id: { $in: productIds } })
+      .select("name price discountPrice image isAvailable stock category");
+
+    const topProducts = results.map(r => {
+      const p = products.find(prod => prod._id.toString() === r._id.toString());
+      return { product: p, recommendationCount: r.recommendationCount };
+    }).filter(item => item.product != null);
+
+    return reply.send({ success: true, topProducts });
+  } catch (error) {
+    console.error("Error fetching top category recommendations:", error);
+    return reply.code(500).send({ message: "Failed to fetch top recommendations", error: error.message });
+  }
+};
+
