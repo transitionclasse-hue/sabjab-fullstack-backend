@@ -465,7 +465,7 @@ export const checkQrStatus = async (req, reply) => {
     console.log(`[Razorpay QR] Checking payments for QR ID: ${order.razorpay_qr_id} (Order ${order.orderId})`);
     
     // Fetch payments for this QR Code from Razorpay
-    const paymentsData = await razorpay.qrCode.allPayments(order.razorpay_qr_id);
+    const paymentsData = await razorpay.qrCode.fetchAllPayments(order.razorpay_qr_id);
     const payments = paymentsData.items || [];
 
     // Find any successful payment (captured or authorized)
