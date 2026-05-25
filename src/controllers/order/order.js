@@ -1433,7 +1433,10 @@ export const processSuccessfulDeliveryPayment = async (order, razorpay_payment_i
         io.emit("admin:order-status-update", {
             orderId: String(order._id),
             status: ORDER_STATUS.DELIVERED,
-            orderNumber: populatedOrder.orderId
+            orderNumber: populatedOrder.orderId,
+            amount: populatedOrder.totalPrice,
+            paymentMethod: populatedOrder.paymentMethod,
+            driverName: populatedOrder.deliveryPartner?.name || "Delivery Partner"
         });
         if (populatedOrder.deliveryPartner?._id) {
             const maskedOrderForAssignedDriver = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
@@ -1497,5 +1500,102 @@ export const verifyDeliveryPayment = async (req, reply) => {
     } catch (err) {
         console.error("verifyDeliveryPayment critical error:", err);
         return reply.status(500).send({ message: "Verification failed.", error: err.message });
+    }
+};
+
+// Request manual payment confirmation from manager
+export const requestPaymentConfirmation = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId).populate("deliveryPartner");
+        } else {
+            order = await Order.findOne({ orderId }).populate("deliveryPartner");
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+
+        console.log(`[Payment confirmation] Driver ${order.deliveryPartner?.name || 'Unknown'} requesting confirmation for Order #${order.orderId}`);
+
+        // Emit socket event to managers
+        if (req.server.io) {
+            req.server.io.emit("admin:payment-confirmation-request", {
+                orderId: order._id.toString(),
+                orderNumber: order.orderId,
+                driverName: order.deliveryPartner?.name || "Delivery Partner",
+                amount: order.totalPrice
+            });
+        }
+
+        return reply.status(200).send({ success: true, message: "Confirmation request sent to manager." });
+    } catch (err) {
+        console.error("requestPaymentConfirmation error:", err);
+        return reply.status(500).send({ message: "Failed to send request.", error: err.message });
+    }
+};
+
+// Confirm payment manually by manager
+export const confirmPaymentManually = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId);
+        } else {
+            order = await Order.findOne({ orderId });
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+
+        console.log(`[Manual confirmation] Manager confirming payment for Order #${order.orderId}`);
+
+        // Run helper to mark order as delivered and paid
+        await processSuccessfulDeliveryPayment(
+            order,
+            `manual_${Date.now()}`, // mock payment ID
+            "", // no order ID needed
+            "", // no signature needed
+            req.server.io
+        );
+
+        return reply.status(200).send({ success: true, message: "Payment confirmed successfully." });
+    } catch (err) {
+        console.error("confirmPaymentManually error:", err);
+        return reply.status(500).send({ message: "Failed to confirm payment.", error: err.message });
+    }
+};
+
+// Reject payment confirmation by manager
+export const rejectPaymentConfirmation = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { reason } = req.body || {};
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId).populate("deliveryPartner");
+        } else {
+            order = await Order.findOne({ orderId }).populate("deliveryPartner");
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+
+        console.log(`[Manual confirmation] Manager rejected payment request for Order #${order.orderId}. Reason: ${reason || 'None'}`);
+
+        // Emit rejection socket event to driver
+        if (req.server.io && order.deliveryPartner?._id) {
+            req.server.io.to(order.deliveryPartner._id.toString()).emit("driver:payment-confirmation-rejected", {
+                orderId: order._id.toString(),
+                message: reason || "Manager rejected the payment request. Please verify the transfer again."
+            });
+        }
+
+        return reply.status(200).send({ success: true, message: "Payment request rejected." });
+    } catch (err) {
+        console.error("rejectPaymentConfirmation error:", err);
+        return reply.status(500).send({ message: "Failed to reject request.", error: err.message });
     }
 };
