@@ -1562,11 +1562,22 @@ export const confirmPaymentManually = async (req, reply) => {
         );
 
         // Explicitly notify the driver app that payment is verified
-        if (req.server.io && order.deliveryPartner) {
-            req.server.io.to(order.deliveryPartner.toString()).emit("driver:payment-confirmed", {
-                orderId: order._id.toString(),
-                message: "Manager successfully verified the payment!"
-            });
+        if (order.deliveryPartner) {
+            const driverIdStr = order.deliveryPartner._id ? order.deliveryPartner._id.toString() : order.deliveryPartner.toString();
+            if (req.server.io) {
+                req.server.io.to(driverIdStr).emit("driver:payment-confirmed", {
+                    orderId: order._id.toString(),
+                    message: "Manager successfully verified the payment!"
+                });
+            }
+            
+            await sendPushNotification(
+                driverIdStr,
+                "Payment Confirmed! ✅",
+                `Manager successfully verified the payment for Order #${order.orderId}`,
+                { orderId: order._id.toString(), type: "payment_confirmed" },
+                "DeliveryPartner"
+            );
         }
 
         return reply.status(200).send({ success: true, message: "Payment confirmed successfully." });
@@ -1594,11 +1605,22 @@ export const rejectPaymentConfirmation = async (req, reply) => {
         console.log(`[Manual confirmation] Manager rejected payment request for Order #${order.orderId}. Reason: ${reason || 'None'}`);
 
         // Emit rejection socket event to driver
-        if (req.server.io && order.deliveryPartner?._id) {
-            req.server.io.to(order.deliveryPartner._id.toString()).emit("driver:payment-confirmation-rejected", {
-                orderId: order._id.toString(),
-                message: reason || "Manager rejected the payment request. Please verify the transfer again."
-            });
+        if (order.deliveryPartner) {
+            const driverIdStr = order.deliveryPartner._id ? order.deliveryPartner._id.toString() : order.deliveryPartner.toString();
+            if (req.server.io) {
+                req.server.io.to(driverIdStr).emit("driver:payment-confirmation-rejected", {
+                    orderId: order._id.toString(),
+                    message: reason || "Manager rejected the payment request. Please verify the transfer again."
+                });
+            }
+            
+            await sendPushNotification(
+                driverIdStr,
+                "Payment Rejected ❌",
+                reason || `Manager rejected the payment request for Order #${order.orderId}. Please verify details again.`,
+                { orderId: order._id.toString(), type: "payment_rejected" },
+                "DeliveryPartner"
+            );
         }
 
         return reply.status(200).send({ success: true, message: "Payment request rejected." });
