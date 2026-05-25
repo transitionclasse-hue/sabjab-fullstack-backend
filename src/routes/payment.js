@@ -1,4 +1,5 @@
 import { createRazorpayOrder, renderCheckoutWebView } from "../controllers/payment.js";
+import { verifyDeliveryPayment } from "../controllers/order/order.js";
 import { verifyToken } from "../middleware/auth.js";
 
 export const paymentRoutes = async (fastify, options) => {
@@ -18,4 +19,7 @@ export const paymentRoutes = async (fastify, options) => {
 
   // GET /payment/checkout-webview (public route requested by WebView container)
   fastify.get("/payment/checkout-webview", renderCheckoutWebView);
+
+  // POST /payment/verify-delivery-payment (public verification callback for driver QR scans)
+  fastify.post("/payment/verify-delivery-payment", verifyDeliveryPayment);
 };
