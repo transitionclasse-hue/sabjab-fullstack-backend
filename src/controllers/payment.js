@@ -47,6 +47,7 @@ export const createRazorpayOrder = async (req, reply) => {
 export const renderCheckoutWebView = async (req, reply) => {
   const { orderId, amount, key, name, phone, method, deliveryCollection } = req.query || {};
   const isDeliveryCollection = deliveryCollection === "true";
+  const rzpKey = key || process.env.RAZORPAY_KEY_ID || "rzp_test_mockKeyId123";
 
   // Fetch PricingConfig to toggle Razorpay topbar layout
   const config = await PricingConfig.findOne({ key: "primary" }).lean();
@@ -250,7 +251,7 @@ export const renderCheckoutWebView = async (req, reply) => {
     }
 
     const options = {
-      key: "${key || ''}",
+      key: "${rzpKey}",
       amount: ${amount || 0},
       currency: "INR",
       name: "SabJab",

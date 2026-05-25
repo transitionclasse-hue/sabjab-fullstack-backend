@@ -1308,7 +1308,13 @@ export const verifyDeliveryPayment = async (req, reply) => {
             return reply.status(400).send({ message: "Payment verification failed. Invalid signature." });
         }
 
-        const order = await Order.findById(orderId);
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId);
+        }
+        if (!order && orderId) {
+            order = await Order.findOne({ orderId: orderId });
+        }
         if (!order) {
             return reply.status(404).send({ message: "Order not found." });
         }

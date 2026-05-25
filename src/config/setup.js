@@ -765,6 +765,7 @@ export async function buildAdminRouter(app) {
             "etaColor",
             "hideRazorpayTopbar",
             "qrCodeAmountPrefill",
+            "driverQrMode",
           ],
           showProperties: [
             "freeDeliveryEnabled",
@@ -792,6 +793,7 @@ export async function buildAdminRouter(app) {
             "etaColor",
             "hideRazorpayTopbar",
             "qrCodeAmountPrefill",
+            "driverQrMode",
             "updatedAt",
           ],
           navigation: {
@@ -900,6 +902,14 @@ export async function buildAdminRouter(app) {
             qrCodeAmountPrefill: {
               label: "Enable Driver UPI QR Code Amount Prefill",
               description: "Check this if your Company UPI ID is a registered Merchant/Business account. Uncheck this if you are using a Personal UPI ID (P2P), otherwise Google Pay/PhonePe will reject the QR code as 'invalid or no longer active'.",
+            },
+            driverQrMode: {
+              label: "Driver QR Collection Mode",
+              description: "Choose 'direct_upi' to let customers pay directly to your VPA, or 'razorpay' to collect doorstep payments via Razorpay and notify the driver instantly.",
+              availableValues: [
+                { value: "direct_upi", label: "Direct UPI VPA Transfer" },
+                { value: "razorpay", label: "Razorpay Checkout Gateway" },
+              ]
             },
             updatedAt: {
               label: "Last Updated",

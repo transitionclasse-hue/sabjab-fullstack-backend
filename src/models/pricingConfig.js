@@ -99,6 +99,7 @@ const pricingConfigSchema = new mongoose.Schema(
     companyName: { type: String, default: "SabJab" },
     hideRazorpayTopbar: { type: Boolean, default: false },
     qrCodeAmountPrefill: { type: Boolean, default: true },
+    driverQrMode: { type: String, enum: ["direct_upi", "razorpay"], default: "direct_upi" },
   },
   { timestamps: true }
 );

@@ -54,6 +54,7 @@ const DEFAULT_PRICING_CONFIG = {
   companyName: "SabJab",
   hideRazorpayTopbar: false,
   qrCodeAmountPrefill: true,
+  driverQrMode: "direct_upi",
   driverIncentiveSlots: [],
 };
 
@@ -350,6 +351,7 @@ export const updatePricingConfig = async (req, reply) => {
       companyName: String(body.companyName || "SabJab").trim(),
       hideRazorpayTopbar: body.hideRazorpayTopbar !== undefined ? Boolean(body.hideRazorpayTopbar) : false,
       qrCodeAmountPrefill: body.qrCodeAmountPrefill !== undefined ? Boolean(body.qrCodeAmountPrefill) : true,
+      driverQrMode: body.driverQrMode === "razorpay" ? "razorpay" : "direct_upi",
     };
 
     const config = await PricingConfig.findOneAndUpdate(
