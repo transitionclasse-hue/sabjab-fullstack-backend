@@ -1742,3 +1742,112 @@ export const rejectConsumerPayment = async (req, reply) => {
         return reply.status(500).send({ message: "Failed to reject consumer request.", error: err.message });
     }
 };
+export const confirmIntentPayment = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { userId } = req.user; // Ensure the user owns the order
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId).populate("customer branch items.item deliveryPartner");
+        } else {
+            order = await Order.findOne({ orderId }).populate("customer branch items.item deliveryPartner");
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+        
+        if (order.customer._id.toString() !== userId && order.customer.toString() !== userId) {
+            return reply.status(403).send({ message: "Unauthorized." });
+        }
+
+        console.log(`[Consumer Payment] Auto-confirming intent payment for Order #${order.orderId}`);
+
+        order.paymentStatus = "Paid";
+        order.status = "confirmed";
+        await order.save();
+
+        if (req.server.io) {
+            // Tell customer (if they have multiple devices or just in case)
+            req.server.io.to(order._id.toString()).emit("customer:payment-confirmed", {
+                orderId: order._id.toString(),
+                message: "Payment verified successfully via Intent!"
+            });
+            req.server.io.to(order._id.toString()).emit("liveTrackingUpdates", {
+                ...order.toObject()
+            });
+
+            // NOW emit to drivers!
+            if (order.orderType === "quick") {
+                const { maskOrderForDriver } = await import("./helpers.js");
+                const maskedOrderForDriverBatch = await maskOrderForDriver(order, "DeliveryPartner");
+                req.server.io.emit("driver:new-order", { order: maskedOrderForDriverBatch });
+
+                // Driver push notifications
+                const { DeliveryPartner } = await import("../../models/user.js");
+                const { sendPushNotification } = await import("../../services/notificationService.js");
+                const onlineDrivers = await DeliveryPartner.find({ isOnline: true, pushToken: { $ne: null } });
+                for (const driver of onlineDrivers) {
+                    await sendPushNotification(
+                        driver._id,
+                        "New Order Available! 🚀",
+                        `New order #${order.orderId} from ${order.branch?.name || "SabJab"}`,
+                        { orderId: String(order._id), type: "new_order" },
+                        "DeliveryPartner"
+                    );
+                }
+            }
+            
+            // Notify admin website of order state change
+            req.server.io.emit("admin:order-status-update", {
+                orderId: String(order._id),
+                status: order.status,
+                paymentStatus: order.paymentStatus
+            });
+        }
+
+        return reply.status(200).send({ success: true, message: "Payment confirmed successfully." });
+    } catch (err) {
+        console.error("confirmIntentPayment error:", err);
+        return reply.status(500).send({ message: "Failed to confirm payment.", error: err.message });
+    }
+};
+
+export const markOrderPaymentFailed = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { reason } = req.body || {};
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId).populate("customer");
+        } else {
+            order = await Order.findOne({ orderId }).populate("customer");
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+
+        order.paymentStatus = "Failed";
+        order.status = "cancelled"; // Auto cancel if payment is a spoof
+        await order.save();
+
+        if (req.server.io) {
+            req.server.io.to(order._id.toString()).emit("customer:payment-rejected", {
+                orderId: order._id.toString(),
+                reason: reason || "Manager marked payment as failed (Spoof detected)."
+            });
+            req.server.io.to(order._id.toString()).emit("liveTrackingUpdates", {
+                ...order.toObject()
+            });
+
+            req.server.io.emit("admin:order-status-update", {
+                orderId: String(order._id),
+                status: order.status,
+                paymentStatus: order.paymentStatus
+            });
+        }
+        return reply.status(200).send({ success: true, message: "Order payment marked as failed." });
+    } catch (err) {
+        console.error("markOrderPaymentFailed error:", err);
+        return reply.status(500).send({ message: "Failed to mark payment as failed.", error: err.message });
+    }
+};
