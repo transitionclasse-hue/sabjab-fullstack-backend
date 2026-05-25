@@ -100,7 +100,6 @@ const pricingConfigSchema = new mongoose.Schema(
     hideRazorpayTopbar: { type: Boolean, default: false },
     qrCodeAmountPrefill: { type: Boolean, default: true },
     driverQrMode: { type: String, enum: ["direct_upi", "razorpay"], default: "direct_upi" },
-    consumerOnlinePaymentMode: { type: String, enum: ["razorpay", "intent", "manual"], default: "razorpay" },
   },
   { timestamps: true }
 );
