@@ -97,6 +97,7 @@ const pricingConfigSchema = new mongoose.Schema(
     // Payment Collection Config
     companyUpiId: { type: String, default: "" },
     companyName: { type: String, default: "SabJab" },
+    hideRazorpayTopbar: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

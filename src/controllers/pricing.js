@@ -52,6 +52,7 @@ const DEFAULT_PRICING_CONFIG = {
   ],
   companyUpiId: "",
   companyName: "SabJab",
+  hideRazorpayTopbar: false,
   driverIncentiveSlots: [],
 };
 

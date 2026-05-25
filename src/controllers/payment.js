@@ -1,5 +1,6 @@
 import Razorpay from "razorpay";
 import dotenv from "dotenv";
+import PricingConfig from "../models/pricingConfig.js";
 
 dotenv.config();
 
@@ -45,6 +46,10 @@ export const createRazorpayOrder = async (req, reply) => {
  */
 export const renderCheckoutWebView = async (req, reply) => {
   const { orderId, amount, key, name, phone, method } = req.query;
+
+  // Fetch PricingConfig to toggle Razorpay topbar layout
+  const config = await PricingConfig.findOne({ key: "primary" }).lean();
+  const hideTopbar = config?.hideRazorpayTopbar || false;
 
   // Construct WebView URL pointing to Fastify hosted payment loader
   const rootUrl = process.env.BASE_URL || "https://api.sabjab.com";
@@ -257,7 +262,8 @@ export const renderCheckoutWebView = async (req, reply) => {
         method: prefillMethod
       },
       theme: {
-        color: "#03102e"
+        color: "#03102e",
+        hide_topbar: ${hideTopbar}
       },
       webview_intent: true,
       handler: function (response) {

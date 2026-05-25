@@ -763,6 +763,7 @@ export async function buildAdminRouter(app) {
             "cartBarColor",
             "choiceCartBarColor",
             "etaColor",
+            "hideRazorpayTopbar",
           ],
           showProperties: [
             "freeDeliveryEnabled",
@@ -788,6 +789,7 @@ export async function buildAdminRouter(app) {
             "cartBarColor",
             "choiceCartBarColor",
             "etaColor",
+            "hideRazorpayTopbar",
             "updatedAt",
           ],
           navigation: {
@@ -888,6 +890,10 @@ export async function buildAdminRouter(app) {
             defaultDriverCodLimit: {
               label: "Default Driver COD Limit",
               description: "Global fallback limit for drivers without a custom limit.",
+            },
+            hideRazorpayTopbar: {
+              label: "Hide Razorpay Checkout Topbar (Price Summary)",
+              description: "If checked, hides the top bar (logo, phone number, and price summary) from the Razorpay checkout overlay. If unchecked, the top bar remains visible.",
             },
             updatedAt: {
               label: "Last Updated",
