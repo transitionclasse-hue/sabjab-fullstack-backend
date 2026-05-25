@@ -122,12 +122,12 @@ const orderSchema = new mongoose.Schema({
   discountAmount: { type: Number, default: 0 },
   paymentMethod: {
     type: String,
-    enum: ["COD", "Wallet", "Online"],
+    enum: ["COD", "Wallet", "Online", "Direct_UPI"],
     default: "COD",
   },
   paymentStatus: {
     type: String,
-    enum: ["Pending", "Paid", "Refunded"],
+    enum: ["Pending", "Paid", "Refunded", "Pending Verification"],
     default: "Pending",
   },
 
