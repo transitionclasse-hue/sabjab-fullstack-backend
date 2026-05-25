@@ -122,7 +122,7 @@ export const renderCheckoutWebView = async (req, reply) => {
       customConfig = {
         display: {
           blocks: {
-            preferred_upi: {
+            upi: {
               name: upiApp === "gpay" ? "Google Pay" : upiApp === "phonepe" ? "PhonePe" : upiApp === "paytm" ? "Paytm" : "CRED Pay",
               instruments: [
                 {
@@ -132,7 +132,7 @@ export const renderCheckoutWebView = async (req, reply) => {
               ]
             }
           },
-          sequence: ["block.preferred_upi"],
+          sequence: ["block.upi"],
           preferences: {
             show_default_blocks: false
           }
