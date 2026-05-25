@@ -764,6 +764,7 @@ export async function buildAdminRouter(app) {
             "choiceCartBarColor",
             "etaColor",
             "hideRazorpayTopbar",
+            "qrCodeAmountPrefill",
           ],
           showProperties: [
             "freeDeliveryEnabled",
@@ -790,6 +791,7 @@ export async function buildAdminRouter(app) {
             "choiceCartBarColor",
             "etaColor",
             "hideRazorpayTopbar",
+            "qrCodeAmountPrefill",
             "updatedAt",
           ],
           navigation: {
@@ -894,6 +896,10 @@ export async function buildAdminRouter(app) {
             hideRazorpayTopbar: {
               label: "Hide Razorpay Checkout Topbar (Price Summary)",
               description: "If checked, hides the top bar (logo, phone number, and price summary) from the Razorpay checkout overlay. If unchecked, the top bar remains visible.",
+            },
+            qrCodeAmountPrefill: {
+              label: "Enable Driver UPI QR Code Amount Prefill",
+              description: "Check this if your Company UPI ID is a registered Merchant/Business account. Uncheck this if you are using a Personal UPI ID (P2P), otherwise Google Pay/PhonePe will reject the QR code as 'invalid or no longer active'.",
             },
             updatedAt: {
               label: "Last Updated",

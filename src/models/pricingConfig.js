@@ -98,6 +98,7 @@ const pricingConfigSchema = new mongoose.Schema(
     companyUpiId: { type: String, default: "" },
     companyName: { type: String, default: "SabJab" },
     hideRazorpayTopbar: { type: Boolean, default: false },
+    qrCodeAmountPrefill: { type: Boolean, default: true },
   },
   { timestamps: true }
 );
