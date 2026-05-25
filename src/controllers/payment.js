@@ -283,13 +283,11 @@ export const renderCheckoutWebView = async (req, reply) => {
           window.ReactNativeWebView.postMessage(JSON.stringify(data));
         } else if (isDeliveryCollection) {
           // Doorstep QR verification
-          document.body.innerHTML = `
-            <div class="container">
-              <div class="spinner"></div>
-              <h2>Verifying Payment...</h2>
-              <p>Confirming your transaction status with the server.</p>
-            </div>
-          `;
+          document.body.innerHTML = '<div class="container">' +
+            '<div class="spinner"></div>' +
+            '<h2>Verifying Payment...</h2>' +
+            '<p>Confirming your transaction status with the server.</p>' +
+            '</div>';
           
           fetch("/payment/verify-delivery-payment", {
             method: "POST",
@@ -301,32 +299,26 @@ export const renderCheckoutWebView = async (req, reply) => {
           .then(function(res) { return res.json(); })
           .then(function(resData) {
             if (resData.success) {
-              document.body.innerHTML = `
-                <div class="container">
-                  <div style="font-size: 64px; color: #10B981; margin-bottom: 20px;">✓</div>
-                  <h2 style="font-weight: 800; font-size: 24px; margin-bottom: 12px;">Payment Successful!</h2>
-                  <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5; margin-bottom: 8px;">Your payment of Rs ${(Number("${amount}") / 100).toFixed(2)} has been verified.</p>
-                  <p style="color: #94a3b8; font-size: 14px; line-height: 1.4;">The driver has been notified of delivery completion. You can safely close this page.</p>
-                </div>
-              `;
+              document.body.innerHTML = '<div class="container">' +
+                '<div style="font-size: 64px; color: #10B981; margin-bottom: 20px;">✓</div>' +
+                '<h2 style="font-weight: 800; font-size: 24px; margin-bottom: 12px;">Payment Successful!</h2>' +
+                '<p style="color: #cbd5e1; font-size: 16px; line-height: 1.5; margin-bottom: 8px;">Your payment of Rs ' + (Number("${amount}") / 100).toFixed(2) + ' has been verified.</p>' +
+                '<p style="color: #94a3b8; font-size: 14px; line-height: 1.4;">The driver has been notified of delivery completion. You can safely close this page.</p>' +
+                '</div>';
             } else {
-              document.body.innerHTML = `
-                <div class="container">
-                  <div style="font-size: 64px; color: #ef4444; margin-bottom: 20px;">✗</div>
-                  <h2 style="font-weight: 800; font-size: 24px; margin-bottom: 12px; color: #ef4444;">Verification Failed</h2>
-                  <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">\${resData.message || "Signature verification failed."}</p>
-                </div>
-              `;
+              document.body.innerHTML = '<div class="container">' +
+                '<div style="font-size: 64px; color: #ef4444; margin-bottom: 20px;">✗</div>' +
+                '<h2 style="font-weight: 800; font-size: 24px; margin-bottom: 12px; color: #ef4444;">Verification Failed</h2>' +
+                '<p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">' + (resData.message || "Signature verification failed.") + '</p>' +
+                '</div>';
             }
           })
           .catch(function(err) {
-            document.body.innerHTML = `
-              <div class="container">
-                <div style="font-size: 64px; color: #ef4444; margin-bottom: 20px;">✗</div>
-                <h2 style="font-weight: 800; font-size: 24px; margin-bottom: 12px; color: #ef4444;">Connection Error</h2>
-                <p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Could not connect to the server to verify payment.</p>
-              </div>
-            `;
+            document.body.innerHTML = '<div class="container">' +
+              '<div style="font-size: 64px; color: #ef4444; margin-bottom: 20px;">✗</div>' +
+              '<h2 style="font-weight: 800; font-size: 24px; margin-bottom: 12px; color: #ef4444;">Connection Error</h2>' +
+              '<p style="color: #cbd5e1; font-size: 16px; line-height: 1.5;">Could not connect to the server to verify payment.</p>' +
+              '</div>';
           });
         } else {
           console.log("Success:", data);
