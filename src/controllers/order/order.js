@@ -390,7 +390,7 @@ export const createOrder = async (req, reply) => {
             branch: resolvedBranchId,
             totalPrice: Number(totalAmount),
             paymentMethod: paymentMethod || "COD",
-            paymentStatus: paymentMethod === "Online" ? "Paid" : "Pending",
+            paymentStatus: paymentMethod === "Online" ? "Paid" : (paymentMethod === "Direct_UPI" ? "Pending Verification" : "Pending"),
             razorpay_payment_id,
             razorpay_order_id,
             razorpay_signature,
@@ -468,8 +468,8 @@ export const createOrder = async (req, reply) => {
             deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
         });
 
-        // Notify all online drivers about the new available order (ONLY for Quick orders)
-        if (savedOrder.orderType === "quick") {
+        // Notify all online drivers about the new available order (ONLY for Quick orders and not waiting on consumer UPI)
+        if (savedOrder.orderType === "quick" && savedOrder.paymentStatus !== "Pending Verification") {
             console.log(`📡 [Socket] Emitting driver:new-order for order ${populatedOrder.orderId}`);
             const maskedOrderForDriverBatch = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
             req.server.io.emit("driver:new-order", {
@@ -480,7 +480,7 @@ export const createOrder = async (req, reply) => {
         // 🆕 NEW: Push Notifications
         (async () => {
             try {
-                if (savedOrder.orderType === "quick") {
+                if (savedOrder.orderType === "quick" && savedOrder.paymentStatus !== "Pending Verification") {
                     const onlineDrivers = await DeliveryPartner.find({ isOnline: true, pushToken: { $ne: null } });
                     for (const driver of onlineDrivers) {
                         await sendPushNotification(
@@ -1597,5 +1597,148 @@ export const rejectPaymentConfirmation = async (req, reply) => {
     } catch (err) {
         console.error("rejectPaymentConfirmation error:", err);
         return reply.status(500).send({ message: "Failed to reject request.", error: err.message });
+    }
+};
+
+// CONSUMER PAYMENT CONFIRMATION BYPASS CONTROLLERS
+
+// Request manager to confirm consumer's Direct UPI payment
+export const requestConsumerPaymentConfirmation = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId).populate("customer");
+        } else {
+            order = await Order.findOne({ orderId }).populate("customer");
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+
+        console.log(`[Consumer Payment] Requesting confirmation for Order #${order.orderId}`);
+
+        // Emit socket event to managers
+        if (req.server.io) {
+            req.server.io.emit("admin:consumer-payment-verification-request", {
+                orderId: order._id.toString(),
+                orderNumber: order.orderId,
+                customerName: order.customer?.name || "Customer",
+                amount: order.totalPrice
+            });
+        }
+
+        return reply.status(200).send({ success: true, message: "Confirmation request sent to manager." });
+    } catch (err) {
+        console.error("requestConsumerPaymentConfirmation error:", err);
+        return reply.status(500).send({ message: "Failed to send request.", error: err.message });
+    }
+};
+
+// Confirm consumer payment manually by manager
+export const confirmConsumerPayment = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId).populate("customer branch items.item deliveryPartner");
+        } else {
+            order = await Order.findOne({ orderId }).populate("customer branch items.item deliveryPartner");
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+
+        console.log(`[Consumer Payment] Manager confirming payment for Order #${order.orderId}`);
+
+        order.paymentStatus = "Paid";
+        order.status = "confirmed";
+        await order.save();
+
+        if (req.server.io) {
+            // Notify customer
+            req.server.io.to(order._id.toString()).emit("customer:payment-confirmed", {
+                orderId: order._id.toString(),
+                message: "Payment verified successfully!"
+            });
+            req.server.io.to(order._id.toString()).emit("liveTrackingUpdates", {
+                ...order.toObject()
+            });
+
+            // NOW emit to drivers!
+            if (order.orderType === "quick") {
+                const { maskOrderForDriver } = await import("./helpers.js");
+                const maskedOrderForDriverBatch = await maskOrderForDriver(order, "DeliveryPartner");
+                req.server.io.emit("driver:new-order", { order: maskedOrderForDriverBatch });
+
+                // Driver push notifications
+                const { DeliveryPartner } = await import("../../models/user.js");
+                const { sendPushNotification } = await import("../../services/notificationService.js");
+                const onlineDrivers = await DeliveryPartner.find({ isOnline: true, pushToken: { $ne: null } });
+                for (const driver of onlineDrivers) {
+                    await sendPushNotification(
+                        driver._id,
+                        "New Order Available! 🚀",
+                        `New order #${order.orderId} from ${order.branch?.name || "SabJab"}`,
+                        { orderId: String(order._id), type: "new_order" },
+                        "DeliveryPartner"
+                    );
+                }
+            }
+            
+            // Notify admin website of order state change
+            req.server.io.emit("admin:order-status-update", {
+                orderId: String(order._id),
+                status: order.status,
+                paymentStatus: order.paymentStatus
+            });
+        }
+
+        return reply.status(200).send({ success: true, message: "Consumer payment confirmed successfully." });
+    } catch (err) {
+        console.error("confirmConsumerPayment error:", err);
+        return reply.status(500).send({ message: "Failed to confirm consumer payment.", error: err.message });
+    }
+};
+
+// Reject consumer payment by manager
+export const rejectConsumerPayment = async (req, reply) => {
+    try {
+        const { orderId } = req.params;
+        const { reason } = req.body || {};
+        let order;
+        if (orderId && orderId.length === 24) {
+            order = await Order.findById(orderId);
+        } else {
+            order = await Order.findOne({ orderId });
+        }
+        if (!order) {
+            return reply.status(404).send({ message: "Order not found." });
+        }
+
+        console.log(`[Consumer Payment] Manager rejected payment request for Order #${order.orderId}. Reason: ${reason || 'None'}`);
+
+        order.status = "cancelled";
+        await order.save();
+
+        // Emit rejection socket event to customer
+        if (req.server.io) {
+            req.server.io.to(order._id.toString()).emit("customer:payment-rejected", {
+                orderId: order._id.toString(),
+                message: reason || "Manager rejected the payment request. The order has been cancelled."
+            });
+            
+            // Notify admin website of order state change
+            req.server.io.emit("admin:order-status-update", {
+                orderId: String(order._id),
+                status: order.status,
+                paymentStatus: order.paymentStatus
+            });
+        }
+
+        return reply.status(200).send({ success: true, message: "Consumer payment request rejected." });
+    } catch (err) {
+        console.error("rejectConsumerPayment error:", err);
+        return reply.status(500).send({ message: "Failed to reject consumer request.", error: err.message });
     }
 };

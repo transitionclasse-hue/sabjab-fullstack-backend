@@ -55,6 +55,7 @@ const DEFAULT_PRICING_CONFIG = {
   hideRazorpayTopbar: false,
   qrCodeAmountPrefill: true,
   driverQrMode: "direct_upi",
+  consumerDirectUpiEnabled: false,
   driverIncentiveSlots: [],
 };
 
@@ -352,6 +353,7 @@ export const updatePricingConfig = async (req, reply) => {
       hideRazorpayTopbar: body.hideRazorpayTopbar !== undefined ? Boolean(body.hideRazorpayTopbar) : false,
       qrCodeAmountPrefill: body.qrCodeAmountPrefill !== undefined ? Boolean(body.qrCodeAmountPrefill) : true,
       driverQrMode: body.driverQrMode === "razorpay" ? "razorpay" : "direct_upi",
+      consumerDirectUpiEnabled: body.consumerDirectUpiEnabled !== undefined ? Boolean(body.consumerDirectUpiEnabled) : false,
     };
 
     const config = await PricingConfig.findOneAndUpdate(

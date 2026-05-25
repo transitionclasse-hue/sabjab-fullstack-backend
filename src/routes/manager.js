@@ -91,7 +91,7 @@ import {
   updateSuperCategory,
   deleteSuperCategory,
 } from "../controllers/product/superCategory.js";
-import { getOrderById, confirmPaymentManually, rejectPaymentConfirmation } from "../controllers/order/order.js";
+import { getOrderById, confirmPaymentManually, rejectPaymentConfirmation, confirmConsumerPayment, rejectConsumerPayment } from "../controllers/order/order.js";
 import { verifyManager } from "../middleware/auth.js";
 import {
   getManagerGigSchedules,
@@ -137,6 +137,8 @@ export const managerRoutes = async (fastify) => {
   fastify.patch("/manager/orders/:orderId/status", AUTH, updateOrderStatusByManager);
   fastify.post("/manager/orders/:orderId/confirm-payment-manually", AUTH, confirmPaymentManually);
   fastify.post("/manager/orders/:orderId/reject-payment-confirmation", AUTH, rejectPaymentConfirmation);
+  fastify.post("/manager/orders/:orderId/confirm-consumer-payment", AUTH, confirmConsumerPayment);
+  fastify.post("/manager/orders/:orderId/reject-consumer-payment", AUTH, rejectConsumerPayment);
   fastify.get("/manager/inventory/low-stock", AUTH, getLowStockProducts);
   fastify.get("/manager/inventory/stats", AUTH, getInventoryStats);
   fastify.post("/manager/inventory/update", AUTH, updateInventoryStock);
