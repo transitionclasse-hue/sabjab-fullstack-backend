@@ -60,7 +60,7 @@ export const renderCheckoutWebView = async (req, reply) => {
     body {
       margin: 0;
       padding: 0;
-      background: radial-gradient(circle at top right, #0a251c, #060913 60%);
+      background: radial-gradient(circle at top right, #03102e, #060913 60%);
       font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
       display: flex;
       flex-direction: column;
@@ -76,7 +76,7 @@ export const renderCheckoutWebView = async (req, reply) => {
       position: absolute;
       width: 300px;
       height: 300px;
-      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0) 70%);
+      background: radial-gradient(circle, rgba(3, 16, 46, 0.15) 0%, rgba(3, 16, 46, 0) 70%);
       top: -50px;
       right: -50px;
       z-index: 1;
@@ -105,10 +105,14 @@ export const renderCheckoutWebView = async (req, reply) => {
     }
     
     .brand-logo {
-      width: 160px;
+      width: 240px;
       height: auto;
       margin-bottom: 28px;
-      filter: drop-shadow(0 4px 10px rgba(16, 185, 129, 0.2));
+      filter: drop-shadow(0 4px 10px rgba(3, 16, 46, 0.25));
+      background: #ffffff;
+      padding: 12px 24px;
+      border-radius: 16px;
+      box-sizing: border-box;
     }
     
     .loader-ring {
@@ -127,22 +131,22 @@ export const renderCheckoutWebView = async (req, reply) => {
       border: 4px solid transparent;
       border-radius: 50%;
       animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-      border-top-color: #10B981;
+      border-top-color: #03102e;
     }
     
     .loader-ring div:nth-child(1) {
       animation-delay: -0.45s;
-      border-top-color: #34D399;
+      border-top-color: #1e3a8a;
     }
     
     .loader-ring div:nth-child(2) {
       animation-delay: -0.3s;
-      border-top-color: #059669;
+      border-top-color: #3b82f6;
     }
     
     .loader-ring div:nth-child(3) {
       animation-delay: -0.15s;
-      border-top-color: #10B981;
+      border-top-color: #03102e;
     }
     
     @keyframes spin {
@@ -171,10 +175,10 @@ export const renderCheckoutWebView = async (req, reply) => {
       align-items: center;
       gap: 6px;
       padding: 6px 14px;
-      background: rgba(16, 185, 129, 0.08);
-      border: 1px solid rgba(16, 185, 129, 0.15);
+      background: rgba(3, 16, 46, 0.2);
+      border: 1px solid rgba(3, 16, 46, 0.4);
       border-radius: 100px;
-      color: #34d399;
+      color: #60a5fa;
       font-size: 10px;
       font-weight: 600;
       letter-spacing: 0.5px;
@@ -191,7 +195,7 @@ export const renderCheckoutWebView = async (req, reply) => {
 <body>
   <div class="glow-blob"></div>
   <div class="container">
-    <img src="${rootUrl}/public/logo.png" alt="SabJab Logo" class="brand-logo" />
+    <img src="${rootUrl}/public/logo.png?v=2" alt="SabJab Logo" class="brand-logo" />
     <div class="loader-ring">
       <div></div>
       <div></div>
@@ -245,7 +249,7 @@ export const renderCheckoutWebView = async (req, reply) => {
       currency: "INR",
       name: "SabJab",
       description: "Order Payment",
-      image: "${rootUrl}/public/logo.png",
+      image: "${rootUrl}/public/logo.png?v=2",
       order_id: "${orderId || ''}",
       prefill: {
         name: "${decodeURIComponent(name || '')}",
@@ -253,7 +257,7 @@ export const renderCheckoutWebView = async (req, reply) => {
         method: prefillMethod
       },
       theme: {
-        color: "#10B981"
+        color: "#03102e"
       },
       webview_intent: true,
       handler: function (response) {
