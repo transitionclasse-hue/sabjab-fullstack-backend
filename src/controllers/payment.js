@@ -257,8 +257,7 @@ export const renderCheckoutWebView = async (req, reply) => {
         method: prefillMethod
       },
       theme: {
-        color: "#03102e",
-        hide_topbar: true
+        color: "#03102e"
       },
       webview_intent: true,
       handler: function (response) {
