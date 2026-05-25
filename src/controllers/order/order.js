@@ -1561,6 +1561,14 @@ export const confirmPaymentManually = async (req, reply) => {
             req.server.io
         );
 
+        // Explicitly notify the driver app that payment is verified
+        if (req.server.io && order.deliveryPartner) {
+            req.server.io.to(order.deliveryPartner.toString()).emit("driver:payment-confirmed", {
+                orderId: order._id.toString(),
+                message: "Manager successfully verified the payment!"
+            });
+        }
+
         return reply.status(200).send({ success: true, message: "Payment confirmed successfully." });
     } catch (err) {
         console.error("confirmPaymentManually error:", err);
