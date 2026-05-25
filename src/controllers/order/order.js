@@ -1288,6 +1288,172 @@ export const requestOrderReturn = async (req, reply) => {
     }
 };
 
+// Helper to mark order as paid online and complete delivery
+export const processSuccessfulDeliveryPayment = async (order, razorpay_payment_id, razorpay_order_id, razorpay_signature, io) => {
+    const oldStatus = order.status;
+    order.status = ORDER_STATUS.DELIVERED;
+    order.paymentMethod = "Online";
+    order.paymentStatus = "Paid";
+    if (razorpay_payment_id) order.razorpay_payment_id = razorpay_payment_id;
+    if (razorpay_order_id) order.razorpay_order_id = razorpay_order_id;
+    if (razorpay_signature) order.razorpay_signature = razorpay_signature;
+    order.deliveredAt = new Date();
+
+    // Calculate delivery time
+    const startTime = order.pickedUpAt || order.assignedAt || order.createdAt;
+    if (startTime) {
+        const durationMs = order.deliveredAt.getTime() - new Date(startTime).getTime();
+        order.deliveryTimeMinutes = Math.max(1, Math.round(durationMs / 60000));
+    }
+
+    // Calculate return expiry for items
+    if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+            if (item.returnWindow > 0) {
+                item.returnExpiresAt = new Date(order.deliveredAt.getTime() + (item.returnWindow * 3600000));
+            }
+            if (order.orderType === "choice") {
+                item.deliveryStatus = "delivered";
+            }
+        });
+    }
+    if (order.returnWindow > 0) {
+        order.returnExpiresAt = new Date(order.deliveredAt.getTime() + (order.returnWindow * 3600000));
+    }
+
+    // Calculate Driver Earning
+    if (!order.driverEarning || order.driverEarning <= 0) {
+        order.driverEarning = await calculateDriverEarning(order);
+    }
+
+    // Create wallet transaction for driver
+    if (order.deliveryPartner && order.driverEarning > 0) {
+        await WalletTransaction.create({
+            deliveryPartner: order.deliveryPartner,
+            order: order._id,
+            amount: order.driverEarning,
+            type: "credit",
+            txnType: "delivery_fee",
+            description: `Delivery fee for order #${order.orderId}`,
+            status: "completed"
+        });
+    }
+
+    // Coins rewards
+    if (order.rewardCoinsEarned > 0 && order.customer) {
+        const rewardExits = await WalletTransaction.findOne({
+            order: order._id,
+            txnType: "reward_coins",
+            customer: order.customer
+        });
+
+        if (!rewardExits) {
+            await WalletTransaction.create({
+                customer: order.customer,
+                order: order._id,
+                amount: order.rewardCoinsEarned,
+                type: "credit",
+                txnType: "reward_coins",
+                description: `SabJab Coins earned for order #${order.orderId}`,
+                status: "completed"
+            });
+        }
+    }
+
+    // Seller earnings
+    if (order.items && order.items.length > 0) {
+        const sellerEarnings = new Map();
+        for (const orderItem of order.items) {
+            const product = await Product.findById(orderItem.item);
+            if (product && product.sellerId) {
+                const sellerId = product.sellerId.toString();
+                const itemPrice = orderItem.variation?.price || product.price || 0;
+                const itemEarning = itemPrice * (orderItem.count || 1);
+                sellerEarnings.set(sellerId, (sellerEarnings.get(sellerId) || 0) + itemEarning);
+            }
+        }
+        for (const [sellerId, amount] of sellerEarnings) {
+            if (amount > 0) {
+                await WalletTransaction.create({
+                    seller: sellerId,
+                    order: order._id,
+                    amount: amount,
+                    type: "credit",
+                    txnType: "seller_sale",
+                    description: `Earning from order #${order.orderId}`,
+                    status: "completed"
+                });
+            }
+        }
+    }
+
+    // Reel commissions
+    try {
+        const { processReelCommission } = await import("../../utils/commission.js");
+        await processReelCommission(order._id);
+    } catch (commError) {
+        console.error("[processSuccessfulDeliveryPayment] Reel commission processing failed:", commError.message);
+    }
+
+    await order.save();
+
+    // Push notifications
+    (async () => {
+        try {
+            if (order.customer) {
+                await sendPushNotification(
+                    String(order.customer),
+                    `Order Delivered`,
+                    `Your order #${order.orderId} is now delivered. Thank you!`,
+                    { orderId: String(order._id), type: 'ORDER_STATUS_UPDATE' },
+                    'Customer'
+                );
+            }
+            if (order.deliveryPartner) {
+                await sendPushNotification(
+                    String(order.deliveryPartner),
+                    "Order Delivered! ✅",
+                    `You earned ₹${order.driverEarning || 0} for delivering order #${order.orderId}.`,
+                    { orderId: String(order._id), type: 'ORDER_DELIVERED' },
+                    'DeliveryPartner'
+                );
+            }
+        } catch (notifyErr) {
+            console.error("[processSuccessfulDeliveryPayment] Push notify error:", notifyErr.message);
+        }
+    })();
+
+    // Sockets
+    const populatedOrder = await Order.findById(order._id).populate("customer branch items.item deliveryPartner");
+    if (io && populatedOrder) {
+        io.to(order._id.toString()).emit("liveTrackingUpdates", {
+            ...populatedOrder.toObject(),
+            deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
+        });
+        io.emit("admin:order-status-update", {
+            orderId: String(order._id),
+            status: ORDER_STATUS.DELIVERED,
+            orderNumber: populatedOrder.orderId
+        });
+        if (populatedOrder.deliveryPartner?._id) {
+            const maskedOrderForAssignedDriver = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
+            io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
+                orderId: String(order._id),
+                status: ORDER_STATUS.DELIVERED,
+                order: maskedOrderForAssignedDriver,
+                orderNumber: populatedOrder.orderId,
+            });
+        }
+        if (populatedOrder.customer?._id) {
+            io.to(String(populatedOrder.customer._id)).emit("customer:order-status-update", {
+                orderId: String(order._id),
+                status: ORDER_STATUS.DELIVERED,
+                orderNumber: populatedOrder.orderId,
+            });
+        }
+    }
+};
+
 // Verify Online Payment during Doorstep Delivery (Driver QR scan)
 export const verifyDeliveryPayment = async (req, reply) => {
     try {
@@ -1319,167 +1485,13 @@ export const verifyDeliveryPayment = async (req, reply) => {
             return reply.status(404).send({ message: "Order not found." });
         }
 
-        const oldStatus = order.status;
-        order.status = ORDER_STATUS.DELIVERED;
-        order.paymentMethod = "Online";
-        order.razorpay_payment_id = razorpay_payment_id;
-        order.razorpay_order_id = razorpay_order_id;
-        order.razorpay_signature = razorpay_signature;
-        order.deliveredAt = new Date();
-
-        // Calculate delivery time
-        const startTime = order.pickedUpAt || order.assignedAt || order.createdAt;
-        if (startTime) {
-            const durationMs = order.deliveredAt.getTime() - new Date(startTime).getTime();
-            order.deliveryTimeMinutes = Math.max(1, Math.round(durationMs / 60000));
-        }
-
-        // Calculate return expiry for items
-        if (order.items && order.items.length > 0) {
-            order.items.forEach(item => {
-                if (item.returnWindow > 0) {
-                    item.returnExpiresAt = new Date(order.deliveredAt.getTime() + (item.returnWindow * 3600000));
-                }
-                if (order.orderType === "choice") {
-                    item.deliveryStatus = "delivered";
-                }
-            });
-        }
-        if (order.returnWindow > 0) {
-            order.returnExpiresAt = new Date(order.deliveredAt.getTime() + (order.returnWindow * 3600000));
-        }
-
-        // Calculate Driver Earning
-        if (!order.driverEarning || order.driverEarning <= 0) {
-            order.driverEarning = await calculateDriverEarning(order);
-        }
-
-        // Create wallet transaction for driver
-        if (order.deliveryPartner && order.driverEarning > 0) {
-            await WalletTransaction.create({
-                deliveryPartner: order.deliveryPartner,
-                order: order._id,
-                amount: order.driverEarning,
-                type: "credit",
-                txnType: "delivery_fee",
-                description: `Delivery fee for order #${order.orderId}`,
-                status: "completed"
-            });
-        }
-
-        // Coins rewards
-        if (order.rewardCoinsEarned > 0 && order.customer) {
-            const rewardExits = await WalletTransaction.findOne({
-                order: order._id,
-                txnType: "reward_coins",
-                customer: order.customer
-            });
-
-            if (!rewardExits) {
-                await WalletTransaction.create({
-                    customer: order.customer,
-                    order: order._id,
-                    amount: order.rewardCoinsEarned,
-                    type: "credit",
-                    txnType: "reward_coins",
-                    description: `SabJab Coins earned for order #${order.orderId}`,
-                    status: "completed"
-                });
-            }
-        }
-
-        // Seller earnings
-        if (order.items && order.items.length > 0) {
-            const sellerEarnings = new Map();
-            for (const orderItem of order.items) {
-                const product = await Product.findById(orderItem.item);
-                if (product && product.sellerId) {
-                    const sellerId = product.sellerId.toString();
-                    const itemPrice = orderItem.variation?.price || product.price || 0;
-                    const itemEarning = itemPrice * (orderItem.count || 1);
-                    sellerEarnings.set(sellerId, (sellerEarnings.get(sellerId) || 0) + itemEarning);
-                }
-            }
-            for (const [sellerId, amount] of sellerEarnings) {
-                if (amount > 0) {
-                    await WalletTransaction.create({
-                        seller: sellerId,
-                        order: order._id,
-                        amount: amount,
-                        type: "credit",
-                        txnType: "seller_sale",
-                        description: `Earning from order #${order.orderId}`,
-                        status: "completed"
-                    });
-                }
-            }
-        }
-
-        // Reel commissions
-        try {
-            const { processReelCommission } = await import("../../utils/commission.js");
-            await processReelCommission(order._id);
-        } catch (commError) {
-            console.error("[verifyDeliveryPayment] Reel commission processing failed:", commError.message);
-        }
-
-        await order.save();
-
-        // Push notifications
-        (async () => {
-            try {
-                if (order.customer) {
-                    await sendPushNotification(
-                        String(order.customer),
-                        `Order Delivered`,
-                        `Your order #${order.orderId} is now delivered. Thank you!`,
-                        { orderId: String(order._id), type: 'ORDER_STATUS_UPDATE' },
-                        'Customer'
-                    );
-                }
-                if (order.deliveryPartner) {
-                    await sendPushNotification(
-                        String(order.deliveryPartner),
-                        "Order Delivered! ✅",
-                        `You earned ₹${order.driverEarning || 0} for delivering order #${order.orderId}.`,
-                        { orderId: String(order._id), type: 'ORDER_DELIVERED' },
-                        'DeliveryPartner'
-                    );
-                }
-            } catch (notifyErr) {
-                console.error("[verifyDeliveryPayment] Push notify error:", notifyErr.message);
-            }
-        })();
-
-        // Sockets
-        const populatedOrder = await Order.findById(order._id).populate("customer branch items.item deliveryPartner");
-        if (req.server.io && populatedOrder) {
-            req.server.io.to(orderId).emit("liveTrackingUpdates", {
-                ...populatedOrder.toObject(),
-                deliveryPartnerName: populatedOrder?.deliveryPartner?.name || "",
-            });
-            req.server.io.emit("admin:order-status-update", {
-                orderId: String(order._id),
-                status: ORDER_STATUS.DELIVERED,
-                orderNumber: populatedOrder.orderId
-            });
-            if (populatedOrder.deliveryPartner?._id) {
-                const maskedOrderForAssignedDriver = await maskOrderForDriver(populatedOrder, "DeliveryPartner");
-                req.server.io.to(String(populatedOrder.deliveryPartner._id)).emit("driver:order-status-update", {
-                    orderId: String(order._id),
-                    status: ORDER_STATUS.DELIVERED,
-                    order: maskedOrderForAssignedDriver,
-                    orderNumber: populatedOrder.orderId,
-                });
-            }
-            if (populatedOrder.customer?._id) {
-                req.server.io.to(String(populatedOrder.customer._id)).emit("customer:order-status-update", {
-                    orderId: String(order._id),
-                    status: ORDER_STATUS.DELIVERED,
-                    orderNumber: populatedOrder.orderId,
-                });
-            }
-        }
+        await processSuccessfulDeliveryPayment(
+            order,
+            razorpay_payment_id,
+            razorpay_order_id,
+            razorpay_signature,
+            req.server.io
+        );
 
         return reply.status(200).send({ success: true, message: "Payment verified and order delivered." });
     } catch (err) {

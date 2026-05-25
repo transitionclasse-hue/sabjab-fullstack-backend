@@ -140,6 +140,12 @@ const orderSchema = new mongoose.Schema({
   razorpay_signature: {
     type: String,
   },
+  razorpay_qr_id: {
+    type: String,
+  },
+  razorpay_upi_string: {
+    type: String,
+  },
 
   driverEarning: { type: Number, default: 0 },
   codCollected: { type: Number, default: 0 },

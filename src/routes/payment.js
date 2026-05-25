@@ -1,4 +1,4 @@
-import { createRazorpayOrder, renderCheckoutWebView } from "../controllers/payment.js";
+import { createRazorpayOrder, renderCheckoutWebView, createRazorpayQr, checkQrStatus } from "../controllers/payment.js";
 import { verifyDeliveryPayment } from "../controllers/order/order.js";
 import { verifyToken } from "../middleware/auth.js";
 
@@ -22,4 +22,10 @@ export const paymentRoutes = async (fastify, options) => {
 
   // POST /payment/verify-delivery-payment (public verification callback for driver QR scans)
   fastify.post("/payment/verify-delivery-payment", verifyDeliveryPayment);
+
+  // POST /payment/create-razorpay-qr (generate dynamic UPI QR link)
+  fastify.post("/payment/create-razorpay-qr", createRazorpayQr);
+
+  // GET /payment/check-qr-status (polling status check)
+  fastify.get("/payment/check-qr-status", checkQrStatus);
 };

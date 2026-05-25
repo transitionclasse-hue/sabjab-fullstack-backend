@@ -1,10 +1,12 @@
 import Razorpay from "razorpay";
 import dotenv from "dotenv";
 import PricingConfig from "../models/pricingConfig.js";
+import { Order } from "../models/index.js";
+import { processSuccessfulDeliveryPayment } from "./order/order.js";
 
 dotenv.config();
 
-const razorpay = new Razorpay({
+export const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_mockKeyId123",
   key_secret: process.env.RAZORPAY_KEY_SECRET || "mockSecret123",
 });
@@ -363,4 +365,132 @@ export const renderCheckoutWebView = async (req, reply) => {
   `;
 
   return reply.type("text/html").send(htmlContent);
+};
+
+/**
+ * 📲 Create Razorpay UPI QR Code for Driver Collection
+ * POST /payment/create-razorpay-qr
+ */
+export const createRazorpayQr = async (req, reply) => {
+  try {
+    const { orderId } = req.body || {};
+    if (!orderId) {
+      return reply.code(400).send({ message: "Order ID is required" });
+    }
+
+    let order;
+    if (orderId.length === 24) {
+      order = await Order.findById(orderId);
+    } else {
+      order = await Order.findOne({ orderId: orderId });
+    }
+
+    if (!order) {
+      return reply.code(404).send({ message: "Order not found" });
+    }
+
+    // If we already have a generated UPI string for this order, reuse it
+    if (order.razorpay_upi_string) {
+      return reply.code(200).send({
+        success: true,
+        upi_string: order.razorpay_upi_string,
+        qr_code_id: order.razorpay_qr_id
+      });
+    }
+
+    // Call Razorpay API to create dynamic UPI QR Code
+    const qrOptions = {
+      type: "upi_qr",
+      name: "SabJab Store",
+      usage: "single_use",
+      fixed_amount: true,
+      payment_amount: Math.round(order.totalPrice * 100), // paise
+      description: `SabJab Order #${order.orderId}`,
+      notes: {
+        orderId: order._id.toString()
+      }
+    };
+
+    console.log(`[Razorpay QR] Creating QR for Order ${order.orderId}, Amount: ${order.totalPrice}`);
+    const qr = await razorpay.qrCode.create(qrOptions);
+
+    // Save qr info to order
+    order.razorpay_qr_id = qr.id;
+    order.razorpay_upi_string = qr.upi_string;
+    await order.save();
+
+    return reply.code(200).send({
+      success: true,
+      upi_string: qr.upi_string,
+      qr_code_id: qr.id
+    });
+  } catch (error) {
+    console.error("Razorpay QR Code Creation Error:", error);
+    return reply.code(500).send({ message: "Failed to create Razorpay QR Code", error: error.message });
+  }
+};
+
+/**
+ * 🔍 Check Razorpay UPI QR Code Payment Status (Polling endpoint)
+ * GET /payment/check-qr-status
+ */
+export const checkQrStatus = async (req, reply) => {
+  try {
+    const { orderId } = req.query || {};
+    if (!orderId) {
+      return reply.code(400).send({ message: "Order ID is required" });
+    }
+
+    let order;
+    if (orderId.length === 24) {
+      order = await Order.findById(orderId);
+    } else {
+      order = await Order.findOne({ orderId: orderId });
+    }
+
+    if (!order) {
+      return reply.code(404).send({ message: "Order not found" });
+    }
+
+    // If order is already delivered/paid, return success
+    if (order.status === "delivered" || order.paymentStatus === "Paid") {
+      return reply.code(200).send({ success: true, paid: true });
+    }
+
+    // If we don't have a QR code generated yet, we can't check its status
+    if (!order.razorpay_qr_id) {
+      return reply.code(200).send({ success: true, paid: false, message: "No QR Code generated for this order" });
+    }
+
+    console.log(`[Razorpay QR] Checking payments for QR ID: ${order.razorpay_qr_id} (Order ${order.orderId})`);
+    
+    // Fetch payments for this QR Code from Razorpay
+    const paymentsData = await razorpay.qrCode.allPayments(order.razorpay_qr_id);
+    const payments = paymentsData.items || [];
+
+    // Find any successful payment (captured or authorized)
+    const successPayment = payments.find(
+      (p) => p.status === "captured" || p.status === "authorized"
+    );
+
+    if (successPayment) {
+      console.log(`[Razorpay QR] Found successful payment ${successPayment.id} for QR ID: ${order.razorpay_qr_id}`);
+      
+      // Update order and perform delivery completion calculations/events
+      await processSuccessfulDeliveryPayment(
+        order,
+        successPayment.id,
+        successPayment.order_id || "", // might be empty for QR
+        "", // no signature needed since verified via server-to-server fetch
+        req.server.io
+      );
+
+      return reply.code(200).send({ success: true, paid: true });
+    }
+
+    return reply.code(200).send({ success: true, paid: false });
+  } catch (error) {
+    console.error("Razorpay QR Status Check Error:", error);
+    return reply.code(500).send({ message: "Failed to check QR Code status", error: error.message });
+  }
 };
