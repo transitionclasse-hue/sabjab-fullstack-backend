@@ -56,28 +56,28 @@ export const renderCheckoutWebView = async (req, reply) => {
     body {
       margin: 0;
       padding: 0;
-      background-color: #03102e;
+      background-color: #f8fafc;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      color: #ffffff;
+      color: #0f172a;
       text-align: center;
     }
     .container {
-      padding: 24px;
+      padding: 30px 24px;
       border-radius: 20px;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #ffffff;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e2e8f0;
       max-width: 90%;
       width: 320px;
       box-sizing: border-box;
     }
     .loader {
-      border: 4px solid rgba(255, 255, 255, 0.1);
+      border: 4px solid #e2e8f0;
       border-top: 4px solid #FF8C00;
       border-radius: 50%;
       width: 48px;
@@ -93,11 +93,12 @@ export const renderCheckoutWebView = async (req, reply) => {
       margin: 0 0 8px 0;
       font-size: 20px;
       font-weight: 800;
+      color: #0f172a;
     }
     p {
       margin: 0;
       font-size: 14px;
-      color: rgba(255, 255, 255, 0.6);
+      color: #64748b;
     }
   </style>
 </head>
