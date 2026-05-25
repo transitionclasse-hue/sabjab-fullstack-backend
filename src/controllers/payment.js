@@ -46,67 +46,166 @@ export const createRazorpayOrder = async (req, reply) => {
 export const renderCheckoutWebView = async (req, reply) => {
   const { orderId, amount, key, name, phone, method } = req.query;
 
+  // Construct WebView URL pointing to Fastify hosted payment loader
+  const rootUrl = process.env.BASE_URL || "https://api.sabjab.com";
+
   const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Sabjab Secure Payment</title>
+  <title>SabJab Secure Payment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       padding: 0;
-      background-color: #f8fafc;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at top right, #0a251c, #060913 60%);
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
-      color: #0f172a;
+      color: #ffffff;
       text-align: center;
+      overflow: hidden;
     }
+    
+    .glow-blob {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0) 70%);
+      top: -50px;
+      right: -50px;
+      z-index: 1;
+      pointer-events: none;
+    }
+    
     .container {
-      padding: 30px 24px;
-      border-radius: 20px;
-      background: #ffffff;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-      border: 1px solid #e2e8f0;
+      position: relative;
+      z-index: 2;
+      padding: 40px 32px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.02);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
       max-width: 90%;
       width: 320px;
       box-sizing: border-box;
+      animation: fadeIn 0.8s ease-out;
     }
-    .loader {
-      border: 4px solid #e2e8f0;
-      border-top: 4px solid #FF8C00;
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .brand-logo {
+      width: 160px;
+      height: auto;
+      margin-bottom: 28px;
+      filter: drop-shadow(0 4px 10px rgba(16, 185, 129, 0.2));
+    }
+    
+    .loader-ring {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 28px auto;
+    }
+    
+    .loader-ring div {
+      box-sizing: border-box;
+      display: block;
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      border: 4px solid transparent;
       border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 20px auto;
+      animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+      border-top-color: #10B981;
     }
+    
+    .loader-ring div:nth-child(1) {
+      animation-delay: -0.45s;
+      border-top-color: #34D399;
+    }
+    
+    .loader-ring div:nth-child(2) {
+      animation-delay: -0.3s;
+      border-top-color: #059669;
+    }
+    
+    .loader-ring div:nth-child(3) {
+      animation-delay: -0.15s;
+      border-top-color: #10B981;
+    }
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+    
     h2 {
-      margin: 0 0 8px 0;
+      margin: 0 0 10px 0;
       font-size: 20px;
       font-weight: 800;
-      color: #0f172a;
+      color: #ffffff;
+      letter-spacing: 0.5px;
     }
+    
     p {
-      margin: 0;
-      font-size: 14px;
-      color: #64748b;
+      margin: 0 0 24px 0;
+      font-size: 13px;
+      color: #94a3b8;
+      font-weight: 500;
+      line-height: 1.6;
+    }
+    
+    .security-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      border-radius: 100px;
+      color: #34d399;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    
+    .security-badge svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
     }
   </style>
 </head>
 <body>
+  <div class="glow-blob"></div>
   <div class="container">
-    <div class="loader"></div>
-    <h2>SabJab Secure Checkout</h2>
-    <p>Connecting to secure payment gateway...</p>
+    <img src="${rootUrl}/public/logo.png" alt="SabJab Logo" class="brand-logo" />
+    <div class="loader-ring">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <h2>Secure Gateway</h2>
+    <p>Connecting to secure payment gateway. Please do not close or refresh this page...</p>
+    <div class="security-badge">
+      <svg viewBox="0 0 24 24">
+        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+      </svg>
+      PCI-DSS Secure
+    </div>
   </div>
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -146,6 +245,7 @@ export const renderCheckoutWebView = async (req, reply) => {
       currency: "INR",
       name: "SabJab",
       description: "Order Payment",
+      image: "${rootUrl}/public/logo.png",
       order_id: "${orderId || ''}",
       prefill: {
         name: "${decodeURIComponent(name || '')}",
@@ -153,7 +253,7 @@ export const renderCheckoutWebView = async (req, reply) => {
         method: prefillMethod
       },
       theme: {
-        color: "#FF8C00"
+        color: "#10B981"
       },
       webview_intent: true,
       handler: function (response) {
