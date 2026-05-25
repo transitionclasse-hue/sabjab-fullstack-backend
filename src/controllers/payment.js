@@ -44,7 +44,7 @@ export const createRazorpayOrder = async (req, reply) => {
  * Renders standard Razorpay Checkout loaded inside an iframe/container for mobile apps
  */
 export const renderCheckoutWebView = async (req, reply) => {
-  const { orderId, amount, key, name, phone } = req.query;
+  const { orderId, amount, key, name, phone, method } = req.query;
 
   const htmlContent = `
 <!DOCTYPE html>
@@ -111,6 +111,35 @@ export const renderCheckoutWebView = async (req, reply) => {
 
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
+    const rawMethod = "${method || ''}";
+    let prefillMethod = rawMethod;
+    let customConfig = null;
+
+    if (rawMethod.startsWith("upi_")) {
+      prefillMethod = "upi";
+      const upiApp = rawMethod.replace("upi_", ""); // 'gpay', 'phonepe', 'paytm', 'cred'
+      
+      customConfig = {
+        display: {
+          blocks: {
+            preferred_upi: {
+              name: upiApp === "gpay" ? "Google Pay" : upiApp === "phonepe" ? "PhonePe" : upiApp === "paytm" ? "Paytm" : "CRED Pay",
+              instruments: [
+                {
+                  method: "upi",
+                  apps: [upiApp]
+                }
+              ]
+            }
+          },
+          sequence: ["block.preferred_upi"],
+          preferences: {
+            show_default_blocks: false
+          }
+        }
+      };
+    }
+
     const options = {
       key: "${key || ''}",
       amount: ${amount || 0},
@@ -120,7 +149,8 @@ export const renderCheckoutWebView = async (req, reply) => {
       order_id: "${orderId || ''}",
       prefill: {
         name: "${decodeURIComponent(name || '')}",
-        contact: "${phone || ''}"
+        contact: "${phone || ''}",
+        method: prefillMethod
       },
       theme: {
         color: "#FF8C00"
@@ -150,6 +180,10 @@ export const renderCheckoutWebView = async (req, reply) => {
         }
       }
     };
+
+    if (customConfig) {
+      options.config = customConfig;
+    }
 
     const rzp = new Razorpay(options);
     
