@@ -416,12 +416,12 @@ export const createRazorpayQr = async (req, reply) => {
 
     // Save qr info to order
     order.razorpay_qr_id = qr.id;
-    order.razorpay_upi_string = qr.upi_string;
+    order.razorpay_upi_string = qr.upi_string || qr.image_url;
     await order.save();
 
     return reply.code(200).send({
       success: true,
-      upi_string: qr.upi_string,
+      upi_string: qr.upi_string || qr.image_url,
       qr_code_id: qr.id
     });
   } catch (error) {
