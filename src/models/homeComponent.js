@@ -30,7 +30,8 @@ const homeComponentSchema = new mongoose.Schema({
             "AISLE_2X2_GRID", // ✅ NEW: 2by2 style from design
             "PROMOTION_PAGINATION", // ✅ NEW: 4 pagination promo style
             "GROCERY_LIST_2X3", // ✅ NEW: 2by3 category list style
-            "TIME_BASED_SCROLLER" // ✅ NEW: Changes based on time of day
+            "TIME_BASED_SCROLLER", // ✅ NEW: Changes based on time of day
+            "REORDER_SCROLLER" // ✅ NEW: Dynamic order history scroller
         ],
         required: true,
     },

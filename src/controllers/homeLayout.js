@@ -8,6 +8,7 @@ import StoreStatus from "../models/storeStatus.js";
 import GlobalConfig from "../models/globalConfig.js";
 import { Seller } from "../models/user.js";
 import { buildStoreStatusResponse } from "./storeStatus.js";
+import { hydrateHomeComponents, buildSellerVisibilityQuery } from "../utils/productHydrator.js";
 
 const escapeRegex = (value = "") => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const isChoiceOnlyRequest = (value) => ["1", "true", "yes"].includes(String(value || "").toLowerCase());
@@ -62,32 +63,12 @@ const findVariationByIdentifier = async ({ identifier, populateComponents = fals
     return null;
 };
 
-const createApprovedProductChecker = (approvedSellerIds) => (product) => {
-    if (!product || product.isApproved === false) return false;
-    const sellerId = product?.sellerId?._id || product?.sellerId || null;
-    if (!sellerId) return true;
-    return approvedSellerIds.has(String(sellerId));
-};
-
-const buildSellerVisibilityQuery = (approvedSellerIds) => ({
-    $or: [
-        { sellerId: { $exists: false } },
-        { sellerId: null },
-        { sellerId: { $in: [...approvedSellerIds] } },
-    ],
-});
-
 export const getHomeLayout = async (req, reply) => {
     try {
         const { variationId, choiceOnly } = req.query;
         const shouldFilterChoice = isChoiceOnlyRequest(choiceOnly);
         const approvedSellerIdList = await Seller.find({ isApproved: true }).distinct("_id");
-        const approvedSellerIds = new Set(approvedSellerIdList.map((id) => String(id)));
-        const isApprovedProduct = createApprovedProductChecker(approvedSellerIds);
-        const filterApprovedProducts = (products = []) =>
-            products.filter((product) => isApprovedProduct(product) && (!shouldFilterChoice || product?.isChoice === true));
         const sellerVisibilityQuery = buildSellerVisibilityQuery(approvedSellerIdList);
-        const choiceProductFilter = shouldFilterChoice ? { isChoice: true } : {};
 
         // 1. Find the target variation (requested or default)
         let variation;
@@ -107,6 +88,10 @@ export const getHomeLayout = async (req, reply) => {
                     await Occasion.findOne({ isActive: true }).populate("components").sort({ order: 1 }).lean();
             }
         }
+
+        // Auto-detect choice mode if the matched variation is a Choice variation
+        const actualFilterChoice = shouldFilterChoice || variation?.isChoice === true;
+        const choiceProductFilter = actualFilterChoice ? { isChoice: true } : {};
 
         // 2. Fetch components explicitly assigned to this variation
         let components = [];
@@ -148,89 +133,7 @@ export const getHomeLayout = async (req, reply) => {
             .populate("products")
             .lean();
 
-        const hydrateHomeComponents = async (comps) => {
-            if (!comps || comps.length === 0) return [];
-            return await Promise.all(comps.map(async (comp) => {
-                if (comp.type === "BENTO_GRID") {
-                    const curated = [];
-                    if (isApprovedProduct(comp.bigDeal)) curated.push(comp.bigDeal);
-                    if (comp.miniDeals?.length) curated.push(...filterApprovedProducts(comp.miniDeals));
-                    const fallback = filterApprovedProducts(comp.products || []);
-                    const combined = [...curated, ...fallback];
-                    const seenIds = new Set();
-                    comp.resolvedProducts = combined.filter(p => {
-                        const id = String(p._id || p.id || p);
-                        if (!id || seenIds.has(id)) return false;
-                        seenIds.add(id);
-                        return true;
-                    });
-                } else if (comp.type === "TIME_BASED_SCROLLER") {
-                    if (comp.timeSlots?.length > 0) {
-                        comp.timeSlots = await Promise.all(comp.timeSlots.map(async (slot) => {
-                            if (slot.products?.length > 0) {
-                                slot.resolvedProducts = await Product.find({
-                                    _id: { $in: slot.products },
-                                    isApproved: true,
-                                    ...choiceProductFilter,
-                                    ...sellerVisibilityQuery,
-                                }).lean();
-                            }
-                            return slot;
-                        }));
-                    }
-                } else if (comp.type === "TRIPLE_SECTION_GRID") {
-                    if (comp.sections?.length > 0) {
-                        comp.sections = await Promise.all(comp.sections.map(async (sec) => {
-                            if (sec.products?.length > 0) {
-                                sec.products = await Product.find({
-                                    _id: { $in: sec.products },
-                                    isApproved: true,
-                                    ...choiceProductFilter,
-                                    ...sellerVisibilityQuery,
-                                }).lean();
-                            }
-                            return sec;
-                        }));
-                    }
-                } else if (comp.type === "CATEGORY_GRID_FOUR_IMAGES" || comp.type === "GROCERY_LIST_2X3") {
-                    if (comp.categories?.length > 0) {
-                        comp.resolvedCategories = await Promise.all(comp.categories.map(async (catModel) => {
-                            const itemId = catModel._id || catModel.id;
-                            const parentCatId = catModel.category?._id || catModel.category ||
-                                catModel.superCategory?._id || catModel.superCategory || null;
-                            const productQuery = {
-                                isAvailable: true,
-                                isApproved: true,
-                                ...choiceProductFilter,
-                                $and: [
-                                    sellerVisibilityQuery,
-                                    { $or: [{ category: itemId }, { subCategory: itemId }] },
-                                ],
-                            };
-                            const [count, products] = await Promise.all([
-                                Product.countDocuments(productQuery),
-                                Product.find(productQuery).sort({ createdAt: -1 }).limit(4).select("image").lean()
-                            ]);
-                            return { ...catModel, parentCategoryId: parentCatId, productCount: count, previewImages: products.map(p => p.image).filter(Boolean) };
-                        }));
-                    } else {
-                        comp.resolvedCategories = [];
-                    }
-                } else if (comp.type === "CATEGORY_STRIP") {
-                    comp.resolvedCategories = comp.categories || [];
-                } else if (comp.type === "FEATURED_DEALS") {
-                    comp.resolvedProducts = [
-                        ...(isApprovedProduct(comp.bigDeal) ? [comp.bigDeal] : []),
-                        ...filterApprovedProducts(comp.miniDeals || [])
-                    ];
-                } else if (["PRODUCT_GRID", "PRODUCT_SCROLLER", "CATEGORY_CLUSTERS", "STORY_STRIP", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "PRODUCT_GRID_3X2", "MINI_VIDEO", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "TIME_BASED_SCROLLER"].includes(comp.type)) {
-                    comp.resolvedProducts = filterApprovedProducts(comp.products || []);
-                }
-                return comp;
-            }));
-        };
-
-        const hydratedComponents = await hydrateHomeComponents(components);
+        const hydratedComponents = await hydrateHomeComponents(components, actualFilterChoice);
 
         let specialOccasion = null;
         if (specialOccasions.length > 0) {
@@ -241,12 +144,13 @@ export const getHomeLayout = async (req, reply) => {
                 specialOccasion.displayName = "Wow";
             }
             if (specialOccasion.components?.length > 0) {
-                specialOccasion.components = await hydrateHomeComponents(specialOccasion.components);
+                specialOccasion.components = await hydrateHomeComponents(specialOccasion.components, actualFilterChoice);
             }
         }
 
+
         // 4. Fetch Occasions for the strip
-        const isChoicePage = shouldFilterChoice || variation?.isChoice === true || variation?.name?.toLowerCase() === 'choice';
+        const isChoicePage = actualFilterChoice || variation?.isChoice === true || variation?.name?.toLowerCase() === 'choice';
         const occasions = await Occasion.find({
             isActive: true,
             isChoice: isChoicePage ? true : { $ne: true },
@@ -258,8 +162,8 @@ export const getHomeLayout = async (req, reply) => {
 
         // 7. Fetch the baseline categories and products that the app needs initially
         const [allCategories, allSuperCategories, allProducts] = await Promise.all([
-            Category.find(shouldFilterChoice ? { isChoice: true } : {}).lean(),
-            SuperCategory.find(shouldFilterChoice ? { isChoice: true } : {}).lean(),
+            Category.find(actualFilterChoice ? { isChoice: true } : {}).lean(),
+            SuperCategory.find(actualFilterChoice ? { isChoice: true } : {}).lean(),
             Product.find({
                 isApproved: true,
                 ...choiceProductFilter,
@@ -278,7 +182,8 @@ export const getHomeLayout = async (req, reply) => {
         // 8. Build unified response
         const filteredOccasions = occasions;
         const effectiveSpecialOccasion =
-            shouldFilterChoice && specialOccasion?.isChoice !== true ? null : specialOccasion;
+            actualFilterChoice && specialOccasion?.isChoice !== true ? null : specialOccasion;
+
 
         return reply.send({
             variation: variation ? {

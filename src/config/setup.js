@@ -1393,7 +1393,8 @@ export async function buildAdminRouter(app) {
                 { value: "AISLE_2X2_GRID", label: "🛍️ Aisle 2x2 Product Grid (New)" },
                 { value: "PROMOTION_PAGINATION", label: "🏷️ Promo with 4-Dots Pagination (New)" },
                 { value: "GROCERY_LIST_2X3", label: "📋 Grocery List 2x3 Category Grid (New)" },
-                { value: "TIME_BASED_SCROLLER", label: "🕒 Time-Based Product Scroller (Automatic)" }
+                { value: "TIME_BASED_SCROLLER", label: "🕒 Time-Based Product Scroller (Automatic)" },
+                { value: "REORDER_SCROLLER", label: "🔄 Reorder / Buy Again Product Scroller (Dynamic)" }
               ],
             },
             sections: {
@@ -1427,7 +1428,7 @@ export async function buildAdminRouter(app) {
               helpText: "Appears below the main title. Type 'Dove' to search anytime!",
               isVisible: (context) => {
                 const type = context.record?.params?.type;
-                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3", "MINI_VIDEO", "TIME_BASED_SCROLLER"];
+                const visibleTypes = ["CATEGORY_CLUSTERS", "FEATURED_DEALS", "PRODUCT_SCROLLER", "PRODUCT_GRID", "BENTO_GRID", "GRADIENT_HERO", "RAMZAN_SPECIAL", "RAMZAN_SPECIAL2", "HAPPY_HOLI", "DIWALI_SPECIAL", "CHRISTMAS_SPECIAL", "CATEGORY_GRID_FOUR_IMAGES", "PRODUCT_GRID_3X2", "AISLE_2X2_GRID", "PROMOTION_PAGINATION", "GROCERY_LIST_2X3", "MINI_VIDEO", "TIME_BASED_SCROLLER", "REORDER_SCROLLER"];
                 return !!(type && visibleTypes.includes(type));
               }
             },

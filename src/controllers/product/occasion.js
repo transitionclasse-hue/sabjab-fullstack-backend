@@ -1,4 +1,5 @@
 import Occasion from "../../models/occasion.js";
+import { hydrateHomeComponents } from "../../utils/productHydrator.js";
 
 export const getOccasions = async (req, reply) => {
     try {
@@ -30,10 +31,16 @@ export const getOccasionById = async (req, reply) => {
                     { path: 'miniDeals' },
                     { path: 'sections.products' }
                 ]
-            });
+            })
+            .lean();
 
         if (!occasion) {
             return reply.status(404).send({ message: "Occasion not found" });
+        }
+
+        if (occasion.components?.length > 0) {
+            const shouldFilterChoice = occasion.isChoice === true;
+            occasion.components = await hydrateHomeComponents(occasion.components, shouldFilterChoice);
         }
 
         return reply.send(occasion);
@@ -41,3 +48,4 @@ export const getOccasionById = async (req, reply) => {
         return reply.status(500).send({ message: "An error occurred fetching occasion details", error });
     }
 };
+
