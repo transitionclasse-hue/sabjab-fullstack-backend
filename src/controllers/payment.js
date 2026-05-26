@@ -7,8 +7,8 @@ import { processSuccessfulDeliveryPayment } from "./order/order.js";
 dotenv.config();
 
 export const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || "rzp_test_mockKeyId123",
-  key_secret: process.env.RAZORPAY_KEY_SECRET || "mockSecret123",
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 /**
@@ -34,7 +34,7 @@ export const createRazorpayOrder = async (req, reply) => {
       id: rzpOrder.id,
       amount: rzpOrder.amount,
       currency: rzpOrder.currency,
-      key: process.env.RAZORPAY_KEY_ID || "rzp_test_mockKeyId123",
+      key: process.env.RAZORPAY_KEY_ID,
     });
   } catch (error) {
     console.error("Razorpay Order Creation Error:", error);
@@ -49,7 +49,7 @@ export const createRazorpayOrder = async (req, reply) => {
 export const renderCheckoutWebView = async (req, reply) => {
   const { orderId, amount, key, name, phone, method, deliveryCollection } = req.query || {};
   const isDeliveryCollection = deliveryCollection === "true";
-  const rzpKey = key || process.env.RAZORPAY_KEY_ID || "rzp_test_mockKeyId123";
+  const rzpKey = key || process.env.RAZORPAY_KEY_ID;
 
   // Fetch PricingConfig to toggle Razorpay topbar layout
   const config = await PricingConfig.findOne({ key: "primary" }).lean();

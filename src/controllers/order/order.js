@@ -135,7 +135,7 @@ export const createOrder = async (req, reply) => {
             }
             const text = razorpay_order_id + "|" + razorpay_payment_id;
             const generated_signature = crypto
-                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "mockSecret123")
+                .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
                 .update(text)
                 .digest("hex");
 
@@ -1468,7 +1468,7 @@ export const verifyDeliveryPayment = async (req, reply) => {
         // Verify Razorpay signature
         const text = razorpay_order_id + "|" + razorpay_payment_id;
         const generated_signature = crypto
-            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET || "mockSecret123")
+            .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
             .update(text)
             .digest("hex");
 
