@@ -101,6 +101,7 @@ const occasionSchema = new mongoose.Schema({
         hideTopBar: { type: Boolean, default: false },
         topBarColor: { type: String, default: "#ffffff" },
         topBarDarkColor: { type: String, default: "" }, // New: Top bar color in dark mode
+        profileIcon: { type: String, default: "" },
         etaBgColor: { type: String, default: "" }, // New: Per-occasion ETA box color
         etaBgDarkColor: { type: String, default: "" }, // New: ETA box color in dark mode
         etaTextColor: { type: String, default: "" }, // New: Per-occasion ETA text color

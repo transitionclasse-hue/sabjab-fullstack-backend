@@ -162,6 +162,30 @@ const homeComponentSchema = new mongoose.Schema({
     isFullWidth: {
         type: Boolean,
         default: true,
+    },
+    titleFont: {
+        type: String,
+        default: null,
+    },
+    titleColor: {
+        type: String,
+        default: null,
+    },
+    revolveTitle: {
+        type: Boolean,
+        default: false,
+    },
+    badgeBgColor: {
+        type: String,
+        default: null,
+    },
+    badgeTextColor: {
+        type: String,
+        default: null,
+    },
+    badgeTiltAngle: {
+        type: Number,
+        default: null,
     }
 });
 
