@@ -186,6 +186,16 @@ const homeComponentSchema = new mongoose.Schema({
     badgeTiltAngle: {
         type: Number,
         default: null,
+    },
+    badgeTilt: {
+        type: String,
+        enum: ["left", "straight", "right"],
+        default: "left",
+    },
+    titleAlign: {
+        type: String,
+        enum: ["left", "center", "right"],
+        default: "left",
     }
 });
 
