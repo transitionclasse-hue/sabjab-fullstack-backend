@@ -75,6 +75,17 @@ const orderSchema = new mongoose.Schema({
     default: "quick",
   },
 
+  deliveryMode: {
+    type: String,
+    enum: ["speed", "slot"],
+    default: "speed",
+  },
+
+  deliverySlot: {
+    type: String,
+    default: null,
+  },
+
   deliveryLocation: {
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
