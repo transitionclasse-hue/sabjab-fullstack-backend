@@ -44,6 +44,9 @@ const pricingConfigSchema = new mongoose.Schema(
     promiseProtectEnabled: { type: Boolean, default: false },
     promiseProtectFee: { type: Number, default: 0, min: 0 },
 
+    deliveryBagEnabled: { type: Boolean, default: false },
+    deliveryBagFee: { type: Number, default: 0, min: 0 },
+
     smallCartFeeEnabled: { type: Boolean, default: false },
     smallCartThreshold: { type: Number, default: 99, min: 0 },
     smallCartFee: { type: Number, default: 0, min: 0 },

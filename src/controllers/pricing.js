@@ -11,6 +11,8 @@ const DEFAULT_PRICING_CONFIG = {
   choiceFreeDeliveryThreshold: 499,
   promiseProtectEnabled: false,
   promiseProtectFee: 0,
+  deliveryBagEnabled: false,
+  deliveryBagFee: 0,
   smallCartFeeEnabled: false,
   smallCartThreshold: 99,
   smallCartFee: 0,
@@ -107,7 +109,7 @@ const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
   return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 };
 
-const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick') => {
+const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false) => {
   const subtotal = Math.max(0, toNumber(itemsTotal, 0));
   const breakdown = [];
 
@@ -134,6 +136,14 @@ const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick') =
       code: "promise_protect_fee",
       label: "Promise Protect Fee",
       amount: toNumber(config.promiseProtectFee, 0),
+    });
+  }
+
+  if (config.deliveryBagEnabled && deliveryInBag) {
+    breakdown.push({
+      code: "delivery_bag_fee",
+      label: "Delivery in a Bag",
+      amount: toNumber(config.deliveryBagFee, 0),
     });
   }
 
@@ -263,7 +273,7 @@ export const getPricingConfig = async (req, reply) => {
 
 export const estimatePricing = async (req, reply) => {
   try {
-    const { itemsTotal, couponCode, orderType } = req.body;
+    const { itemsTotal, couponCode, orderType, deliveryInBag } = req.body;
     const subtotal = toNumber(itemsTotal, 0);
 
     const config = await PricingConfig.findOneAndUpdate(
@@ -293,7 +303,7 @@ export const estimatePricing = async (req, reply) => {
       }
     }
 
-    const estimate = calculateFees(config, subtotal, coupon, orderType);
+    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag));
     return reply.send(estimate);
   } catch (error) {
     return reply.status(500).send({
@@ -316,6 +326,8 @@ export const updatePricingConfig = async (req, reply) => {
       choiceFreeDeliveryThreshold: Math.max(0, toNumber(body.choiceFreeDeliveryThreshold, 499)),
       promiseProtectEnabled: Boolean(body.promiseProtectEnabled),
       promiseProtectFee: Math.max(0, toNumber(body.promiseProtectFee, 0)),
+      deliveryBagEnabled: Boolean(body.deliveryBagEnabled),
+      deliveryBagFee: Math.max(0, toNumber(body.deliveryBagFee, 0)),
       smallCartFeeEnabled: Boolean(body.smallCartFeeEnabled),
       smallCartThreshold: Math.max(0, toNumber(body.smallCartThreshold, 0)),
       smallCartFee: Math.max(0, toNumber(body.smallCartFee, 0)),

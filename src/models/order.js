@@ -86,6 +86,11 @@ const orderSchema = new mongoose.Schema({
     default: null,
   },
 
+  deliveryInBag: {
+    type: Boolean,
+    default: false,
+  },
+
   deliveryLocation: {
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
