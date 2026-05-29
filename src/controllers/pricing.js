@@ -310,6 +310,12 @@ export const estimatePricing = async (req, reply) => {
       const lat = Number(latitude);
       const lng = Number(longitude);
 
+      // Auto-deactivate expired slot promotions
+      await SlotPromotion.updateMany(
+        { isActive: true, expiresAt: { $lte: new Date() } },
+        { $set: { isActive: false } }
+      );
+
       const activePromos = await SlotPromotion.find({
         isActive: true,
         expiresAt: { $gt: new Date() }
@@ -445,6 +451,12 @@ export const checkSlotPromotions = async (req, reply) => {
 
     const lat = Number(latitude);
     const lng = Number(longitude);
+
+    // Auto-deactivate expired slot promotions
+    await SlotPromotion.updateMany(
+      { isActive: true, expiresAt: { $lte: new Date() } },
+      { $set: { isActive: false } }
+    );
 
     const activePromos = await SlotPromotion.find({
       isActive: true,

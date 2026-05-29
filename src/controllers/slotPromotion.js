@@ -100,6 +100,12 @@ export const createSlotPromotion = async (req, reply) => {
 // Fetch active or all slot promotions
 export const getSlotPromotions = async (req, reply) => {
   try {
+    // Auto-deactivate expired slot promotions
+    await SlotPromotion.updateMany(
+      { isActive: true, expiresAt: { $lte: new Date() } },
+      { $set: { isActive: false } }
+    );
+
     const { activeOnly } = req.query;
     const filter = {};
     if (activeOnly === "true") {

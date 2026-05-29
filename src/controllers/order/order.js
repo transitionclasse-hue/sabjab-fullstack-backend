@@ -371,6 +371,12 @@ export const createOrder = async (req, reply) => {
         let slotPromotionData = null;
         if (deliveryMode === "slot" && deliverySlot) {
             try {
+                // Auto-deactivate expired slot promotions
+                await SlotPromotion.updateMany(
+                    { isActive: true, expiresAt: { $lte: new Date() } },
+                    { $set: { isActive: false } }
+                );
+
                 const activePromos = await SlotPromotion.find({
                     isActive: true,
                     expiresAt: { $gt: new Date() }
