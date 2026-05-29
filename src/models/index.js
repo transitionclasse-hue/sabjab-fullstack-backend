@@ -21,6 +21,7 @@ import SupportMessage from "./supportMessage.js";
 import GlobalConfig from "./globalConfig.js";
 import GigSchedule from "./gigSchedule.js";
 import Reel from "./reel.js";
+import { SlotPromotion } from "./slotPromotion.js";
 
 export {
   Order,
@@ -49,4 +50,5 @@ export {
   GlobalConfig,
   GigSchedule,
   Reel,
+  SlotPromotion,
 };

@@ -1,4 +1,5 @@
 import PricingConfig from "../models/pricingConfig.js";
+import { SlotPromotion } from "../models/slotPromotion.js";
 
 const DEFAULT_PRICING_CONFIG = {
   key: "primary",
@@ -273,7 +274,7 @@ export const getPricingConfig = async (req, reply) => {
 
 export const estimatePricing = async (req, reply) => {
   try {
-    const { itemsTotal, couponCode, orderType, deliveryInBag } = req.body;
+    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot } = req.body;
     const subtotal = toNumber(itemsTotal, 0);
 
     const config = await PricingConfig.findOneAndUpdate(
@@ -296,14 +297,63 @@ export const estimatePricing = async (req, reply) => {
       });
 
       if (coupon && coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
-        // If coupon exists but min amount not met, don't apply it but don't error? 
-        // Actually, maybe error so frontend knows why it's not applied.
-        // For now, let's just not apply it and we'll handle messaging in checkout.
         coupon = null;
       }
     }
 
     const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag));
+
+    let slotPromotion = null;
+    let slotPromoDiscount = 0;
+
+    if (deliveryMode === "slot" && deliverySlot && latitude !== undefined && longitude !== undefined) {
+      const lat = Number(latitude);
+      const lng = Number(longitude);
+
+      const activePromos = await SlotPromotion.find({
+        isActive: true,
+        expiresAt: { $gt: new Date() }
+      });
+
+      const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+        const R = 6371e3;
+        const phi1 = (lat1 * Math.PI) / 180;
+        const phi2 = (lat2 * Math.PI) / 180;
+        const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+        const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+        const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      };
+
+      const matchingPromo = activePromos.find(promo => {
+        const promoLng = promo.location.coordinates[0];
+        const promoLat = promo.location.coordinates[1];
+        const distance = getDistanceMeters(lat, lng, promoLat, promoLng);
+        if (distance > promo.radiusMeters) return false;
+
+        const timeMatch = deliverySlot.toLowerCase().includes(promo.slotLabel.toLowerCase());
+        const dayMatch = !promo.dayLabel || deliverySlot.toLowerCase().includes(promo.dayLabel.toLowerCase());
+        return timeMatch && dayMatch;
+      });
+
+      if (matchingPromo) {
+        slotPromotion = {
+          promoId: matchingPromo._id,
+          promotionType: matchingPromo.promotionType,
+          discountAmount: matchingPromo.promotionType === "discount" ? matchingPromo.discountAmount : 0,
+          giftName: matchingPromo.promotionType === "gift" ? matchingPromo.giftName : ""
+        };
+
+        if (slotPromotion.promotionType === "discount" && slotPromotion.discountAmount > 0) {
+          slotPromoDiscount = slotPromotion.discountAmount;
+          estimate.grandTotal = Math.max(0, estimate.grandTotal - slotPromoDiscount);
+        }
+      }
+    }
+
+    estimate.slotPromotion = slotPromotion;
+    estimate.slotPromoDiscount = slotPromoDiscount;
+
     return reply.send(estimate);
   } catch (error) {
     return reply.status(500).send({
@@ -382,6 +432,47 @@ export const updatePricingConfig = async (req, reply) => {
     return reply.status(500).send({
       message: "Failed to update pricing config",
       error: error.message,
+    });
+  }
+};
+
+export const checkSlotPromotions = async (req, reply) => {
+  try {
+    const { latitude, longitude } = req.query;
+    if (latitude === undefined || longitude === undefined) {
+      return reply.status(400).send({ message: "latitude and longitude are required query parameters" });
+    }
+
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+
+    const activePromos = await SlotPromotion.find({
+      isActive: true,
+      expiresAt: { $gt: new Date() }
+    });
+
+    const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+      const R = 6371e3;
+      const phi1 = (lat1 * Math.PI) / 180;
+      const phi2 = (lat2 * Math.PI) / 180;
+      const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+      const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+      const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    const nearbyPromos = activePromos.filter(promo => {
+      const promoLng = promo.location.coordinates[0];
+      const promoLat = promo.location.coordinates[1];
+      const distance = getDistanceMeters(lat, lng, promoLat, promoLng);
+      return distance <= promo.radiusMeters;
+    });
+
+    return reply.send(nearbyPromos);
+  } catch (error) {
+    return reply.status(500).send({
+      message: "Failed to check slot promotions",
+      error: error.message
     });
   }
 };

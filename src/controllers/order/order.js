@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction, Admin, GlobalConfig, StoreStatus } from "../../models/index.js";
+import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction, Admin, GlobalConfig, StoreStatus, SlotPromotion } from "../../models/index.js";
 import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
 import { getDistanceKm, isValidLatLng } from "../../utils/geo.js";
@@ -368,8 +368,51 @@ export const createOrder = async (req, reply) => {
         const orderReturnWindow = Math.max(...stockUpdates.map(u => u.product.returnWindow || 0), 0);
         // ---------------------------------
 
+        let slotPromotionData = null;
+        if (deliveryMode === "slot" && deliverySlot) {
+            try {
+                const activePromos = await SlotPromotion.find({
+                    isActive: true,
+                    expiresAt: { $gt: new Date() }
+                });
+
+                const getDistanceMeters = (lat1, lon1, lat2, lon2) => {
+                    const R = 6371e3;
+                    const phi1 = (lat1 * Math.PI) / 180;
+                    const phi2 = (lat2 * Math.PI) / 180;
+                    const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+                    const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+                    const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) + Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+                    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                };
+
+                const matchingPromo = activePromos.find(promo => {
+                    const promoLng = promo.location.coordinates[0];
+                    const promoLat = promo.location.coordinates[1];
+                    const distance = getDistanceMeters(userLat, userLng, promoLat, promoLng);
+                    if (distance > promo.radiusMeters) return false;
+
+                    const timeMatch = deliverySlot.toLowerCase().includes(promo.slotLabel.toLowerCase());
+                    const dayMatch = !promo.dayLabel || deliverySlot.toLowerCase().includes(promo.dayLabel.toLowerCase());
+                    return timeMatch && dayMatch;
+                });
+
+                if (matchingPromo) {
+                    slotPromotionData = {
+                        promoId: matchingPromo._id,
+                        promotionType: matchingPromo.promotionType,
+                        discountAmount: matchingPromo.promotionType === "discount" ? matchingPromo.discountAmount : 0,
+                        giftName: matchingPromo.promotionType === "gift" ? matchingPromo.giftName : ""
+                    };
+                }
+            } catch (promoErr) {
+                console.error("Error applying slot promotion to order:", promoErr);
+            }
+        }
+
         const newOrder = new Order({
             customer: userId,
+            slotPromotion: slotPromotionData,
             items: items.map((item, idx) => {
                 const deliveryDays = item.deliveryDays || 0;
                 const expectedDate = new Date();

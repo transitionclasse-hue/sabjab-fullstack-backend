@@ -170,6 +170,13 @@ const orderSchema = new mongoose.Schema({
   deliveryOtp: { type: String },
   isHighValueOrder: { type: Boolean, default: false },
 
+  slotPromotion: {
+    promoId: { type: mongoose.Schema.Types.ObjectId, ref: "SlotPromotion" },
+    promotionType: { type: String, enum: ["discount", "gift"] },
+    discountAmount: { type: Number, default: 0 },
+    giftName: { type: String, default: "" }
+  },
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

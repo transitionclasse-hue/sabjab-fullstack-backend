@@ -98,6 +98,12 @@ import {
   evaluateGigSchedule,
   getWeeklyGigSchedules,
 } from "../controllers/gigSchedule.js";
+import {
+  createSlotPromotion,
+  getSlotPromotions,
+  deleteSlotPromotion,
+  getSlotOrders
+} from "../controllers/slotPromotion.js";
 
 const AUTH = { preHandler: [verifyManager] };
 
@@ -215,4 +221,10 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/gig-schedules", AUTH, getManagerGigSchedules);
   fastify.get("/manager/gig-schedules/weekly", AUTH, getWeeklyGigSchedules);
   fastify.post("/manager/gig-schedules/:id/evaluate", AUTH, evaluateGigSchedule);
+
+  // Slot Clustering Promotions
+  fastify.get("/manager/slot-promotions", AUTH, getSlotPromotions);
+  fastify.post("/manager/slot-promotions", AUTH, createSlotPromotion);
+  fastify.delete("/manager/slot-promotions/:id", AUTH, deleteSlotPromotion);
+  fastify.get("/manager/slot-orders", AUTH, getSlotOrders);
 };
