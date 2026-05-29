@@ -34,6 +34,7 @@ const pricingConfigSchema = new mongoose.Schema(
     freeDeliveryEnabled: { type: Boolean, default: true },
     freeDeliveryThreshold: { type: Number, default: 199, min: 0 },
     baseDeliveryFee: { type: Number, default: 20, min: 0 },
+    speedDeliveryEnabled: { type: Boolean, default: true },
 
     // Choice Delivery Config
     choiceDeliveryFee: { type: Number, default: 40, min: 0 },
