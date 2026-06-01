@@ -116,7 +116,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging, gstNumber } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -419,6 +419,7 @@ export const createOrder = async (req, reply) => {
         const newOrder = new Order({
             customer: userId,
             slotPromotion: slotPromotionData,
+            gstNumber: gstNumber || "",
             items: items.map((item, idx) => {
                 const deliveryDays = item.deliveryDays || 0;
                 const expectedDate = new Date();

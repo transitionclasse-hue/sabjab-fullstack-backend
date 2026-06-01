@@ -61,6 +61,7 @@ const DEFAULT_PRICING_CONFIG = {
   driverQrMode: "direct_upi",
   consumerOnlinePaymentMode: "razorpay",
   driverIncentiveSlots: [],
+  gstDetailsEnabled: false,
 };
 
 const FOOTER_STYLES = new Set(["standard", "floating", "minimal", "premium", "ultra"]);
@@ -440,6 +441,7 @@ export const updatePricingConfig = async (req, reply) => {
       qrCodeAmountPrefill: body.qrCodeAmountPrefill !== undefined ? Boolean(body.qrCodeAmountPrefill) : true,
       driverQrMode: body.driverQrMode === "razorpay" ? "razorpay" : "direct_upi",
       consumerOnlinePaymentMode: body.consumerOnlinePaymentMode || "razorpay",
+      gstDetailsEnabled: body.gstDetailsEnabled !== undefined ? Boolean(body.gstDetailsEnabled) : false,
     };
 
     const config = await PricingConfig.findOneAndUpdate(

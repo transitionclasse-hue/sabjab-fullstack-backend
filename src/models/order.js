@@ -188,6 +188,7 @@ const orderSchema = new mongoose.Schema({
 
   deliveryOtp: { type: String },
   isHighValueOrder: { type: Boolean, default: false },
+  gstNumber: { type: String, default: "" },
 
   slotPromotion: {
     promoId: { type: mongoose.Schema.Types.ObjectId, ref: "SlotPromotion" },
