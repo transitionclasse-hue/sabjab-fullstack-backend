@@ -116,7 +116,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -439,6 +439,9 @@ export const createOrder = async (req, reply) => {
             deliveryMode: deliveryMode || "speed",
             deliverySlot: deliveryMode === "slot" ? deliverySlot : null,
             deliveryInBag: Boolean(deliveryInBag),
+            deliveryInstructions: deliveryInstructions || { selectedOptions: [], voiceNote: "" },
+            tipAmount: Number(tipAmount || 0),
+            giftPackaging: giftPackaging || { enabled: false, fee: 0 },
             branch: resolvedBranchId,
             totalPrice: Number(totalAmount),
             paymentMethod: paymentMethod || "COD",

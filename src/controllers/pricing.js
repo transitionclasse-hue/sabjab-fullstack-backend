@@ -110,7 +110,7 @@ const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
   return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 };
 
-const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false) => {
+const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0) => {
   const subtotal = Math.max(0, toNumber(itemsTotal, 0));
   const breakdown = [];
 
@@ -131,6 +131,22 @@ const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', d
       orderType
     },
   });
+
+  if (toNumber(giftPackagingFee, 0) > 0) {
+    breakdown.push({
+      code: "gift_packaging_fee",
+      label: "Gift Packaging",
+      amount: toNumber(giftPackagingFee, 0),
+    });
+  }
+
+  if (toNumber(tipAmount, 0) > 0) {
+    breakdown.push({
+      code: "driver_tip",
+      label: "Delivery Partner Tip",
+      amount: toNumber(tipAmount, 0),
+    });
+  }
 
   if (config.promiseProtectEnabled) {
     breakdown.push({
@@ -274,7 +290,7 @@ export const getPricingConfig = async (req, reply) => {
 
 export const estimatePricing = async (req, reply) => {
   try {
-    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot } = req.body;
+    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot, tipAmount, giftPackagingFee } = req.body;
     const subtotal = toNumber(itemsTotal, 0);
 
     const config = await PricingConfig.findOneAndUpdate(
@@ -301,7 +317,7 @@ export const estimatePricing = async (req, reply) => {
       }
     }
 
-    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag));
+    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag), tipAmount, giftPackagingFee);
 
     let slotPromotion = null;
     let slotPromoDiscount = 0;

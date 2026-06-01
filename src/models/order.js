@@ -91,6 +91,25 @@ const orderSchema = new mongoose.Schema({
     default: false,
   },
 
+  deliveryInstructions: {
+    selectedOptions: [{ type: String }],
+    voiceNote: { type: String, default: "" },
+  },
+
+  tipAmount: {
+    type: Number,
+    default: 0,
+  },
+
+  giftPackaging: {
+    enabled: { type: Boolean, default: false },
+    fee: { type: Number, default: 0 },
+    recipientName: { type: String },
+    recipientPhone: { type: String },
+    recipientAddress: { type: String },
+    packedItemIds: [{ type: String }],
+  },
+
   deliveryLocation: {
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
