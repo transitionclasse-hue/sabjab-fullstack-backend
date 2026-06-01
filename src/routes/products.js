@@ -1,6 +1,6 @@
 import { getAllCategories, getCategoriesBySuperCategoryId } from "../controllers/product/category.js"; //
 import { getAllSubCategories, getSubCategoriesByCategoryId } from "../controllers/product/subCategory.js"; //
-import { getProductsByCategoryId, getAllProducts, getProductById, searchProducts } from "../controllers/product/product.js";
+import { getProductsByCategoryId, getAllProducts, getProductById, searchProducts, validateCart } from "../controllers/product/product.js";
 import { uploadSellerProduct, getMySellerProducts, getPendingSellerProducts, approveSellerProduct } from "../controllers/product/sellerProduct.js";
 import { verifyToken } from "../middleware/auth.js";
 export const categoryRoutes = async (fastify, options) => {
@@ -16,6 +16,7 @@ export const productRoutes = async (fastify, options) => {
     fastify.get("/products/:categoryId", getProductsByCategoryId);
     fastify.get("/products/search", searchProducts);
     fastify.get("/product/:id", getProductById);
+    fastify.post("/products/validate-cart", validateCart);
 
     // Seller Product Routes
     fastify.post("/seller/products", { preHandler: [verifyToken] }, uploadSellerProduct);
@@ -25,3 +26,4 @@ export const productRoutes = async (fastify, options) => {
     fastify.get("/admin/seller-products/pending", { preHandler: [verifyToken] }, getPendingSellerProducts);
     fastify.put("/admin/seller-products/:id/approve", { preHandler: [verifyToken] }, approveSellerProduct);
 };
+

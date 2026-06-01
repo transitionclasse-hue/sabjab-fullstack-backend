@@ -226,3 +226,94 @@ export const createBulkProducts = async (req, reply) => {
         return reply.code(500).send({ message: "An error occurred during bulk product creation", error: error.message });
     }
 };
+
+export const validateCart = async (req, reply) => {
+    try {
+        const { items } = req.body || {};
+        if (!Array.isArray(items) || items.length === 0) {
+            return reply.send({ success: true, unavailableItems: [] });
+        }
+
+        const productIds = items.map(item => item.productId).filter(Boolean);
+        const liveVisibilityFilter = await getLiveVisibilityFilter();
+        
+        // Find all products in the cart that are approved and live
+        const products = await Product.find({
+            _id: { $in: productIds },
+            isApproved: true,
+            $and: [liveVisibilityFilter],
+        }).select("-costPrice").exec();
+
+        const unavailableItems = [];
+
+        for (const item of items) {
+            const product = products.find(p => String(p._id) === String(item.productId));
+            
+            if (!product) {
+                // Product deleted, unapproved, or invisible
+                unavailableItems.push({
+                    id: item.id,
+                    productId: item.productId,
+                    name: item.name,
+                    reason: "deleted"
+                });
+                continue;
+            }
+
+            if (product.isAvailable === false) {
+                unavailableItems.push({
+                    id: item.id,
+                    productId: item.productId,
+                    name: item.name,
+                    reason: "unavailable"
+                });
+                continue;
+            }
+
+            // Check variation if item has a variation
+            if (item.variation) {
+                const variationName = typeof item.variation === 'string' ? item.variation : item.variation.name;
+                const dbVariation = product.variations.find(v => v.name === variationName);
+                
+                if (!dbVariation) {
+                    unavailableItems.push({
+                        id: item.id,
+                        productId: item.productId,
+                        name: item.name,
+                        reason: "variation_deleted"
+                    });
+                } else if (dbVariation.isAvailable === false) {
+                    unavailableItems.push({
+                        id: item.id,
+                        productId: item.productId,
+                        name: item.name,
+                        reason: "unavailable"
+                    });
+                } else if (dbVariation.stock <= 0) {
+                    unavailableItems.push({
+                        id: item.id,
+                        productId: item.productId,
+                        name: item.name,
+                        reason: "out_of_stock"
+                    });
+                }
+            } else {
+                // Check main product stock
+                if (product.stock <= 0) {
+                    unavailableItems.push({
+                        id: item.id,
+                        productId: item.productId,
+                        name: item.name,
+                        reason: "out_of_stock"
+                    });
+                }
+            }
+        }
+
+        return reply.send({ success: true, unavailableItems });
+    } catch (error) {
+        console.error("Cart validation error:", error);
+        return reply.status(500).send({ message: "An error occurred during cart validation", error: error.message });
+    }
+};
+
