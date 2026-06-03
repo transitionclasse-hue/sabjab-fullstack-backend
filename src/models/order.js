@@ -108,6 +108,7 @@ const orderSchema = new mongoose.Schema({
     recipientPhone: { type: String },
     recipientAddress: { type: String },
     packedItemIds: [{ type: String }],
+    giftMessage: { type: String, default: "" },
   },
 
   deliveryLocation: {
