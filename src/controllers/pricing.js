@@ -63,6 +63,7 @@ const DEFAULT_PRICING_CONFIG = {
   driverIncentiveSlots: [],
   gstDetailsEnabled: false,
   giftPackagingFee: 30,
+  themeWaveEffectEnabled: false,
 };
 
 const FOOTER_STYLES = new Set(["standard", "floating", "minimal", "premium", "ultra"]);
@@ -444,6 +445,7 @@ export const updatePricingConfig = async (req, reply) => {
       consumerOnlinePaymentMode: body.consumerOnlinePaymentMode || "razorpay",
       gstDetailsEnabled: body.gstDetailsEnabled !== undefined ? Boolean(body.gstDetailsEnabled) : false,
       giftPackagingFee: body.giftPackagingFee !== undefined ? Math.max(0, toNumber(body.giftPackagingFee, 30)) : 30,
+      themeWaveEffectEnabled: body.themeWaveEffectEnabled !== undefined ? Boolean(body.themeWaveEffectEnabled) : false,
     };
 
     const config = await PricingConfig.findOneAndUpdate(

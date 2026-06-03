@@ -106,6 +106,7 @@ const pricingConfigSchema = new mongoose.Schema(
     driverQrMode: { type: String, enum: ["direct_upi", "razorpay"], default: "direct_upi" },
     gstDetailsEnabled: { type: Boolean, default: false },
     giftPackagingFee: { type: Number, default: 30, min: 0 },
+    themeWaveEffectEnabled: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
