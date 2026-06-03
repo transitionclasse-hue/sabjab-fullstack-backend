@@ -523,7 +523,7 @@ export const registerDriverDetails = async (req, reply) => {
 
 export const updateCustomerProfile = async (req, reply) => {
   try {
-    const { name, dateOfBirth, email, notificationsEnabled, pushToken, password, sensitiveMode, liveLocation, address } = req.body;
+    const { name, dateOfBirth, email, notificationsEnabled, pushToken, password, sensitiveMode, liveLocation, address, gstNumber, businessName, businessAddress } = req.body;
     const userId = req.user.userId;
 
     const customer = await Customer.findById(userId);
@@ -544,6 +544,10 @@ export const updateCustomerProfile = async (req, reply) => {
     } else if (sensitiveMode === 'true' || sensitiveMode === 'false') {
       customer.sensitiveMode = sensitiveMode === 'true';
     }
+
+    if (gstNumber !== undefined) customer.gstNumber = gstNumber;
+    if (businessName !== undefined) customer.businessName = businessName;
+    if (businessAddress !== undefined) customer.businessAddress = businessAddress;
 
     if (dateOfBirth) {
       // Robust DD/MM/YYYY parsing

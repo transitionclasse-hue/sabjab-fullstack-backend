@@ -522,6 +522,7 @@ export async function buildAdminRouter(app) {
             "isInsightsVisible", 
             "isSupportVisible", 
             "isVersionVisible",
+            "isGstDetailsVisible",
             "backgroundColor", "onBackgroundTextColor", "accentColor",
             "backgroundDarkColor", "onBackgroundTextDarkColor", "accentDarkColor"
           ],
@@ -536,6 +537,7 @@ export async function buildAdminRouter(app) {
             isInsightsVisible: { label: "Visible: Insights (Spending Analysis)" },
             isSupportVisible: { label: "Visible: Support & Legal" },
             isVersionVisible: { label: "Visible: Version Info" },
+            isGstDetailsVisible: { label: "Visible: Business GST Details" },
             
             backgroundColor: { label: "Background color (Light Mode)" },
             onBackgroundTextColor: { label: "Text color (Light Mode)" },

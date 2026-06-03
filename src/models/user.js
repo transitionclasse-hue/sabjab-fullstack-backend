@@ -75,6 +75,9 @@ const customerSchema = new mongoose.Schema({
     }
   ],
   sensitiveMode: { type: Boolean, default: true },
+  gstNumber: { type: String },
+  businessName: { type: String },
+  businessAddress: { type: String },
   lastActive: { type: Date, default: Date.now },
   appUninstalled: { type: Boolean, default: false },
 }, { timestamps: true });

@@ -11,6 +11,7 @@ const profileConfigSchema = new mongoose.Schema({
     isSupportVisible: { type: Boolean, default: true },
     isVersionVisible: { type: Boolean, default: true },
     isQuickActionsVisible: { type: Boolean, default: true },
+    isGstDetailsVisible: { type: Boolean, default: true },
     
     // SabJab Samachar
     isSamacharVisible: { type: Boolean, default: true },

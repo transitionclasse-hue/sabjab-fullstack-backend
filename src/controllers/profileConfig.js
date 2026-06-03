@@ -11,6 +11,7 @@ const DEFAULT_CONFIG = {
     isSupportVisible: true,
     isVersionVisible: true,
     isQuickActionsVisible: true,
+    isGstDetailsVisible: true,
     isSamacharVisible: true,
     samacharUrl: "https://sabjab.com/news",
     samacharTitle: "SabJab Samachar",
