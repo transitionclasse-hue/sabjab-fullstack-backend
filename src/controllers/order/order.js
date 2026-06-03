@@ -926,16 +926,38 @@ export const updateOrderStatus = async (req, reply) => {
                         if (customer?.referredBy) {
                             const orderCount = await Order.countDocuments({ customer: order.customer, status: "delivered" });
                             if (orderCount === 1) {
-                                const referral = await Referral.findOne({ referee: order.customer, bonusesAwarded: false });
+                                const referral = await Referral.findOne({ referrer: customer.referredBy });
                                 if (referral && gpConfig?.earnRules?.referral?.enabled) {
                                     const rGP = await GreenPoints.getOrCreate(referral.referrer);
                                     await rGP.earnPoints("referral", referral.referrerPoints, `Referral bonus`, referral.referralCode);
                                     const refGP = await GreenPoints.getOrCreate(order.customer);
                                     await refGP.earnPoints("referral", referral.refereePoints, `Welcome bonus`, referral.referralCode);
+                                    
+                                    const WalletTransaction = (await import("../../models/walletTransaction.js")).default;
+                                    
+                                    // Referrer Coins
+                                    await WalletTransaction.create({
+                                        customer: referral.referrer,
+                                        amount: referral.referrerPoints,
+                                        type: "credit",
+                                        txnType: "referral_bonus",
+                                        description: `Referral bonus for order by ${customer.name || customer.phone || 'a friend'}`,
+                                        status: "completed"
+                                    });
+
+                                    // Referee Coins
+                                    await WalletTransaction.create({
+                                        customer: order.customer,
+                                        amount: referral.refereePoints,
+                                        type: "credit",
+                                        txnType: "referral_bonus",
+                                        description: `Referral welcome bonus for first order`,
+                                        status: "completed"
+                                    });
+
                                     await Promise.all([
                                         Customer.findByIdAndUpdate(referral.referrer, { greenPointsBalance: rGP.totalBalance }),
-                                        Customer.findByIdAndUpdate(order.customer, { greenPointsBalance: refGP.totalBalance }),
-                                        referral.markBonusesAwarded()
+                                        Customer.findByIdAndUpdate(order.customer, { greenPointsBalance: refGP.totalBalance })
                                     ]);
                                 }
                             }

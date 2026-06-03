@@ -2,6 +2,7 @@ import Referral from "../models/referral.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import { Customer } from "../models/user.js";
+import WalletTransaction from "../models/walletTransaction.js";
 
 // =====================================================
 // GENERATE REFERRAL CODE
@@ -52,10 +53,7 @@ export const getReferralInfo = async (req, reply) => {
   try {
     const { userId } = req.user;
 
-    const referral = await Referral.findOne({ referrer: userId }).populate({
-      path: "referee",
-      select: "name phone email",
-    });
+    const referral = await Referral.findOne({ referrer: userId });
 
     if (!referral) {
       return reply.send({
@@ -65,16 +63,46 @@ export const getReferralInfo = async (req, reply) => {
       });
     }
 
+    // Fetch all customers referred by this user
+    const referredUsers = await Customer.find({ referredBy: userId })
+      .select("name phone email createdAt")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const config = await GreenPointsConfig.getConfig();
+    const isSignupTrigger = config?.earnRules?.referral?.trigger === "signup";
+
+    const referredUsersWithStatus = await Promise.all(
+      referredUsers.map(async (u) => {
+        if (isSignupTrigger) {
+          return {
+            name: u.name || "Friend",
+            phone: u.phone ? String(u.phone).replace(/(\d{3})\d+(\d{3})/, "$1****$2") : "N/A",
+            joinedAt: u.createdAt,
+            status: "Coins Credited"
+          };
+        } else {
+          const Order = (await import("../models/order.js")).default;
+          const orderCount = await Order.countDocuments({ customer: u._id, status: "delivered" });
+          return {
+            name: u.name || "Friend",
+            phone: u.phone ? String(u.phone).replace(/(\d{3})\d+(\d{3})/, "$1****$2") : "N/A",
+            joinedAt: u.createdAt,
+            status: orderCount > 0 ? "Coins Credited" : "Joined (Pending Purchase)"
+          };
+        }
+      })
+    );
+
     return reply.send({
       success: true,
       hasCode: true,
       referralCode: referral.referralCode,
       status: referral.status,
-      referee: referral.referee ? { name: referral.referee.name, phone: referral.referee.phone } : null,
       pointsEarned: referral.referrerPoints,
-      bonusAwarded: referral.bonusesAwarded,
       createdAt: referral.createdAt,
       expiresAt: referral.expiresAt,
+      referredUsers: referredUsersWithStatus,
     });
   } catch (error) {
     req.log.error(error);
@@ -109,10 +137,17 @@ export const applyReferralCode = async (req, reply) => {
       });
     }
 
-    // Check if already used
-    if (referral.status === "used") {
+    // Check if referee already has a referrer
+    const referee = await Customer.findById(refereeId);
+    if (!referee) {
+      return reply.code(404).send({
+        message: "Referee customer not found",
+      });
+    }
+
+    if (referee.referredBy) {
       return reply.code(400).send({
-        message: "This referral code has already been used",
+        message: "You have already applied a referral code",
       });
     }
 
@@ -132,9 +167,6 @@ export const applyReferralCode = async (req, reply) => {
       });
     }
 
-    // Mark as used
-    await referral.markAsUsed(refereeId);
-
     // Get config
     const config = await GreenPointsConfig.getConfig();
     const referralSettings = config.earnRules.referral;
@@ -153,6 +185,7 @@ export const applyReferralCode = async (req, reply) => {
       let refereePointsAwarded = 0;
 
       if (awardToReferrer) {
+        // Green Points
         const referrerGP = await GreenPoints.getOrCreate(referral.referrer);
         await referrerGP.earnPoints(
           "referral",
@@ -163,10 +196,22 @@ export const applyReferralCode = async (req, reply) => {
         await Customer.findByIdAndUpdate(referral.referrer, {
           greenPointsBalance: referrerGP.totalBalance,
         });
+
+        // SabJab Coins (WalletTransaction)
+        await WalletTransaction.create({
+          customer: referral.referrer,
+          amount: referral.referrerPoints,
+          type: "credit",
+          txnType: "referral_bonus",
+          description: `Referral bonus for inviting ${referee.name || referee.phone || 'a friend'}`,
+          status: "completed"
+        });
+
         referrerPointsAwarded = referral.referrerPoints;
       }
 
       if (awardToReferee) {
+        // Green Points
         const refereeGP = await GreenPoints.getOrCreate(refereeId);
         await refereeGP.earnPoints(
           "referral",
@@ -177,11 +222,19 @@ export const applyReferralCode = async (req, reply) => {
         await Customer.findByIdAndUpdate(refereeId, {
           greenPointsBalance: refereeGP.totalBalance,
         });
+
+        // SabJab Coins (WalletTransaction)
+        await WalletTransaction.create({
+          customer: refereeId,
+          amount: referral.refereePoints,
+          type: "credit",
+          txnType: "referral_bonus",
+          description: `Referral sign-up bonus`,
+          status: "completed"
+        });
+
         refereePointsAwarded = referral.refereePoints;
       }
-
-      // Mark bonuses as awarded in reference record
-      await referral.markBonusesAwarded();
 
       return reply.send({
         success: true,
