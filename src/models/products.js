@@ -65,6 +65,7 @@ const productSchema = new mongoose.Schema({
   ],
   isSensitive: { type: Boolean, default: false },
   isChoice: { type: Boolean, default: false },
+  isGiftPackaging: { type: Boolean, default: false },
   userStockLimit: { type: Number, default: null },
   deliveryDays: { type: Number, default: 0 },
   shippingCost: { type: Number, default: 0, min: 0 }, // Seller logistics cost
