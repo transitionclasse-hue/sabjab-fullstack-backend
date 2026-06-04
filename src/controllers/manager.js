@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule } from "../models/index.js";
+import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule, Coupon } from "../models/index.js";
 import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
@@ -2020,6 +2020,47 @@ export const updateBawalConfig = async (req, reply) => {
     return reply.send({ success: true, message: "Bawal config updated successfully", data: config.value });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to update Bawal config", error: error.message });
+  }
+};
+
+export const getManagerCoupons = async (req, reply) => {
+  try {
+    const coupons = await Coupon.find({}).sort({ createdAt: -1 });
+    return reply.send(coupons);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch coupons", error: error.message });
+  }
+};
+
+export const createManagerCoupon = async (req, reply) => {
+  try {
+    const coupon = new Coupon(req.body);
+    await coupon.save();
+    return reply.status(201).send(coupon);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to create coupon", error: error.message });
+  }
+};
+
+export const updateManagerCoupon = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const coupon = await Coupon.findByIdAndUpdate(id, req.body, { new: true });
+    if (!coupon) return reply.status(404).send({ message: "Coupon not found" });
+    return reply.send(coupon);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update coupon", error: error.message });
+  }
+};
+
+export const deleteManagerCoupon = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const coupon = await Coupon.findByIdAndDelete(id);
+    if (!coupon) return reply.status(404).send({ message: "Coupon not found" });
+    return reply.send({ message: "Coupon deleted successfully" });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to delete coupon", error: error.message });
   }
 };
 

@@ -58,6 +58,10 @@ import {
   updateAssignmentTimeoutConfig,
   getBawalConfig,
   updateBawalConfig,
+  getManagerCoupons,
+  createManagerCoupon,
+  updateManagerCoupon,
+  deleteManagerCoupon,
 } from "../controllers/manager.js";
 
 import { getMediaLibrary, deleteMedia, bulkDeleteMedia } from "../controllers/mediaController.js";
@@ -227,4 +231,10 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/slot-promotions", AUTH, createSlotPromotion);
   fastify.delete("/manager/slot-promotions/:id", AUTH, deleteSlotPromotion);
   fastify.get("/manager/slot-orders", AUTH, getSlotOrders);
+
+  // Coupon Management CRUD
+  fastify.get("/manager/coupons", AUTH, getManagerCoupons);
+  fastify.post("/manager/coupons", AUTH, createManagerCoupon);
+  fastify.put("/manager/coupons/:id", AUTH, updateManagerCoupon);
+  fastify.delete("/manager/coupons/:id", AUTH, deleteManagerCoupon);
 };
