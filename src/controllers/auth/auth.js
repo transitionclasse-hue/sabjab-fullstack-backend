@@ -743,15 +743,34 @@ export const updateAdminProfile = async (req, reply) => {
 export const getFriends = async (req, reply) => {
   try {
     const userId = req.user.userId;
-    const user = await Customer.findById(userId).populate("following", "name username phone email");
-    
+    const { search } = req.query;
+
+    let query = { _id: { $ne: userId }, role: "Customer" };
+
+    if (search && String(search).trim() !== "") {
+      const searchStr = String(search).trim();
+      const isNum = !isNaN(Number(searchStr)) && searchStr.length >= 3;
+      
+      query.$or = [
+        { name: new RegExp(searchStr, "i") },
+        { username: new RegExp(searchStr, "i") }
+      ];
+      
+      if (isNum) {
+        query.$or.push({ phone: Number(searchStr) });
+      }
+    }
+
     let friends = [];
-    if (user && user.following && user.following.length > 0) {
-      friends = user.following;
+    if (search && String(search).trim() !== "") {
+      friends = await Customer.find(query).select("name username phone email").limit(20);
     } else {
-      friends = await Customer.find({ _id: { $ne: userId }, role: "Customer" })
-        .select("name username phone email")
-        .limit(20);
+      const user = await Customer.findById(userId).populate("following", "name username phone email");
+      if (user && user.following && user.following.length > 0) {
+        friends = user.following;
+      } else {
+        friends = await Customer.find(query).select("name username phone email").limit(20);
+      }
     }
 
     const emojis = ["👩‍🦰", "👨", "🧑", "👩", "🧔", "👱‍♂️", "👱‍♀️", "👵", "👴", "👧"];
