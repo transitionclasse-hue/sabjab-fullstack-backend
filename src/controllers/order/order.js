@@ -342,25 +342,39 @@ export const createOrder = async (req, reply) => {
                 ]
             });
 
-            if (coupon) {
-                // Calculate item total for minOrderAmount check
+            if (!coupon) {
+                return reply.status(400).send({ message: "This coupon doesn't exist, has expired, or is fully used." });
+            }
 
-                if (!coupon.minOrderAmount || itemsTotal >= coupon.minOrderAmount) {
-                    validatedCouponCode = coupon.code;
-                    if (coupon.discountType === "percentage") {
-                        discountAmount = (itemsTotal * coupon.discountValue) / 100;
-                        if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
-                            discountAmount = coupon.maxDiscount;
-                        }
-                    } else {
-                        discountAmount = coupon.discountValue;
-                    }
-
-                    // Increment usedCount
-                    coupon.usedCount += 1;
-                    await coupon.save();
+            // Check oncePerUser
+            if (coupon.oncePerUser) {
+                const existingOrder = await Order.findOne({
+                    customer: userId,
+                    couponCode: coupon.code,
+                    status: { $ne: "cancelled" }
+                });
+                if (existingOrder) {
+                    return reply.status(400).send({ message: "This coupon can only be used once per customer account." });
                 }
             }
+
+            if (coupon.minOrderAmount && itemsTotal < coupon.minOrderAmount) {
+                return reply.status(400).send({ message: `Minimum order amount of ₹${coupon.minOrderAmount} required for this coupon.` });
+            }
+
+            validatedCouponCode = coupon.code;
+            if (coupon.discountType === "percentage") {
+                discountAmount = (itemsTotal * coupon.discountValue) / 100;
+                if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
+                    discountAmount = coupon.maxDiscount;
+                }
+            } else {
+                discountAmount = coupon.discountValue;
+            }
+
+            // Increment usedCount
+            coupon.usedCount += 1;
+            await coupon.save();
         }
         // -------------------------
 

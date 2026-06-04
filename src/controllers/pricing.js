@@ -1,5 +1,6 @@
 import PricingConfig from "../models/pricingConfig.js";
 import { SlotPromotion } from "../models/slotPromotion.js";
+import jwt from "jsonwebtoken";
 
 const DEFAULT_PRICING_CONFIG = {
   key: "primary",
@@ -302,6 +303,18 @@ export const estimatePricing = async (req, reply) => {
       { upsert: true, new: true }
     );
 
+    let userId = null;
+    try {
+      const authHeader = req.headers["authorization"];
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        userId = decoded.userId;
+      }
+    } catch (e) {
+      // Ignore token verification errors for pricing estimation
+    }
+
     let coupon = null;
     if (couponCode) {
       const { Coupon } = await import("../models/coupon.js");
@@ -314,6 +327,18 @@ export const estimatePricing = async (req, reply) => {
           { $expr: { $lt: ["$usedCount", "$usageLimit"] } }
         ]
       });
+
+      if (coupon && coupon.oncePerUser && userId) {
+        const { Order } = await import("../models/index.js");
+        const existingOrder = await Order.findOne({
+          customer: userId,
+          couponCode: coupon.code,
+          status: { $ne: "cancelled" }
+        });
+        if (existingOrder) {
+          coupon = null;
+        }
+      }
 
       if (coupon && coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
         coupon = null;
