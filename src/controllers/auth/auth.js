@@ -739,3 +739,47 @@ export const updateAdminProfile = async (req, reply) => {
     return reply.status(500).send({ message: "Error updating admin profile", error: error.message });
   }
 };
+
+export const getFriends = async (req, reply) => {
+  try {
+    const userId = req.user.userId;
+    const user = await Customer.findById(userId).populate("following", "name username phone email");
+    
+    let friends = [];
+    if (user && user.following && user.following.length > 0) {
+      friends = user.following;
+    } else {
+      friends = await Customer.find({ _id: { $ne: userId }, role: "Customer" })
+        .select("name username phone email")
+        .limit(20);
+    }
+
+    const emojis = ["👩‍🦰", "👨", "🧑", "👩", "🧔", "👱‍♂️", "👱‍♀️", "👵", "👴", "👧"];
+    const formattedFriends = friends.map((f) => {
+      const friendObj = f.toObject ? f.toObject() : f;
+      const idStr = String(friendObj._id);
+      let hash = 0;
+      for (let i = 0; i < idStr.length; i++) {
+        hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const emojiIndex = Math.abs(hash) % emojis.length;
+      
+      let username = friendObj.username || friendObj.name || "friend";
+      if (!username.startsWith("@")) {
+        username = "@" + username.toLowerCase().replace(/\s+/g, "_");
+      }
+
+      return {
+        _id: friendObj._id,
+        name: friendObj.name || username,
+        username,
+        avatar: emojis[emojiIndex],
+      };
+    });
+
+    return reply.send({ success: true, friends: formattedFriends });
+  } catch (error) {
+    console.error("❌ GET FRIENDS ERROR:", error);
+    return reply.status(500).send({ message: "Error fetching friends", error: error.message });
+  }
+};

@@ -15,7 +15,8 @@ import {
     verifyDriverOtp,
     registerDriverDetails,
     updateDriverProfile,
-    checkDriverPhone
+    checkDriverPhone,
+    getFriends
 } from "../controllers/auth/auth.js";
 import { verifyToken, verifyDeliveryPartner } from "../middleware/auth.js";
 import {
@@ -33,6 +34,7 @@ export const authRoutes = async (fastify) => {
     fastify.post("/customer/verify-otp", verifyOtp);
     fastify.post("/customer/check-phone", checkPhone);
     fastify.post("/customer/login-password", loginPassword);
+    fastify.get("/customer/friends", { preHandler: [verifyToken] }, getFriends);
 
     fastify.post("/delivery/login", loginDeliveryPartner);
     fastify.post("/delivery/request-otp", requestDriverOtp);

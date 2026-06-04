@@ -26,7 +26,7 @@ const walletTransactionSchema = new mongoose.Schema(
         },
         txnType: {
             type: String,
-            enum: ["delivery_fee", "cod_collection", "cod_settlement", "payout", "customer_order", "refund", "referral_bonus", "green_points_redemption", "reward_coins", "return_deduction", "manual_adjustment", "seller_sale", "reel_commission"],
+            enum: ["delivery_fee", "cod_collection", "cod_settlement", "payout", "customer_order", "refund", "referral_bonus", "green_points_redemption", "reward_coins", "return_deduction", "manual_adjustment", "seller_sale", "reel_commission", "split_bill"],
             default: "customer_order",
         },
         status: {
