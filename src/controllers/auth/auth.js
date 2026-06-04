@@ -1,4 +1,5 @@
 import { Customer, DeliveryPartner, Admin, Seller } from '../../models/user.js';
+import GlobalConfig from '../../models/globalConfig.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import dotenv from 'dotenv';
@@ -745,32 +746,26 @@ export const getFriends = async (req, reply) => {
     const userId = req.user.userId;
     const { search } = req.query;
 
-    let query = { _id: { $ne: userId }, role: "Customer" };
+    // Check if Bawal is enabled in global configurations
+    const bawalConfig = await GlobalConfig.findOne({ key: "bawal_config" }).lean();
+    const bawalEnabled = !bawalConfig || bawalConfig.value?.enabled !== false;
 
-    if (search && String(search).trim() !== "") {
-      const searchStr = String(search).trim();
-      const isNum = !isNaN(Number(searchStr)) && searchStr.length >= 3;
-      
-      query.$or = [
-        { name: new RegExp(searchStr, "i") },
-        { username: new RegExp(searchStr, "i") }
-      ];
-      
-      if (isNum) {
-        query.$or.push({ phone: Number(searchStr) });
-      }
+    if (!bawalEnabled) {
+      return reply.send({ success: true, bawalEnabled: false, friends: [] });
     }
 
-    let friends = [];
+    const user = await Customer.findById(userId).populate("following", "name username phone email");
+    let friends = (user && user.following) ? user.following : [];
+
+    // Filter strictly followed friends if search query exists
     if (search && String(search).trim() !== "") {
-      friends = await Customer.find(query).select("name username phone email").limit(20);
-    } else {
-      const user = await Customer.findById(userId).populate("following", "name username phone email");
-      if (user && user.following && user.following.length > 0) {
-        friends = user.following;
-      } else {
-        friends = await Customer.find(query).select("name username phone email").limit(20);
-      }
+      const searchStr = String(search).trim().toLowerCase();
+      friends = friends.filter(friend => {
+        const nameMatch = friend.name && friend.name.toLowerCase().includes(searchStr);
+        const usernameMatch = friend.username && friend.username.toLowerCase().includes(searchStr);
+        const phoneMatch = friend.phone && String(friend.phone).includes(searchStr);
+        return nameMatch || usernameMatch || phoneMatch;
+      });
     }
 
     const emojis = ["👩‍🦰", "👨", "🧑", "👩", "🧔", "👱‍♂️", "👱‍♀️", "👵", "👴", "👧"];
@@ -796,7 +791,7 @@ export const getFriends = async (req, reply) => {
       };
     });
 
-    return reply.send({ success: true, friends: formattedFriends });
+    return reply.send({ success: true, bawalEnabled: true, friends: formattedFriends });
   } catch (error) {
     console.error("❌ GET FRIENDS ERROR:", error);
     return reply.status(500).send({ message: "Error fetching friends", error: error.message });
