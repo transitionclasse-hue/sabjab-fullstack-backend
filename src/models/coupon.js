@@ -51,7 +51,7 @@ const couponSchema = new mongoose.Schema(
         },
         colorTheme: {
             type: String,
-            enum: ["purple", "blue", "gold", "rose", "green", "slate"],
+            enum: ["purple", "blue", "gold", "rose", "green", "slate", "orange", "teal", "crimson"],
             default: "purple",
         },
     },
