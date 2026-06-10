@@ -136,7 +136,7 @@ export const createOrder = async (req, reply) => {
 
             const acceptChoiceForSuggestion = acceptChoiceReal && hasChoiceProduct;
 
-            if (storeConfig.acceptOrders === false || (!acceptInstant && !acceptSlot && !acceptChoiceForSuggestion)) {
+            if (storeConfig.acceptOrders === false) {
                 return reply.status(400).send({ message: "Store is closed and fresh order not accepting" });
             }
 
