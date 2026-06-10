@@ -318,6 +318,10 @@ export async function buildAdminRouter(app) {
           closingTime: "22:00",
           alertBeforeMinutes: 30,
           note: "",
+          acceptOrders: true,
+          acceptInstantOrders: true,
+          acceptSlotOrders: true,
+          acceptChoiceOrders: true,
         },
       },
       { upsert: true, new: true }

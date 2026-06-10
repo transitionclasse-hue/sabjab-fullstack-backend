@@ -123,8 +123,51 @@ export const createOrder = async (req, reply) => {
 
         // --- STORE STATUS VALIDATION ---
         const storeConfig = await StoreStatus.findOne({ key: "primary" });
-        if (storeConfig && storeConfig.acceptOrders === false) {
-            return reply.status(400).send({ message: "Store is currently not accepting new orders." });
+        if (storeConfig) {
+            const acceptInstant = storeConfig.acceptInstantOrders !== false;
+            const acceptSlot = storeConfig.acceptSlotOrders !== false;
+            const acceptChoice = storeConfig.acceptChoiceOrders !== false;
+
+            if (storeConfig.acceptOrders === false || (!acceptInstant && !acceptSlot && !acceptChoice)) {
+                return reply.status(400).send({ message: "Store is closed and fresh order not accepting" });
+            }
+
+            const isChoice = orderType === "choice";
+            const isSlot = deliveryMode === "slot";
+            const isInstant = !isChoice && !isSlot;
+
+            if (isInstant && !acceptInstant) {
+                const optionsOn = [];
+                if (acceptSlot) optionsOn.push("slot");
+                if (acceptChoice) optionsOn.push("choice");
+                let msg = "Store is closed for instant delivery.";
+                if (optionsOn.length > 0) {
+                    msg += ` Instead, try ${optionsOn.join(" or ")} delivery.`;
+                }
+                return reply.status(400).send({ message: msg });
+            }
+
+            if (isSlot && !acceptSlot) {
+                const optionsOn = [];
+                if (acceptInstant) optionsOn.push("instant");
+                if (acceptChoice) optionsOn.push("choice");
+                let msg = "Store is closed for slot delivery.";
+                if (optionsOn.length > 0) {
+                    msg += ` Instead, try ${optionsOn.join(" or ")} delivery.`;
+                }
+                return reply.status(400).send({ message: msg });
+            }
+
+            if (isChoice && !acceptChoice) {
+                const optionsOn = [];
+                if (acceptInstant) optionsOn.push("instant");
+                if (acceptSlot) optionsOn.push("slot");
+                let msg = "Store is closed for choice delivery.";
+                if (optionsOn.length > 0) {
+                    msg += ` Instead, try ${optionsOn.join(" or ")} delivery.`;
+                }
+                return reply.status(400).send({ message: msg });
+            }
         }
         // -------------------------------
 

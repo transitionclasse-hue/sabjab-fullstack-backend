@@ -7,6 +7,10 @@ const DEFAULT_STORE_STATUS = {
   closingTime: "22:00",
   alertBeforeMinutes: 30,
   note: "",
+  acceptOrders: true,
+  acceptInstantOrders: true,
+  acceptSlotOrders: true,
+  acceptChoiceOrders: true,
 };
 
 const formatIn = (value) => {
@@ -87,6 +91,9 @@ export const buildStoreStatusResponse = (config) => {
       etaTextDarkColor: "#ffffff",
       note: config.note || "We are not accepting orders at the moment.",
       acceptOrders: false,
+      acceptInstantOrders: config.acceptInstantOrders !== false,
+      acceptSlotOrders: config.acceptSlotOrders !== false,
+      acceptChoiceOrders: config.acceptChoiceOrders !== false,
       showPrepTime: config.showPrepTime,
       storeName: config.storeName,
       phoneNumber: config.phoneNumber,
@@ -158,6 +165,9 @@ export const buildStoreStatusResponse = (config) => {
     etaTextDarkColor: config.etaTextDarkColor || "#ffffff",
     note: config.note || "",
     acceptOrders: config.acceptOrders !== false,
+    acceptInstantOrders: config.acceptInstantOrders !== false,
+    acceptSlotOrders: config.acceptSlotOrders !== false,
+    acceptChoiceOrders: config.acceptChoiceOrders !== false,
     showPrepTime: config.showPrepTime !== false,
     storeName: config.storeName || "SabJab Store",
     phoneNumber: config.phoneNumber || "",
@@ -189,6 +199,15 @@ export const updateStoreStatus = async (req, reply) => {
     }
     if (payload.acceptOrders !== undefined) {
       update.acceptOrders = !!payload.acceptOrders;
+    }
+    if (payload.acceptInstantOrders !== undefined) {
+      update.acceptInstantOrders = !!payload.acceptInstantOrders;
+    }
+    if (payload.acceptSlotOrders !== undefined) {
+      update.acceptSlotOrders = !!payload.acceptSlotOrders;
+    }
+    if (payload.acceptChoiceOrders !== undefined) {
+      update.acceptChoiceOrders = !!payload.acceptChoiceOrders;
     }
     if (payload.showPrepTime !== undefined) {
       update.showPrepTime = !!payload.showPrepTime;

@@ -51,6 +51,18 @@ const storeStatusSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    acceptInstantOrders: {
+      type: Boolean,
+      default: true,
+    },
+    acceptSlotOrders: {
+      type: Boolean,
+      default: true,
+    },
+    acceptChoiceOrders: {
+      type: Boolean,
+      default: true,
+    },
     showPrepTime: {
       type: Boolean,
       default: true,
