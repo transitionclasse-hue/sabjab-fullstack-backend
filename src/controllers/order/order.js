@@ -148,9 +148,9 @@ export const createOrder = async (req, reply) => {
                 const optionsOn = [];
                 if (acceptSlot) optionsOn.push("slot");
                 if (acceptChoiceForSuggestion) optionsOn.push("choice");
-                let msg = "Store is closed for instant delivery.";
+                let msg = "Store is currently not accepting new instant orders.";
                 if (optionsOn.length > 0) {
-                    msg += ` Instead, try ${optionsOn.join(" or ")} delivery.`;
+                    msg += ` Instead try ${optionsOn.join(" or ")} delivery.`;
                 }
                 return reply.status(400).send({ message: msg });
             }
@@ -159,9 +159,9 @@ export const createOrder = async (req, reply) => {
                 const optionsOn = [];
                 if (acceptInstant) optionsOn.push("instant");
                 if (acceptChoiceForSuggestion) optionsOn.push("choice");
-                let msg = "Store is closed for slot delivery.";
+                let msg = "Store is currently not accepting new slot orders.";
                 if (optionsOn.length > 0) {
-                    msg += ` Instead, try ${optionsOn.join(" or ")} delivery.`;
+                    msg += ` Instead try ${optionsOn.join(" or ")} delivery.`;
                 }
                 return reply.status(400).send({ message: msg });
             }
@@ -170,9 +170,9 @@ export const createOrder = async (req, reply) => {
                 const optionsOn = [];
                 if (acceptInstant) optionsOn.push("instant");
                 if (acceptSlot) optionsOn.push("slot");
-                let msg = "Store is closed for choice delivery.";
+                let msg = "Store is currently not accepting new choice orders.";
                 if (optionsOn.length > 0) {
-                    msg += ` Instead, try ${optionsOn.join(" or ")} delivery.`;
+                    msg += ` Instead try ${optionsOn.join(" or ")} delivery.`;
                 }
                 return reply.status(400).send({ message: msg });
             }
