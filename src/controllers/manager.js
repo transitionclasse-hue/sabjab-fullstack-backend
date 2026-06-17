@@ -838,19 +838,33 @@ export const getManagerCustomers = async (req, reply) => {
 // =====================================================
 export const getGreenPointsConfig = async (req, reply) => {
   try {
-    let config = await GreenPointsConfig.findOne({});
+    let config = await GreenPointsConfig.findOne({ key: "primary" });
 
     if (!config) {
-      // Return default config if none exists
-      return reply.send({
-        earnRules: [],
-        redeemRules: [],
-        settings: {
-          enabled: true,
-          minRedemptionPoints: 50,
-          bonusPerReferral: 10,
-        },
-      });
+      config = new GreenPointsConfig({ key: "primary" });
+      await config.save();
+    } else {
+      let modified = false;
+      if (!config.settings) {
+        config.settings = {};
+        modified = true;
+      }
+      if (config.settings.enabled === undefined || config.settings.enabled === null) {
+        config.settings.enabled = true;
+        modified = true;
+      }
+      if (config.settings.pointValue === undefined || config.settings.pointValue === null) {
+        config.settings.pointValue = 0.20;
+        modified = true;
+      }
+      if (config.settings.minRedemptionPoints === undefined || config.settings.minRedemptionPoints === null) {
+        config.settings.minRedemptionPoints = 0;
+        modified = true;
+      }
+      if (modified) {
+        config.markModified("settings");
+        await config.save();
+      }
     }
 
     return reply.send(config);
