@@ -492,6 +492,7 @@ export const updatePricingConfig = async (req, reply) => {
       gstDetailsEnabled: body.gstDetailsEnabled !== undefined ? Boolean(body.gstDetailsEnabled) : false,
       giftPackagingFee: body.giftPackagingFee !== undefined ? Math.max(0, toNumber(body.giftPackagingFee, 30)) : 30,
       themeWaveEffectEnabled: body.themeWaveEffectEnabled !== undefined ? Boolean(body.themeWaveEffectEnabled) : false,
+      walletSystemEnabled: body.walletSystemEnabled !== undefined ? Boolean(body.walletSystemEnabled) : true,
     };
 
     const config = await PricingConfig.findOneAndUpdate(
