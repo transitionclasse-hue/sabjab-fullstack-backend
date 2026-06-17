@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule, Coupon } from "../models/index.js";
+import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule, Coupon, Seller } from "../models/index.js";
 import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
@@ -2125,6 +2125,72 @@ export const deleteManagerCoupon = async (req, reply) => {
     return reply.send({ message: "Coupon deleted successfully" });
   } catch (error) {
     return reply.status(500).send({ message: "Failed to delete coupon", error: error.message });
+  }
+};
+
+export const getCustomerWalletHistory = async (req, reply) => {
+  try {
+    const { customerId } = req.params;
+    const history = await WalletTransaction.find({ customer: customerId })
+      .sort({ createdAt: -1 })
+      .limit(100);
+    return reply.send(history);
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch customer wallet history", error: error.message });
+  }
+};
+
+export const deleteWalletTransaction = async (req, reply) => {
+  try {
+    const { transactionId } = req.params;
+
+    const transaction = await WalletTransaction.findById(transactionId);
+    if (!transaction) {
+      return reply.status(404).send({ message: "Transaction not found" });
+    }
+
+    if (transaction.status === "completed") {
+      // Revert balance adjustments
+      if (transaction.deliveryPartner) {
+        const update = {};
+        if (transaction.txnType === "delivery_fee" || transaction.txnType === "payout" || transaction.txnType === "referral_bonus") {
+          const change = transaction.type === "credit" ? -transaction.amount : transaction.amount;
+          update.$inc = { walletBalance: change };
+        } else if (transaction.txnType === "cod_collection" || transaction.txnType === "cod_settlement") {
+          const change = transaction.txnType === "cod_collection" ? -transaction.amount : transaction.amount;
+          update.$inc = { cashInHand: change };
+        }
+        if (Object.keys(update).length > 0) {
+          await DeliveryPartner.findByIdAndUpdate(transaction.deliveryPartner, update);
+        }
+      }
+
+      if (transaction.customer) {
+        const change = transaction.type === "credit" ? -transaction.amount : transaction.amount;
+        await Customer.findByIdAndUpdate(
+          transaction.customer,
+          { $inc: { walletBalance: change } }
+        );
+      }
+
+      if (transaction.seller) {
+        const change = transaction.type === "credit" ? -transaction.amount : transaction.amount;
+        await Seller.findByIdAndUpdate(
+          transaction.seller,
+          { $inc: { walletBalance: change } }
+        );
+      }
+    }
+
+    await WalletTransaction.findByIdAndDelete(transactionId);
+
+    return reply.send({
+      success: true,
+      message: "Wallet transaction deleted and balance reversed successfully"
+    });
+  } catch (error) {
+    console.error("Delete Wallet Transaction Error:", error);
+    return reply.status(500).send({ message: "Failed to delete wallet transaction", error: error.message });
   }
 };
 

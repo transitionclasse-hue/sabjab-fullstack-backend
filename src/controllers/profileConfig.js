@@ -1,4 +1,5 @@
 import ProfileConfig from "../models/profileConfig.js";
+import GlobalConfig from "../models/globalConfig.js";
 
 const DEFAULT_CONFIG = {
     isPreferencesVisible: true,
@@ -12,6 +13,12 @@ const DEFAULT_CONFIG = {
     isVersionVisible: true,
     isQuickActionsVisible: true,
     isGstDetailsVisible: true,
+    isBawalEarningsVisible: true,
+    isPaymentMethodsVisible: true,
+    isRefundStatusVisible: true,
+    isGiftCardsVisible: true,
+    isRewardsCardVisible: true,
+    isSpendingTrendsVisible: true,
     isSamacharVisible: true,
     samacharUrl: "https://sabjab.com/news",
     samacharTitle: "SabJab Samachar",
@@ -33,9 +40,16 @@ export const getProfileConfig = async (req, reply) => {
         // Return defaults merged with stored config to handle newly added schema fields
         const mergedData = config ? { ...DEFAULT_CONFIG, ...config } : DEFAULT_CONFIG;
 
+        // Fetch global bawal config
+        const bawalConfig = await GlobalConfig.findOne({ key: "bawal_config" }).lean();
+        const bawalEnabled = !bawalConfig || bawalConfig.value?.enabled !== false;
+
         return reply.send({
             success: true,
-            data: mergedData
+            data: {
+                ...mergedData,
+                bawalEnabled
+            }
         });
     } catch (error) {
         return reply.status(500).send({

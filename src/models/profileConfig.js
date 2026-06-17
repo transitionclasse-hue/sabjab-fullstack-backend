@@ -13,6 +13,13 @@ const profileConfigSchema = new mongoose.Schema({
     isQuickActionsVisible: { type: Boolean, default: true },
     isGstDetailsVisible: { type: Boolean, default: true },
     
+    // Payments & Money Cards Visibility
+    isBawalEarningsVisible: { type: Boolean, default: true },
+    isPaymentMethodsVisible: { type: Boolean, default: true },
+    isRefundStatusVisible: { type: Boolean, default: true },
+    isGiftCardsVisible: { type: Boolean, default: true },
+    isRewardsCardVisible: { type: Boolean, default: true },
+    isSpendingTrendsVisible: { type: Boolean, default: true },
     // SabJab Samachar
     isSamacharVisible: { type: Boolean, default: true },
     samacharUrl: { type: String, default: "https://sabjab.com/news" },

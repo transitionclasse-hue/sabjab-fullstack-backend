@@ -41,6 +41,8 @@ import {
   updateGlobalCodLimit,
   adjustCustomerWallet,
   adjustCustomerGreenPoints,
+  getCustomerWalletHistory,
+  deleteWalletTransaction,
   getSafeModeConfig,
   updateSafeModeConfig,
   deleteManagerDriver,
@@ -187,6 +189,8 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/finance-history", AUTH, getManagerFinanceHistory);
   fastify.get("/manager/driver-activity", AUTH, getManagerDriverActivity);
   fastify.post("/manager/customers/:customerId/wallet-adjustment", AUTH, adjustCustomerWallet);
+  fastify.get("/manager/customers/:customerId/wallet-history", AUTH, getCustomerWalletHistory);
+  fastify.delete("/manager/wallet-transactions/:transactionId", AUTH, deleteWalletTransaction);
   fastify.post("/manager/customers/:customerId/green-points-adjustment", AUTH, adjustCustomerGreenPoints);
   fastify.post("/manager/profile-config", AUTH, updateProfileConfig);
   fastify.get("/manager/safe-mode-config", AUTH, getSafeModeConfig);
