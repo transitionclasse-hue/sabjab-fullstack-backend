@@ -107,6 +107,7 @@ const pricingConfigSchema = new mongoose.Schema(
     gstDetailsEnabled: { type: Boolean, default: false },
     giftPackagingFee: { type: Number, default: 30, min: 0 },
     themeWaveEffectEnabled: { type: Boolean, default: false },
+    walletSystemEnabled: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

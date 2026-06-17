@@ -65,6 +65,7 @@ const DEFAULT_PRICING_CONFIG = {
   gstDetailsEnabled: false,
   giftPackagingFee: 30,
   themeWaveEffectEnabled: false,
+  walletSystemEnabled: true,
 };
 
 const FOOTER_STYLES = new Set(["standard", "floating", "minimal", "premium", "ultra"]);
@@ -238,7 +239,7 @@ export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'qu
   const grandTotalWithoutWallet = subtotal + feesTotalWithoutWallet;
 
   let appliedWalletAmount = 0;
-  if (toNumber(walletBalance, 0) > 0) {
+  if (config.walletSystemEnabled !== false && toNumber(walletBalance, 0) > 0) {
     appliedWalletAmount = Math.min(toNumber(walletBalance, 0), grandTotalWithoutWallet);
     breakdown.push({
       code: "wallet_deduction",

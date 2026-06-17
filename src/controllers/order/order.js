@@ -501,7 +501,7 @@ export const createOrder = async (req, reply) => {
         }
 
         let walletAmountUsed = 0;
-        if (useWallet) {
+        if (useWallet && pricingConfig?.walletSystemEnabled !== false) {
             const walletBalance = customerData.walletBalance || 0;
             if (walletBalance > 0) {
                 walletAmountUsed = Math.min(walletBalance, finalTotalPrice);
