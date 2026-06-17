@@ -9,6 +9,7 @@ export const getActiveCoupons = async (req, reply) => {
         // 3. Haven't reached usage limit (if applicable)
         const coupons = await Coupon.find({
             isActive: true,
+            isHidden: { $ne: true },
             expirationDate: { $gt: now },
             $or: [
                 { usageLimit: null },
