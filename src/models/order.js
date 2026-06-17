@@ -187,6 +187,8 @@ const orderSchema = new mongoose.Schema({
   codCollected: { type: Number, default: 0 },
   rewardCoinsEarned: { type: Number, default: 0 }, // Amount of SabJab Coins earned from this order
   walletAmountUsed: { type: Number, default: 0 },
+  greenPointsUsed: { type: Number, default: 0 },
+  greenPointsAmountUsed: { type: Number, default: 0 },
 
   deliveryOtp: { type: String },
   isHighValueOrder: { type: Boolean, default: false },

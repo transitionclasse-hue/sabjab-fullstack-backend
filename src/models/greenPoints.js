@@ -24,6 +24,7 @@ const greenPointTransactionSchema = new mongoose.Schema({
       "free_delivery",
       "eco_products",
       "tree_planted",
+      "checkout_redemption",
     ],
     required: true,
   },

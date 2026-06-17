@@ -115,7 +115,7 @@ const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
   return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 };
 
-export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0, walletBalance = 0) => {
+export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0, walletBalance = 0, useGreenPoints = false, greenPointsBalance = 0, greenPointsConfig = null) => {
   const subtotal = Math.max(0, toNumber(itemsTotal, 0));
   const breakdown = [];
 
@@ -235,6 +235,28 @@ export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'qu
     }
   }
 
+  const feesTotalWithoutLoyalty = breakdown.reduce((sum, fee) => sum + toNumber(fee.amount, 0), 0);
+  const grandTotalWithoutLoyalty = subtotal + feesTotalWithoutLoyalty;
+
+  let appliedEcoCoins = 0;
+  let appliedEcoAmount = 0;
+  if (useGreenPoints && greenPointsConfig?.settings?.enabled && toNumber(greenPointsBalance, 0) >= (greenPointsConfig.settings.minRedemptionPoints || 0)) {
+    const pointValue = greenPointsConfig.settings.pointValue !== undefined ? greenPointsConfig.settings.pointValue : 0.20;
+    appliedEcoCoins = Math.min(Math.floor(toNumber(greenPointsBalance, 0)), Math.floor(grandTotalWithoutLoyalty / pointValue));
+    appliedEcoAmount = appliedEcoCoins * pointValue;
+    if (appliedEcoCoins > 0) {
+      breakdown.push({
+        code: "green_points_deduction",
+        label: "Green Points Applied",
+        amount: -appliedEcoAmount,
+        meta: {
+          pointsRedeemed: appliedEcoCoins,
+          pointValue: pointValue
+        }
+      });
+    }
+  }
+
   const feesTotalWithoutWallet = breakdown.reduce((sum, fee) => sum + toNumber(fee.amount, 0), 0);
   const grandTotalWithoutWallet = subtotal + feesTotalWithoutWallet;
 
@@ -255,6 +277,7 @@ export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'qu
     itemsTotal: Number(subtotal.toFixed(2)),
     feesTotal: Number(feesTotal.toFixed(2)),
     grandTotal: Number(grandTotal.toFixed(2)),
+    appliedEcoCoins,
     breakdown: breakdown.map((item) => ({
       ...item,
       amount: Number(toNumber(item.amount, 0).toFixed(2)),
@@ -308,7 +331,7 @@ export const getPricingConfig = async (req, reply) => {
 
 export const estimatePricing = async (req, reply) => {
   try {
-    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot, tipAmount, giftPackagingFee, useWallet } = req.body;
+    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot, tipAmount, giftPackagingFee, useWallet, useGreenPoints } = req.body;
     const subtotal = toNumber(itemsTotal, 0);
 
     const config = await PricingConfig.findOneAndUpdate(
@@ -366,7 +389,17 @@ export const estimatePricing = async (req, reply) => {
       walletBalance = customer?.walletBalance || 0;
     }
 
-    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag), tipAmount, giftPackagingFee, walletBalance);
+    let greenPointsBalance = 0;
+    let greenPointsConfig = null;
+    if (useGreenPoints && userId) {
+      const { default: GP } = await import("../models/greenPoints.js");
+      const { default: GPC } = await import("../models/greenPointsConfig.js");
+      const record = await GP.findOne({ customer: userId });
+      greenPointsBalance = record?.totalBalance || 0;
+      greenPointsConfig = await GPC.getConfig();
+    }
+
+    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag), tipAmount, giftPackagingFee, walletBalance, useGreenPoints, greenPointsBalance, greenPointsConfig);
 
     let slotPromotion = null;
     let slotPromoDiscount = 0;

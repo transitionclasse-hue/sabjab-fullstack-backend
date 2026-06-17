@@ -90,6 +90,9 @@ const greenPointsConfigSchema = new mongoose.Schema(
 
     // System settings
     settings: {
+      enabled: { type: Boolean, default: true },
+      pointValue: { type: Number, default: 0.20 },
+      minRedemptionPoints: { type: Number, default: 0 },
       maxPointsPerOrder: { type: Number, default: 1000 },
       pointsExpiryDays: { type: Number, default: 365 }, // 0 = never expires
       minPointsToRedeem: { type: Number, default: 50 },

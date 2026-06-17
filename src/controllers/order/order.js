@@ -117,7 +117,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging, gstNumber, useWallet } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging, gstNumber, useWallet, useGreenPoints } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -483,6 +483,17 @@ export const createOrder = async (req, reply) => {
         }
 
         const pricingConfig = await PricingConfig.findOne({ key: "primary" });
+
+        let greenPointsBalance = 0;
+        let greenPointsConfig = null;
+        let customerGreenPointsRecord = null;
+
+        if (useGreenPoints) {
+            customerGreenPointsRecord = await GreenPoints.findOne({ customer: userId });
+            greenPointsBalance = customerGreenPointsRecord?.totalBalance || 0;
+            greenPointsConfig = await GreenPointsConfig.getConfig();
+        }
+
         const pricingEstimate = calculateFees(
             pricingConfig,
             itemsTotal,
@@ -491,8 +502,15 @@ export const createOrder = async (req, reply) => {
             Boolean(deliveryInBag),
             Number(tipAmount || 0),
             Number(giftPackaging?.fee || 0),
-            0
+            0,
+            useGreenPoints,
+            greenPointsBalance,
+            greenPointsConfig
         );
+
+        const appliedEcoCoins = pricingEstimate.appliedEcoCoins || 0;
+        const pointValue = greenPointsConfig?.settings?.pointValue !== undefined ? greenPointsConfig.settings.pointValue : 0.20;
+        const appliedEcoAmount = appliedEcoCoins * pointValue;
 
         let finalTotalPrice = pricingEstimate.grandTotal;
 
@@ -547,6 +565,8 @@ export const createOrder = async (req, reply) => {
             branch: resolvedBranchId,
             totalPrice: finalTotalPrice,
             walletAmountUsed: walletAmountUsed,
+            greenPointsUsed: appliedEcoCoins,
+            greenPointsAmountUsed: appliedEcoAmount,
             paymentMethod: resolvedPaymentMethod,
             paymentStatus: resolvedPaymentStatus,
             razorpay_payment_id,
@@ -619,6 +639,18 @@ export const createOrder = async (req, reply) => {
                 description: `Paid using SabJab Wallet for Order #${savedOrder.orderId}`,
                 status: "completed",
                 order: savedOrder._id
+            });
+        }
+
+        if (appliedEcoCoins > 0 && customerGreenPointsRecord) {
+            await customerGreenPointsRecord.redeemPoints(
+                "checkout_redemption",
+                appliedEcoCoins,
+                `Redeemed at checkout for Order #${savedOrder.orderId}`,
+                savedOrder._id
+            );
+            await Customer.findByIdAndUpdate(userId, {
+                greenPointsBalance: customerGreenPointsRecord.totalBalance,
             });
         }
 
