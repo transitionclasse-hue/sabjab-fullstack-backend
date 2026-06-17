@@ -114,7 +114,7 @@ const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
   return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 };
 
-const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0) => {
+export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0, walletBalance = 0) => {
   const subtotal = Math.max(0, toNumber(itemsTotal, 0));
   const breakdown = [];
 
@@ -234,6 +234,19 @@ const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', d
     }
   }
 
+  const feesTotalWithoutWallet = breakdown.reduce((sum, fee) => sum + toNumber(fee.amount, 0), 0);
+  const grandTotalWithoutWallet = subtotal + feesTotalWithoutWallet;
+
+  let appliedWalletAmount = 0;
+  if (toNumber(walletBalance, 0) > 0) {
+    appliedWalletAmount = Math.min(toNumber(walletBalance, 0), grandTotalWithoutWallet);
+    breakdown.push({
+      code: "wallet_deduction",
+      label: "Wallet Balance Applied",
+      amount: -appliedWalletAmount,
+    });
+  }
+
   const feesTotal = breakdown.reduce((sum, fee) => sum + toNumber(fee.amount, 0), 0);
   const grandTotal = subtotal + feesTotal;
 
@@ -294,7 +307,7 @@ export const getPricingConfig = async (req, reply) => {
 
 export const estimatePricing = async (req, reply) => {
   try {
-    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot, tipAmount, giftPackagingFee } = req.body;
+    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot, tipAmount, giftPackagingFee, useWallet } = req.body;
     const subtotal = toNumber(itemsTotal, 0);
 
     const config = await PricingConfig.findOneAndUpdate(
@@ -345,7 +358,14 @@ export const estimatePricing = async (req, reply) => {
       }
     }
 
-    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag), tipAmount, giftPackagingFee);
+    let walletBalance = 0;
+    if (useWallet && userId) {
+      const { Customer } = await import("../models/user.js");
+      const customer = await Customer.findById(userId).select("walletBalance");
+      walletBalance = customer?.walletBalance || 0;
+    }
+
+    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag), tipAmount, giftPackagingFee, walletBalance);
 
     let slotPromotion = null;
     let slotPromoDiscount = 0;

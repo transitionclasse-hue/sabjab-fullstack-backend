@@ -1,6 +1,7 @@
 import { Order, DeliveryPartner, Customer, Branch, Product, Coupon, GreenPoints, GreenPointsConfig, Referral, WalletTransaction, Admin, GlobalConfig, StoreStatus, SlotPromotion } from "../../models/index.js";
 import PricingConfig from "../../models/pricingConfig.js";
 import { sendPushNotification } from "../../utils/notification.js";
+import { calculateFees } from "../pricing.js";
 import { getDistanceKm, isValidLatLng } from "../../utils/geo.js";
 import { computeDriverEarning } from "../../utils/driverEarning.js";
 import crypto from "crypto";
@@ -116,7 +117,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging, gstNumber } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging, gstNumber, useWallet } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -481,6 +482,41 @@ export const createOrder = async (req, reply) => {
             }
         }
 
+        const pricingConfig = await PricingConfig.findOne({ key: "primary" });
+        const pricingEstimate = calculateFees(
+            pricingConfig,
+            itemsTotal,
+            couponCode ? await Coupon.findOne({ code: couponCode.toUpperCase() }) : null,
+            orderType || "quick",
+            Boolean(deliveryInBag),
+            Number(tipAmount || 0),
+            Number(giftPackaging?.fee || 0),
+            0
+        );
+
+        let finalTotalPrice = pricingEstimate.grandTotal;
+
+        if (slotPromotionData && slotPromotionData.promotionType === "discount" && slotPromotionData.discountAmount > 0) {
+            finalTotalPrice = Math.max(0, finalTotalPrice - slotPromotionData.discountAmount);
+        }
+
+        let walletAmountUsed = 0;
+        if (useWallet) {
+            const walletBalance = customerData.walletBalance || 0;
+            if (walletBalance > 0) {
+                walletAmountUsed = Math.min(walletBalance, finalTotalPrice);
+                finalTotalPrice -= walletAmountUsed;
+            }
+        }
+
+        let resolvedPaymentMethod = paymentMethod || "COD";
+        let resolvedPaymentStatus = paymentMethod === "Online" ? "Paid" : (paymentMethod === "Direct_UPI" ? "Pending Verification" : "Pending");
+
+        if (walletAmountUsed > 0 && finalTotalPrice === 0) {
+            resolvedPaymentMethod = "Wallet";
+            resolvedPaymentStatus = "Paid";
+        }
+
         const newOrder = new Order({
             customer: userId,
             slotPromotion: slotPromotionData,
@@ -509,9 +545,10 @@ export const createOrder = async (req, reply) => {
             tipAmount: Number(tipAmount || 0),
             giftPackaging: giftPackaging || { enabled: false, fee: 0 },
             branch: resolvedBranchId,
-            totalPrice: Number(totalAmount),
-            paymentMethod: paymentMethod || "COD",
-            paymentStatus: paymentMethod === "Online" ? "Paid" : (paymentMethod === "Direct_UPI" ? "Pending Verification" : "Pending"),
+            totalPrice: finalTotalPrice,
+            walletAmountUsed: walletAmountUsed,
+            paymentMethod: resolvedPaymentMethod,
+            paymentStatus: resolvedPaymentStatus,
             razorpay_payment_id,
             razorpay_order_id,
             razorpay_signature,
@@ -537,10 +574,10 @@ export const createOrder = async (req, reply) => {
         // --- HIGH VALUE ORDER OTP LOGIC ---
         try {
             const hvc = await GlobalConfig.findOne({ key: "high_value_order_config" });
-            if (hvc?.value?.enabled && totalAmount >= (hvc.value.threshold || 1000)) {
+            if (hvc?.value?.enabled && (finalTotalPrice + walletAmountUsed) >= (hvc.value.threshold || 1000)) {
                 newOrder.isHighValueOrder = true;
                 newOrder.deliveryOtp = Math.floor(100000 + Math.random() * 900000).toString(); // Generate 6-digit OTP
-                console.log(`[OrderOTP] Secure OTP ${newOrder.deliveryOtp} generated for Order #${newOrder.orderId} (Value: ${totalAmount})`);
+                console.log(`[OrderOTP] Secure OTP ${newOrder.deliveryOtp} generated for Order #${newOrder.orderId} (Value: ${finalTotalPrice + walletAmountUsed})`);
             }
         } catch (hvcError) {
             console.error("[OTP] High-value config fetch failed:", hvcError.message);
@@ -549,7 +586,6 @@ export const createOrder = async (req, reply) => {
 
         // --- REWARD COINS CALCULATION ---
         try {
-            const pricingConfig = await PricingConfig.findOne({ key: "primary" });
             if (pricingConfig?.rewardCoinsEnabled && itemsTotal >= (pricingConfig.minAmountForCoins || 0)) {
                 let eligibleTotal = 0;
                 for (const item of items) {
@@ -573,6 +609,19 @@ export const createOrder = async (req, reply) => {
         newOrder.driverEarning = await calculateDriverEarning(newOrder);
 
         const savedOrder = await newOrder.save();
+
+        if (walletAmountUsed > 0) {
+            await WalletTransaction.create({
+                customer: userId,
+                amount: walletAmountUsed,
+                type: "debit",
+                txnType: "customer_order",
+                description: `Paid using SabJab Wallet for Order #${savedOrder.orderId}`,
+                status: "completed",
+                order: savedOrder._id
+            });
+        }
+
         const populatedOrder = await Order.findById(savedOrder._id).populate(
             "customer branch items.item deliveryPartner"
         );
