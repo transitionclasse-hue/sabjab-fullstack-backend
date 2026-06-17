@@ -15,6 +15,8 @@ const greenPointTransactionSchema = new mongoose.Schema({
     enum: [
       "plastic_bottles",
       "organic_waste",
+      "newspaper_scrap",
+      "aluminum_cans",
       "eco_packaging",
       "referral",
       "sustainable_purchase",
@@ -25,6 +27,7 @@ const greenPointTransactionSchema = new mongoose.Schema({
       "eco_products",
       "tree_planted",
       "checkout_redemption",
+      "manual_adjustment",
     ],
     required: true,
   },

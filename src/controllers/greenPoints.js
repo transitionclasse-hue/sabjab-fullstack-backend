@@ -47,6 +47,8 @@ export const earnGreenPoints = async (req, reply) => {
     const validCategories = [
       "plastic_bottles",
       "organic_waste",
+      "newspaper_scrap",
+      "aluminum_cans",
       "eco_packaging",
       "referral",
       "sustainable_purchase",

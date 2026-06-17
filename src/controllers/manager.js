@@ -1721,6 +1721,56 @@ export const adjustCustomerWallet = async (req, reply) => {
   }
 };
 
+export const adjustCustomerGreenPoints = async (req, reply) => {
+  try {
+    const { customerId } = req.params;
+    const { amount, type, category, description } = req.body;
+
+    if (!amount || amount <= 0) {
+      return reply.status(400).send({ message: "Invalid amount" });
+    }
+
+    if (!["earn", "redeem"].includes(type)) {
+      return reply.status(400).send({ message: "Type must be earn or redeem" });
+    }
+
+    const customer = await Customer.findById(customerId);
+    if (!customer) {
+      return reply.status(404).send({ message: "Customer not found" });
+    }
+
+    const greenPoints = await GreenPoints.getOrCreate(customerId);
+
+    if (type === "earn") {
+      await greenPoints.earnPoints(
+        category || "manual_adjustment",
+        Number(amount),
+        description || "Eco points awarded by Manager"
+      );
+    } else {
+      await greenPoints.redeemPoints(
+        category || "manual_adjustment",
+        Number(amount),
+        description || "Eco points deducted by Manager"
+      );
+    }
+
+    // Update customer record
+    await Customer.findByIdAndUpdate(customerId, {
+      greenPointsBalance: greenPoints.totalBalance,
+    });
+
+    return reply.send({
+      success: true,
+      message: `Eco points adjusted successfully`,
+      balance: greenPoints.totalBalance
+    });
+  } catch (error) {
+    console.error("Adjust Green Points Error:", error);
+    return reply.status(500).send({ message: "Failed to adjust green points", error: error.message });
+  }
+};
+
 export const createManagerDriver = async (req, reply) => {
   try {
     const { name, phone, email, vehicleType, licenseNumber, branch, password } = req.body;

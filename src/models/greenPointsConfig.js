@@ -23,6 +23,16 @@ const greenPointsConfigSchema = new mongoose.Schema(
         description: { type: String, default: "Points per kg of organic waste" },
         enabled: { type: Boolean, default: false },
       },
+      newspaperScrap: {
+        pointsPerUnit: { type: Number, default: 3 },
+        description: { type: String, default: "Points per kg of newspaper scrap" },
+        enabled: { type: Boolean, default: false },
+      },
+      aluminumCans: {
+        pointsPerUnit: { type: Number, default: 4 },
+        description: { type: String, default: "Points per aluminum can returned" },
+        enabled: { type: Boolean, default: false },
+      },
       ecoPackaging: {
         pointsPerOrder: { type: Number, default: 3 },
         description: { type: String, default: "Points per order with eco-packaging" },
