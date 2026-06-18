@@ -76,6 +76,8 @@ const pricingConfigSchema = new mongoose.Schema(
     rewardCoinsEnabled: { type: Boolean, default: true },
     rewardCoinsPercentage: { type: Number, default: 1, min: 0, max: 100 }, // X% of purchase
     minAmountForCoins: { type: Number, default: 1, min: 0 }, // Minimum order value to earn coins
+    referralCoinsReward: { type: Number, default: 50, min: 0 }, // SabJab Coins earned by the referrer
+    referredFriendCoinsReward: { type: Number, default: 50, min: 0 }, // SabJab Coins earned by the new user
 
     customFees: { type: [customFeeSchema], default: [] },
     cartBarColor: { type: String, default: "#1A1A1A" },
@@ -108,6 +110,8 @@ const pricingConfigSchema = new mongoose.Schema(
     giftPackagingFee: { type: Number, default: 30, min: 0 },
     themeWaveEffectEnabled: { type: Boolean, default: false },
     walletSystemEnabled: { type: Boolean, default: true },
+    sabjabCoinsSystemEnabled: { type: Boolean, default: true },
+    ecoPointsSystemEnabled: { type: Boolean, default: true },
     sabjabCoinsToRupeesRatio: { type: Number, default: 0 }, // 0 means conversion disabled. 100 means 100 coins = 1 rupee.
   },
   { timestamps: true }

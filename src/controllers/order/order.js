@@ -933,24 +933,12 @@ export const updateOrderStatus = async (req, reply) => {
 
                 // Handle SabJab Coins Reward
                 if (order.rewardCoinsEarned > 0 && order.customer) {
-                    const rewardExits = await WalletTransaction.findOne({
-                        order: order._id,
-                        txnType: "reward_coins",
-                        customer: order.customer
+                    // Update the customer's sabjabCoinsBalance directly instead of creating a wallet transaction
+                    // because SabJab Coins are completely separate from Wallet Balance.
+                    await Customer.findByIdAndUpdate(order.customer, {
+                        $inc: { sabjabCoinsBalance: order.rewardCoinsEarned }
                     });
-
-                    if (!rewardExits) {
-                        const rewardTxn = await WalletTransaction.create({
-                            customer: order.customer,
-                            order: order._id,
-                            amount: order.rewardCoinsEarned,
-                            type: "credit",
-                            txnType: "reward_coins",
-                            description: `SabJab Coins earned for order #${order.orderId}`,
-                            status: "completed"
-                        });
-                        console.log(`[OrderRewards] SUCCESS: Awarded ${order.rewardCoinsEarned} SabJab Coins to customer ${order.customer} for order ${order.orderId}`);
-                    }
+                    console.log(`[OrderRewards] SUCCESS: Awarded ${order.rewardCoinsEarned} SabJab Coins to customer ${order.customer} for order ${order.orderId}`);
                 }
 
                 // NEW: Credit Sellers for delivered items
@@ -1076,34 +1064,23 @@ export const updateOrderStatus = async (req, reply) => {
                                 if (referral && gpConfig?.earnRules?.referral?.enabled) {
                                     const rGP = await GreenPoints.getOrCreate(referral.referrer);
                                     await rGP.earnPoints("referral", referral.referrerPoints, `Referral bonus`, referral.referralCode);
-                                    const refGP = await GreenPoints.getOrCreate(order.customer);
+                                    const refGP = await GreenPoints.getOrCreate(customer._id);
                                     await refGP.earnPoints("referral", referral.refereePoints, `Welcome bonus`, referral.referralCode);
-                                    
-                                    const WalletTransaction = (await import("../../models/walletTransaction.js")).default;
-                                    
-                                    // Referrer Coins
-                                    await WalletTransaction.create({
-                                        customer: referral.referrer,
-                                        amount: referral.referrerPoints,
-                                        type: "credit",
-                                        txnType: "referral_bonus",
-                                        description: `Referral bonus for order by ${customer.name || customer.phone || 'a friend'}`,
-                                        status: "completed"
-                                    });
 
-                                    // Referee Coins
-                                    await WalletTransaction.create({
-                                        customer: order.customer,
-                                        amount: referral.refereePoints,
-                                        type: "credit",
-                                        txnType: "referral_bonus",
-                                        description: `Referral welcome bonus for first order`,
-                                        status: "completed"
-                                    });
+                                    const pConfig = await PricingConfig.findOne({ key: "primary" });
+                                    const rSabJabReward = pConfig?.referralCoinsReward || 0;
+                                    const refSabJabReward = pConfig?.referredFriendCoinsReward || 0;
 
+                                    // Update balances atomically
                                     await Promise.all([
-                                        Customer.findByIdAndUpdate(referral.referrer, { greenPointsBalance: rGP.totalBalance }),
-                                        Customer.findByIdAndUpdate(order.customer, { greenPointsBalance: refGP.totalBalance })
+                                        Customer.findByIdAndUpdate(referral.referrer, { 
+                                            greenPointsBalance: rGP.totalBalance,
+                                            $inc: { sabjabCoinsBalance: rSabJabReward }
+                                        }),
+                                        Customer.findByIdAndUpdate(customer._id, { 
+                                            greenPointsBalance: refGP.totalBalance,
+                                            $inc: { sabjabCoinsBalance: refSabJabReward }
+                                        }),
                                     ]);
                                 }
                             }

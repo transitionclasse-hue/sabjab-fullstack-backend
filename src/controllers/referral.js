@@ -2,7 +2,7 @@ import Referral from "../models/referral.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
 import { Customer } from "../models/user.js";
-import WalletTransaction from "../models/walletTransaction.js";
+import PricingConfig from "../models/pricingConfig.js";
 
 // =====================================================
 // GENERATE REFERRAL CODE
@@ -176,6 +176,11 @@ export const applyReferralCode = async (req, reply) => {
       referredBy: referral.referrer,
     });
 
+    // Get global pricing config for SabJab Coins
+    const globalPricing = await PricingConfig.findOne({ key: "primary" });
+    const sabjabReferralReward = globalPricing?.referralCoinsReward || 0;
+    const sabjabRefereeReward = globalPricing?.referredFriendCoinsReward || 0;
+
     // AWARD LOGIC
     if (referralSettings.trigger === "signup") {
       const awardToReferrer = ["referrer", "both"].includes(referralSettings.awardTo);
@@ -193,18 +198,13 @@ export const applyReferralCode = async (req, reply) => {
           "Referral bonus",
           referralCode
         );
+        
+        // SabJab Coins 
+        const referrerSabJabReward = sabjabReferralReward > 0 ? sabjabReferralReward : 0;
+        
         await Customer.findByIdAndUpdate(referral.referrer, {
           greenPointsBalance: referrerGP.totalBalance,
-        });
-
-        // SabJab Coins (WalletTransaction)
-        await WalletTransaction.create({
-          customer: referral.referrer,
-          amount: referral.referrerPoints,
-          type: "credit",
-          txnType: "referral_bonus",
-          description: `Referral bonus for inviting ${referee.name || referee.phone || 'a friend'}`,
-          status: "completed"
+          $inc: { sabjabCoinsBalance: referrerSabJabReward }
         });
 
         referrerPointsAwarded = referral.referrerPoints;
@@ -219,18 +219,13 @@ export const applyReferralCode = async (req, reply) => {
           "Referral sign-up bonus",
           referralCode
         );
+        
+        // SabJab Coins
+        const refereeSabJabReward = sabjabRefereeReward > 0 ? sabjabRefereeReward : 0;
+        
         await Customer.findByIdAndUpdate(refereeId, {
           greenPointsBalance: refereeGP.totalBalance,
-        });
-
-        // SabJab Coins (WalletTransaction)
-        await WalletTransaction.create({
-          customer: refereeId,
-          amount: referral.refereePoints,
-          type: "credit",
-          txnType: "referral_bonus",
-          description: `Referral sign-up bonus`,
-          status: "completed"
+          $inc: { sabjabCoinsBalance: refereeSabJabReward }
         });
 
         refereePointsAwarded = referral.refereePoints;
