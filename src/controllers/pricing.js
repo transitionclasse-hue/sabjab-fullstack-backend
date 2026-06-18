@@ -115,7 +115,7 @@ const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
   return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 };
 
-export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0, walletBalance = 0, useGreenPoints = false, greenPointsBalance = 0, greenPointsConfig = null, useSabjabCoins = false, sabjabCoinsBalance = 0, sabjabCoinsToRupeesRatio = 0) => {
+export const calculateFees = (config, itemsTotal, coupon = null, automaticMilestone = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0, walletBalance = 0, useGreenPoints = false, greenPointsBalance = 0, greenPointsConfig = null, useSabjabCoins = false, sabjabCoinsBalance = 0, sabjabCoinsToRupeesRatio = 0) => {
   const subtotal = Math.max(0, toNumber(itemsTotal, 0));
   const breakdown = [];
 
@@ -231,6 +231,34 @@ export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'qu
         code: "coupon_discount",
         label: `Discount (${coupon.code})`,
         amount: -discountAmount,
+      });
+    }
+  }
+
+  // Apply Automatic Milestone Discount
+  let milestoneDiscountAmount = 0;
+  if (automaticMilestone) {
+    if (automaticMilestone.discountType === "percentage") {
+      milestoneDiscountAmount = (subtotal * toNumber(automaticMilestone.discountValue, 0)) / 100;
+      if (automaticMilestone.maxDiscount && milestoneDiscountAmount > automaticMilestone.maxDiscount) {
+        milestoneDiscountAmount = automaticMilestone.maxDiscount;
+      }
+    } else {
+      milestoneDiscountAmount = toNumber(automaticMilestone.discountValue, 0);
+    }
+
+    // Ensure combined discount doesn't exceed subtotal
+    milestoneDiscountAmount = Math.min(milestoneDiscountAmount, subtotal - discountAmount);
+
+    if (milestoneDiscountAmount > 0) {
+      breakdown.push({
+        code: "milestone_discount",
+        label: `Milestone Discount (${automaticMilestone.code})`,
+        amount: -milestoneDiscountAmount,
+        meta: {
+          code: automaticMilestone.code,
+          savingAmount: automaticMilestone.discountValue,
+        }
       });
     }
   }
@@ -431,10 +459,28 @@ export const estimatePricing = async (req, reply) => {
       sabjabCoinsBalance = customer?.sabjabCoinsBalance || 0;
     }
 
+    let automaticMilestone = null;
+    try {
+      const { Coupon } = await import("../models/coupon.js");
+      const activeMilestones = await Coupon.find({
+        isMilestone: true,
+        isActive: true,
+        expirationDate: { $gt: new Date() },
+        minOrderAmount: { $lte: subtotal }
+      });
+      if (activeMilestones.length > 0) {
+        activeMilestones.sort((a, b) => b.minOrderAmount - a.minOrderAmount);
+        automaticMilestone = activeMilestones[0];
+      }
+    } catch (e) {
+      console.error("Error finding automatic milestone:", e);
+    }
+
     const estimate = calculateFees(
       config,
       subtotal,
       coupon,
+      automaticMilestone,
       orderType,
       Boolean(deliveryInBag),
       tipAmount,

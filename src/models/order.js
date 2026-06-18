@@ -156,6 +156,8 @@ const orderSchema = new mongoose.Schema({
   totalPrice: { type: Number, required: true },
   couponCode: { type: String, uppercase: true, trim: true },
   discountAmount: { type: Number, default: 0 },
+  milestoneCode: { type: String, uppercase: true, trim: true },
+  milestoneDiscountAmount: { type: Number, default: 0 },
   paymentMethod: {
     type: String,
     enum: ["COD", "Wallet", "Online", "Direct_UPI"],

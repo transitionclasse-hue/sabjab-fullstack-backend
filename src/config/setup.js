@@ -484,14 +484,20 @@ export async function buildAdminRouter(app) {
 
   if (mongoose.models.Coupon) {
     try {
-      const couponCount = await mongoose.models.Coupon.countDocuments();
-      if (couponCount === 0) {
+      // Migrate existing SAVE50, SAVE100, SAVE200 to set isMilestone: true
+      await mongoose.models.Coupon.updateMany(
+        { code: { $in: ['SAVE50', 'SAVE100', 'SAVE200'] }, isMilestone: { $ne: true } },
+        { $set: { isMilestone: true } }
+      );
+
+      const save50Exists = await mongoose.models.Coupon.findOne({ code: 'SAVE50' });
+      if (!save50Exists) {
         const farFuture = new Date();
         farFuture.setFullYear(farFuture.getFullYear() + 5);
         await mongoose.models.Coupon.insertMany([
-          { code: 'SAVE50', description: 'Save ₹50 on orders above ₹150', discountType: 'flat', discountValue: 50, minOrderAmount: 150, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'green' },
-          { code: 'SAVE100', description: 'Save ₹100 on orders above ₹250', discountType: 'flat', discountValue: 100, minOrderAmount: 250, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'blue' },
-          { code: 'SAVE200', description: 'Save ₹200 on orders above ₹500', discountType: 'flat', discountValue: 200, minOrderAmount: 500, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'gold' }
+          { code: 'SAVE50', description: 'Save ₹50 on orders above ₹150', discountType: 'flat', discountValue: 50, minOrderAmount: 150, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'green', isMilestone: true },
+          { code: 'SAVE100', description: 'Save ₹100 on orders above ₹250', discountType: 'flat', discountValue: 100, minOrderAmount: 250, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'blue', isMilestone: true },
+          { code: 'SAVE200', description: 'Save ₹200 on orders above ₹500', discountType: 'flat', discountValue: 200, minOrderAmount: 500, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'gold', isMilestone: true }
         ]);
         console.log('✅ Default Coupons seeded successfully');
       }
@@ -957,7 +963,7 @@ export async function buildAdminRouter(app) {
             name: "Marketing",
             icon: "Gift",
           },
-          listProperties: ["code", "discountType", "discountValue", "expirationDate", "isActive"],
+          listProperties: ["code", "discountType", "discountValue", "expirationDate", "isActive", "isMilestone"],
           editProperties: [
             "code",
             "description",
@@ -967,7 +973,11 @@ export async function buildAdminRouter(app) {
             "maxDiscount",
             "expirationDate",
             "isActive",
+            "isMilestone",
             "usageLimit",
+            "oncePerUser",
+            "isHidden",
+            "colorTheme",
           ],
           properties: {
             code: { isRequired: true },
@@ -981,7 +991,23 @@ export async function buildAdminRouter(app) {
             discountValue: { isRequired: true },
             expirationDate: { type: "datetime", isRequired: true },
             isActive: { type: "boolean" },
+            isMilestone: { type: "boolean" },
+            oncePerUser: { type: "boolean" },
+            isHidden: { type: "boolean" },
             usedCount: { isDisabled: true },
+            colorTheme: {
+              availableValues: [
+                { value: "purple", label: "Purple" },
+                { value: "blue", label: "Blue" },
+                { value: "gold", label: "Gold" },
+                { value: "rose", label: "Rose" },
+                { value: "green", label: "Green" },
+                { value: "slate", label: "Slate" },
+                { value: "orange", label: "Orange" },
+                { value: "teal", label: "Teal" },
+                { value: "crimson", label: "Crimson" },
+              ]
+            }
           },
         },
       };

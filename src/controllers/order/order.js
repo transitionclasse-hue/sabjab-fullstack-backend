@@ -430,6 +430,44 @@ export const createOrder = async (req, reply) => {
         }
         // -------------------------
 
+        // --- AUTOMATIC MILESTONE VALIDATION ---
+        let milestoneDiscountAmount = 0;
+        let validatedMilestoneCode = null;
+        let automaticMilestone = null;
+
+        try {
+            const activeMilestones = await Coupon.find({
+                isMilestone: true,
+                isActive: true,
+                expirationDate: { $gt: new Date() },
+                minOrderAmount: { $lte: itemsTotal }
+            });
+            if (activeMilestones.length > 0) {
+                activeMilestones.sort((a, b) => b.minOrderAmount - a.minOrderAmount);
+                automaticMilestone = activeMilestones[0];
+                validatedMilestoneCode = automaticMilestone.code;
+
+                if (automaticMilestone.discountType === "percentage") {
+                    milestoneDiscountAmount = (itemsTotal * automaticMilestone.discountValue) / 100;
+                    if (automaticMilestone.maxDiscount && milestoneDiscountAmount > automaticMilestone.maxDiscount) {
+                        milestoneDiscountAmount = automaticMilestone.maxDiscount;
+                    }
+                } else {
+                    milestoneDiscountAmount = automaticMilestone.discountValue;
+                }
+
+                // Ensure combined discount doesn't exceed subtotal
+                milestoneDiscountAmount = Math.min(milestoneDiscountAmount, itemsTotal - discountAmount);
+
+                // Increment usedCount for the milestone coupon
+                automaticMilestone.usedCount += 1;
+                await automaticMilestone.save();
+            }
+        } catch (e) {
+            console.error("Error applying automatic milestone to order:", e);
+        }
+        // --------------------------------------
+
         // --- RETURN WINDOW CALCULATION ---
         const orderReturnWindow = Math.max(...stockUpdates.map(u => u.product.returnWindow || 0), 0);
         // ---------------------------------
@@ -503,6 +541,7 @@ export const createOrder = async (req, reply) => {
             pricingConfig,
             itemsTotal,
             couponCode ? await Coupon.findOne({ code: couponCode.toUpperCase() }) : null,
+            automaticMilestone,
             orderType || "quick",
             Boolean(deliveryInBag),
             Number(tipAmount || 0),
@@ -587,6 +626,8 @@ export const createOrder = async (req, reply) => {
             razorpay_signature,
             couponCode: validatedCouponCode,
             discountAmount: discountAmount,
+            milestoneCode: validatedMilestoneCode,
+            milestoneDiscountAmount: milestoneDiscountAmount,
             returnWindow: orderReturnWindow, // SNAPSHOT the return window
             customerInfo: {
                 name: deliveryAddress?.recipientName || customerData.name || "Customer",

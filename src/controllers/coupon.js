@@ -3,19 +3,25 @@ import { Coupon } from "../models/coupon.js";
 export const getActiveCoupons = async (req, reply) => {
     try {
         const now = new Date();
-        // Fetch coupons that are:
-        // 1. Active
-        // 2. Not expired
-        // 3. Haven't reached usage limit (if applicable)
-        const coupons = await Coupon.find({
+        const { isMilestone } = req.query;
+
+        const query = {
             isActive: true,
-            isHidden: { $ne: true },
             expirationDate: { $gt: now },
             $or: [
                 { usageLimit: null },
                 { $expr: { $lt: ["$usedCount", "$usageLimit"] } }
             ]
-        }).sort({ createdAt: -1 });
+        };
+
+        if (isMilestone === "true") {
+            query.isMilestone = true;
+        } else {
+            query.isMilestone = { $ne: true };
+            query.isHidden = { $ne: true };
+        }
+
+        const coupons = await Coupon.find(query).sort({ createdAt: -1 });
 
         return reply.send({
             success: true,

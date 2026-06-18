@@ -53,6 +53,10 @@ const couponSchema = new mongoose.Schema(
             type: Boolean,
             default: false,
         },
+        isMilestone: {
+            type: Boolean,
+            default: false,
+        },
         colorTheme: {
             type: String,
             enum: ["purple", "blue", "gold", "rose", "green", "slate", "orange", "teal", "crimson"],
