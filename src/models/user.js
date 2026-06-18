@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String },
   role: {
     type: String,
-    enum: ["Customer", "Admin", "DeliveryPartner", "Seller", "SubManager"],
+    enum: ["Customer", "Admin", "DeliveryPartner", "Seller", "SubManager", "Farmer"],
     required: true,
   },
   isActivated: { type: Boolean, default: false },
@@ -193,8 +193,34 @@ sellerSchema.pre('save', async function (next) {
   next();
 });
 
+// ================= FARMER =================
+const farmerSchema = new mongoose.Schema({
+  ...userSchema.obj,
+  phone: { type: Number, required: true, unique: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ["Farmer"], default: "Farmer" },
+  isApproved: { type: Boolean, default: false }, // Collection centre manager needs to approve them
+  village: { type: String },
+  farmAddress: { type: String },
+  bankAccount: {
+    bankName: { type: String },
+    accountNumber: { type: String },
+    ifsc: { type: String },
+  },
+  walletBalance: { type: Number, default: 0 },
+  pushToken: { type: String, default: null },
+  notificationsEnabled: { type: Boolean, default: true },
+}, { timestamps: true });
+
+farmerSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, SALT_ROUNDS);
+  next();
+});
+
 // ================= MODELS =================
 export const Customer = mongoose.model("Customer", customerSchema);
 export const DeliveryPartner = mongoose.model("DeliveryPartner", deliveryPartnerSchema);
 export const Admin = mongoose.model("Admin", adminSchema);
 export const Seller = mongoose.model("Seller", sellerSchema);
+export const Farmer = mongoose.model("Farmer", farmerSchema);

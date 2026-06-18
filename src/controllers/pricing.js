@@ -451,6 +451,9 @@ export const estimatePricing = async (req, reply) => {
         if (slotPromotion.promotionType === "discount" && slotPromotion.discountAmount > 0) {
           slotPromoDiscount = slotPromotion.discountAmount;
           estimate.grandTotal = Math.max(0, estimate.grandTotal - slotPromoDiscount);
+        } else if (slotPromotion.promotionType === "free_delivery") {
+          slotPromoDiscount = estimate.deliveryFee || 0;
+          estimate.grandTotal = Math.max(0, estimate.grandTotal - slotPromoDiscount);
         }
       } else {
         // Fallback to built-in slot discount

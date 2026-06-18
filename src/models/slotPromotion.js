@@ -8,7 +8,7 @@ const slotPromotionSchema = new mongoose.Schema({
   },
   slotLabel: { type: String, required: true }, // e.g. "09:00 AM - 11:00 AM"
   dayLabel: { type: String }, // e.g. "Tomorrow", "Saturday" or null for recurring
-  promotionType: { type: String, enum: ["discount", "gift"], required: true },
+  promotionType: { type: String, enum: ["discount", "gift", "free_delivery"], required: true },
   discountAmount: { type: Number, default: 0 },
   giftName: { type: String, default: "" },
   radiusMeters: { type: Number, default: 50 },

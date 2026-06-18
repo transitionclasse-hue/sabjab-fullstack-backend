@@ -28,6 +28,7 @@ import { sellerRoutes } from "./seller.js";
 import { reelsRoutes } from "./reels.js";
 import { paymentRoutes } from "./payment.js";
 import { splitBillRoutes } from "./splitBill.js";
+import { farmerRoutes } from "./farmer.js";
 
 const prefix = "/api";
 
@@ -110,4 +111,7 @@ export const registerRoutes = async (fastify) => {
 
   // Split Bill Operations
   fastify.register(splitBillRoutes, { prefix });
+
+  // Farmer App Operations
+  fastify.register(farmerRoutes, { prefix });
 };
