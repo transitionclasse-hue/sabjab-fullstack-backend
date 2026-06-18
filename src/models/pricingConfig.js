@@ -13,6 +13,10 @@ const slotSchema = new mongoose.Schema(
   {
     label: { type: String, required: true },
     isEnabled: { type: Boolean, default: true },
+    day: { type: String, default: "All" },
+    discountEnabled: { type: Boolean, default: false },
+    discountPercentage: { type: Number, default: 0, min: 0, max: 100 },
+    discountAmount: { type: Number, default: 0, min: 0 },
   },
   { _id: true }
 );

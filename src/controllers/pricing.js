@@ -452,6 +452,27 @@ export const estimatePricing = async (req, reply) => {
           slotPromoDiscount = slotPromotion.discountAmount;
           estimate.grandTotal = Math.max(0, estimate.grandTotal - slotPromoDiscount);
         }
+      } else {
+        // Fallback to built-in slot discount
+        const slotInConfig = (config.deliverySlots || []).find(s => s.isEnabled && deliverySlot.toLowerCase().includes(s.label.toLowerCase()));
+        if (slotInConfig && slotInConfig.discountEnabled) {
+          let discountAmt = 0;
+          if (slotInConfig.discountPercentage > 0) {
+            discountAmt = (subtotal * slotInConfig.discountPercentage) / 100;
+          } else if (slotInConfig.discountAmount > 0) {
+            discountAmt = slotInConfig.discountAmount;
+          }
+          
+          if (discountAmt > 0) {
+            slotPromotion = {
+              promotionType: "discount",
+              discountAmount: discountAmt,
+              isBuiltIn: true
+            };
+            slotPromoDiscount = discountAmt;
+            estimate.grandTotal = Math.max(0, estimate.grandTotal - slotPromoDiscount);
+          }
+        }
       }
     }
 
