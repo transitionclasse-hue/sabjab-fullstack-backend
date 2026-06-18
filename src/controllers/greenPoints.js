@@ -1,6 +1,8 @@
+import mongoose from "mongoose";
 import GreenPoints from "../models/greenPoints.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import { Customer } from "../models/user.js";
+import WalletTransaction from "../models/walletTransaction.js";
 
 // =====================================================
 // GET BALANCE
@@ -164,6 +166,21 @@ export const redeemGreenPoints = async (req, reply) => {
     await Customer.findByIdAndUpdate(userId, {
       greenPointsBalance: updated.totalBalance,
     });
+
+    // Handle Actual Rupees Conversion to Wallet
+    let walletAmountAdded = 0;
+    if (rewardType === "discount_50" || rewardType === "discount_100") {
+      walletAmountAdded = redemptionRule.discountAmount;
+      const newWalletTxn = new WalletTransaction({
+        customer: userId,
+        amount: walletAmountAdded,
+        type: "credit",
+        txnType: "green_points_redemption",
+        description: `Converted Eco Coins into SabJab Wallet (Redeemed: ${rewardType})`,
+        status: "completed",
+      });
+      await newWalletTxn.save();
+    }
 
     return reply.send({
       success: true,

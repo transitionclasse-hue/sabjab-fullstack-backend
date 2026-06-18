@@ -128,6 +128,7 @@ const greenPointsConfigSchema = new mongoose.Schema(
       minPointsToRedeem: { type: Number, default: 50 },
       enableLeaderboard: { type: Boolean, default: true },
       enableNotifications: { type: Boolean, default: true },
+      funFact: { type: String, default: "Every 100 green points you redeem helps us plant 1 tree and reduce 10kg of plastic waste!" }
     },
 
     updatedAt: {
