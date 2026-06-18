@@ -2223,3 +2223,31 @@ export const updateFarmerQuote = async (req, reply) => {
   }
 };
 
+export const getFarmers = async (req, reply) => {
+  try {
+    const { Farmer } = await import("../models/user.js");
+    const farmers = await Farmer.find().sort({ createdAt: -1 });
+    return reply.send({ success: true, farmers });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch farmers", error: error.message });
+  }
+};
+
+export const approveFarmer = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const { isApproved } = req.body;
+    
+    const { Farmer } = await import("../models/user.js");
+    const farmer = await Farmer.findById(id);
+    if (!farmer) return reply.status(404).send({ message: "Farmer not found" });
+
+    farmer.isApproved = isApproved;
+    await farmer.save();
+    
+    return reply.send({ success: true, farmer });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to approve farmer", error: error.message });
+  }
+};
+

@@ -5,61 +5,14 @@ import jwt from "jsonwebtoken";
 import { verifyToken } from "../middleware/auth.js";
 import bcrypt from "bcrypt";
 
+import { requestFarmerOtp, verifyFarmerOtp, registerFarmerDetails } from "../controllers/auth/farmerAuth.js";
+
 export const farmerRoutes = async (fastify, options) => {
   
-  // Register a new farmer
-  fastify.post("/farmer/auth/register", async (req, reply) => {
-    try {
-      const { name, phone, password, village, farmAddress } = req.body;
-      
-      const existing = await Farmer.findOne({ phone });
-      if (existing) {
-        return reply.status(400).send({ success: false, message: "Phone number already registered" });
-      }
-
-      const farmer = new Farmer({
-        name,
-        phone,
-        password,
-        village,
-        farmAddress,
-        role: "Farmer"
-      });
-
-      await farmer.save();
-      
-      const token = jwt.sign({ id: farmer._id, role: farmer.role }, process.env.JWT_SECRET || "sabjab_secret", { expiresIn: "30d" });
-      
-      reply.status(201).send({ success: true, user: { _id: farmer._id, name: farmer.name, phone: farmer.phone, role: farmer.role }, token });
-    } catch (error) {
-      fastify.log.error(error);
-      reply.status(500).send({ success: false, message: "Server error" });
-    }
-  });
-
-  // Login farmer
-  fastify.post("/farmer/auth/login", async (req, reply) => {
-    try {
-      const { phone, password } = req.body;
-      
-      const farmer = await Farmer.findOne({ phone, role: "Farmer" });
-      if (!farmer) {
-        return reply.status(401).send({ success: false, message: "Invalid credentials" });
-      }
-
-      const isMatch = await bcrypt.compare(password, farmer.password);
-      if (!isMatch) {
-        return reply.status(401).send({ success: false, message: "Invalid credentials" });
-      }
-
-      const token = jwt.sign({ id: farmer._id, role: farmer.role }, process.env.JWT_SECRET || "sabjab_secret", { expiresIn: "30d" });
-      
-      reply.send({ success: true, user: { _id: farmer._id, name: farmer.name, phone: farmer.phone, role: farmer.role, isApproved: farmer.isApproved }, token });
-    } catch (error) {
-      fastify.log.error(error);
-      reply.status(500).send({ success: false, message: "Server error" });
-    }
-  });
+  // Auth Endpoints
+  fastify.post("/farmer/auth/request-otp", requestFarmerOtp);
+  fastify.post("/farmer/auth/verify-otp", verifyFarmerOtp);
+  fastify.post("/farmer/auth/register-details", registerFarmerDetails);
 
   // Get farmer profile
   fastify.get("/farmer/profile", { preHandler: [verifyToken] }, async (req, reply) => {

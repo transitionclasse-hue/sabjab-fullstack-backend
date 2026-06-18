@@ -67,6 +67,8 @@ import {
   deleteManagerCoupon,
   getFarmerQuotes,
   updateFarmerQuote,
+  getFarmers,
+  approveFarmer,
 } from "../controllers/manager.js";
 
 import { getMediaLibrary, deleteMedia, bulkDeleteMedia } from "../controllers/mediaController.js";
@@ -246,7 +248,9 @@ export const managerRoutes = async (fastify) => {
   fastify.put("/manager/coupons/:id", AUTH, updateManagerCoupon);
   fastify.delete("/manager/coupons/:id", AUTH, deleteManagerCoupon);
 
-  // Farmer App Quotes
+  // Farmer App Quotes & Farmers
   fastify.get("/manager/farmer-quotes", AUTH, getFarmerQuotes);
   fastify.patch("/manager/farmer-quotes/:id", AUTH, updateFarmerQuote);
+  fastify.get("/manager/farmers", AUTH, getFarmers);
+  fastify.put("/manager/farmers/:id/approve", AUTH, approveFarmer);
 };
