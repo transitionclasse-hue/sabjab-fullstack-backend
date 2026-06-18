@@ -5,6 +5,12 @@ import {
   getGreenPointsHistory,
   getGreenPointsConfig,
 } from "../controllers/greenPoints.js";
+import {
+  createScrapRequest,
+  getScrapRequests,
+  cancelScrapRequest,
+  updateScrapRequestStatus,
+} from "../controllers/scrapRequest.js";
 import { verifyToken } from "../middleware/auth.js";
 
 export const greenPointsRoutes = async (fastify) => {
@@ -38,4 +44,33 @@ export const greenPointsRoutes = async (fastify) => {
 
   // Get config (public - for frontend to show current rates)
   fastify.get("/green-points/config", getGreenPointsConfig);
+
+  // --- SCRAP COLLECTION MINI APP ENDPOINTS ---
+  // Create pickup request
+  fastify.post(
+    "/green-points/scrap-requests",
+    { preHandler: [verifyToken] },
+    createScrapRequest
+  );
+
+  // Get customer's requests
+  fastify.get(
+    "/green-points/scrap-requests",
+    { preHandler: [verifyToken] },
+    getScrapRequests
+  );
+
+  // Cancel request
+  fastify.put(
+    "/green-points/scrap-requests/:id/cancel",
+    { preHandler: [verifyToken] },
+    cancelScrapRequest
+  );
+
+  // Update status (Admin/Manager utility)
+  fastify.put(
+    "/manager/scrap-requests/:id/status",
+    { preHandler: [verifyToken] },
+    updateScrapRequestStatus
+  );
 };

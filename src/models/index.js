@@ -22,6 +22,7 @@ import GlobalConfig from "./globalConfig.js";
 import GigSchedule from "./gigSchedule.js";
 import Reel from "./reel.js";
 import { SlotPromotion } from "./slotPromotion.js";
+import { ScrapRequest } from "./scrapRequest.js";
 
 export {
   Order,
@@ -51,4 +52,5 @@ export {
   GigSchedule,
   Reel,
   SlotPromotion,
+  ScrapRequest,
 };
