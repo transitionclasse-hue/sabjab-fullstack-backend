@@ -1,6 +1,7 @@
 import { Farmer } from "../models/user.js";
 import { ProduceQuote } from "../models/produceQuote.js";
 import Category from "../models/category.js";
+import Product from "../models/products.js";
 import jwt from "jsonwebtoken";
 import { verifyToken } from "../middleware/auth.js";
 import bcrypt from "bcrypt";
@@ -28,8 +29,8 @@ export const farmerRoutes = async (fastify, options) => {
   // Get items that can be sold
   fastify.get("/farmer/produce-items", async (req, reply) => {
     try {
-      const categories = await Category.find({}).select("name image");
-      reply.send({ success: true, items: categories });
+      const products = await Product.find({ isAvailable: true }).select("name image");
+      reply.send({ success: true, items: products });
     } catch (error) {
       reply.status(500).send({ success: false, message: "Server error" });
     }
