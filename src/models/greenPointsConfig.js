@@ -64,6 +64,26 @@ const greenPointsConfigSchema = new mongoose.Schema(
         description: { type: String, default: "Points per community event attendance" },
         enabled: { type: Boolean, default: false },
       },
+      glassBottles: {
+        pointsPerUnit: { type: Number, default: 4 },
+        description: { type: String, default: "Points per glass bottle returned" },
+        enabled: { type: Boolean, default: false },
+      },
+      cardboard: {
+        pointsPerUnit: { type: Number, default: 3 },
+        description: { type: String, default: "Points per kg of cardboard" },
+        enabled: { type: Boolean, default: false },
+      },
+      oldClothes: {
+        pointsPerUnit: { type: Number, default: 5 },
+        description: { type: String, default: "Points per kg of old clothes" },
+        enabled: { type: Boolean, default: false },
+      },
+      eWaste: {
+        pointsPerUnit: { type: Number, default: 10 },
+        description: { type: String, default: "Points per kg of e-waste" },
+        enabled: { type: Boolean, default: false },
+      },
     },
 
     // Redemption rules per reward
