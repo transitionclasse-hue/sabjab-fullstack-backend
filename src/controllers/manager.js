@@ -1,4 +1,5 @@
 import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule, Coupon, Seller } from "../models/index.js";
+import { ProduceQuote } from "../models/produceQuote.js";
 import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
 import GreenPoints from "../models/greenPoints.js";
@@ -2194,4 +2195,31 @@ export const deleteWalletTransaction = async (req, reply) => {
   }
 };
 
+export const getFarmerQuotes = async (req, reply) => {
+  try {
+    const quotes = await ProduceQuote.find().populate("farmer", "name phone village").sort({ createdAt: -1 });
+    return reply.send({ success: true, quotes });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch farmer quotes", error: error.message });
+  }
+};
+
+export const updateFarmerQuote = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const { status, managerNotes, negotiatedPricePerUnit } = req.body;
+    
+    const quote = await ProduceQuote.findById(id);
+    if (!quote) return reply.status(404).send({ message: "Quote not found" });
+
+    if (status) quote.status = status;
+    if (managerNotes !== undefined) quote.managerNotes = managerNotes;
+    if (negotiatedPricePerUnit !== undefined) quote.negotiatedPricePerUnit = negotiatedPricePerUnit;
+
+    await quote.save();
+    return reply.send({ success: true, quote });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update farmer quote", error: error.message });
+  }
+};
 
