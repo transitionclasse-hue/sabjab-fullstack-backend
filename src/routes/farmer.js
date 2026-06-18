@@ -1,6 +1,6 @@
 import { Farmer } from "../models/user.js";
 import { ProduceQuote } from "../models/produceQuote.js";
-import { Category } from "../models/category.js";
+import Category from "../models/category.js";
 import jwt from "jsonwebtoken";
 import { verifyToken } from "../middleware/auth.js";
 import bcrypt from "bcrypt";
