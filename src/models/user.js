@@ -39,6 +39,7 @@ const customerSchema = new mongoose.Schema({
   ],
   dateOfBirth: { type: Date },
   walletBalance: { type: Number, default: 0 },
+  sabjabCoinsBalance: { type: Number, default: 0 },
   // Green Points System
   greenPointsBalance: { type: Number, default: 0 },
   // Referral System

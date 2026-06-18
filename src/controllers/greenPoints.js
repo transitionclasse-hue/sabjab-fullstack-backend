@@ -117,23 +117,23 @@ export const redeemGreenPoints = async (req, reply) => {
     let pointsRequired = 0;
 
     switch (rewardType) {
-      case "discount_50":
+      case "discount50":
         redemptionRule = config.redeemRules.discount50;
         pointsRequired = redemptionRule.pointsRequired;
         break;
-      case "discount_100":
+      case "discount100":
         redemptionRule = config.redeemRules.discount100;
         pointsRequired = redemptionRule.pointsRequired;
         break;
-      case "free_delivery":
+      case "freeDelivery":
         redemptionRule = config.redeemRules.freeDelivery;
         pointsRequired = redemptionRule.pointsRequired;
         break;
-      case "eco_products":
+      case "ecoProductBundle":
         redemptionRule = config.redeemRules.ecoProductBundle;
         pointsRequired = redemptionRule.pointsRequired;
         break;
-      case "tree_planted":
+      case "treePlanted":
         redemptionRule = config.redeemRules.treePlanted;
         pointsRequired = redemptionRule.pointsRequired;
         break;
@@ -169,7 +169,7 @@ export const redeemGreenPoints = async (req, reply) => {
 
     // Handle Actual Rupees Conversion to Wallet
     let walletAmountAdded = 0;
-    if (rewardType === "discount_50" || rewardType === "discount_100") {
+    if (rewardType === "discount50" || rewardType === "discount100") {
       walletAmountAdded = redemptionRule.discountAmount;
       const newWalletTxn = new WalletTransaction({
         customer: userId,

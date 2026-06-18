@@ -108,6 +108,7 @@ const pricingConfigSchema = new mongoose.Schema(
     giftPackagingFee: { type: Number, default: 30, min: 0 },
     themeWaveEffectEnabled: { type: Boolean, default: false },
     walletSystemEnabled: { type: Boolean, default: true },
+    sabjabCoinsToRupeesRatio: { type: Number, default: 0 }, // 0 means conversion disabled. 100 means 100 coins = 1 rupee.
   },
   { timestamps: true }
 );
