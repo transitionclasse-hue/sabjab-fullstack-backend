@@ -115,7 +115,7 @@ const isWithinTimeWindow = (startMinutes, endMinutes, nowMinutes) => {
   return nowMinutes >= startMinutes || nowMinutes < endMinutes;
 };
 
-export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0, walletBalance = 0, useGreenPoints = false, greenPointsBalance = 0, greenPointsConfig = null) => {
+export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'quick', deliveryInBag = false, tipAmount = 0, giftPackagingFee = 0, walletBalance = 0, useGreenPoints = false, greenPointsBalance = 0, greenPointsConfig = null, useSabjabCoins = false, sabjabCoinsBalance = 0, sabjabCoinsToRupeesRatio = 0) => {
   const subtotal = Math.max(0, toNumber(itemsTotal, 0));
   const breakdown = [];
 
@@ -257,6 +257,29 @@ export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'qu
     }
   }
 
+  let appliedSabjabCoins = 0;
+  let appliedSabjabAmount = 0;
+
+  const grandTotalAfterEco = grandTotalWithoutLoyalty - appliedEcoAmount;
+
+  if (useSabjabCoins && config.sabjabCoinsSystemEnabled !== false && toNumber(sabjabCoinsToRupeesRatio, 0) > 0 && toNumber(sabjabCoinsBalance, 0) > 0) {
+    const ratio = toNumber(sabjabCoinsToRupeesRatio, 0);
+    appliedSabjabCoins = Math.min(Math.floor(toNumber(sabjabCoinsBalance, 0)), Math.floor(grandTotalAfterEco * ratio));
+    appliedSabjabAmount = Number((appliedSabjabCoins / ratio).toFixed(2));
+    
+    if (appliedSabjabCoins > 0) {
+      breakdown.push({
+        code: "sabjab_coins_deduction",
+        label: "SabJab Coins Applied",
+        amount: -appliedSabjabAmount,
+        meta: {
+          coinsRedeemed: appliedSabjabCoins,
+          conversionRatio: ratio
+        }
+      });
+    }
+  }
+
   const feesTotalWithoutWallet = breakdown.reduce((sum, fee) => sum + toNumber(fee.amount, 0), 0);
   const grandTotalWithoutWallet = subtotal + feesTotalWithoutWallet;
 
@@ -278,6 +301,8 @@ export const calculateFees = (config, itemsTotal, coupon = null, orderType = 'qu
     feesTotal: Number(feesTotal.toFixed(2)),
     grandTotal: Number(grandTotal.toFixed(2)),
     appliedEcoCoins,
+    appliedSabjabCoins,
+    appliedSabjabAmount,
     breakdown: breakdown.map((item) => ({
       ...item,
       amount: Number(toNumber(item.amount, 0).toFixed(2)),
@@ -331,7 +356,7 @@ export const getPricingConfig = async (req, reply) => {
 
 export const estimatePricing = async (req, reply) => {
   try {
-    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot, tipAmount, giftPackagingFee, useWallet, useGreenPoints } = req.body;
+    const { itemsTotal, couponCode, orderType, deliveryInBag, latitude, longitude, deliveryMode, deliverySlot, tipAmount, giftPackagingFee, useWallet, useGreenPoints, useSabjabCoins } = req.body;
     const subtotal = toNumber(itemsTotal, 0);
 
     const config = await PricingConfig.findOneAndUpdate(
@@ -399,7 +424,29 @@ export const estimatePricing = async (req, reply) => {
       greenPointsConfig = await GPC.getConfig();
     }
 
-    const estimate = calculateFees(config, subtotal, coupon, orderType, Boolean(deliveryInBag), tipAmount, giftPackagingFee, walletBalance, useGreenPoints, greenPointsBalance, greenPointsConfig);
+    let sabjabCoinsBalance = 0;
+    if (useSabjabCoins && userId) {
+      const { Customer } = await import("../models/user.js");
+      const customer = await Customer.findById(userId).select("sabjabCoinsBalance");
+      sabjabCoinsBalance = customer?.sabjabCoinsBalance || 0;
+    }
+
+    const estimate = calculateFees(
+      config,
+      subtotal,
+      coupon,
+      orderType,
+      Boolean(deliveryInBag),
+      tipAmount,
+      giftPackagingFee,
+      walletBalance,
+      useGreenPoints,
+      greenPointsBalance,
+      greenPointsConfig,
+      useSabjabCoins,
+      sabjabCoinsBalance,
+      config.sabjabCoinsToRupeesRatio || 0
+    );
 
     let slotPromotion = null;
     let slotPromoDiscount = 0;

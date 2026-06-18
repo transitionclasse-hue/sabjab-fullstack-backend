@@ -189,6 +189,8 @@ const orderSchema = new mongoose.Schema({
   walletAmountUsed: { type: Number, default: 0 },
   greenPointsUsed: { type: Number, default: 0 },
   greenPointsAmountUsed: { type: Number, default: 0 },
+  sabjabCoinsUsed: { type: Number, default: 0 },
+  sabjabCoinsAmountUsed: { type: Number, default: 0 },
 
   deliveryOtp: { type: String },
   isHighValueOrder: { type: Boolean, default: false },

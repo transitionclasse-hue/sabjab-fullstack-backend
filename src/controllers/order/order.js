@@ -117,7 +117,7 @@ export const expireStaleAssignedOrders = async (io = null) => {
 export const createOrder = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging, gstNumber, useWallet, useGreenPoints } = req.body;
+        const { items, branchId, totalAmount, deliveryAddress, couponCode, paymentMethod, orderType, razorpay_payment_id, razorpay_order_id, razorpay_signature, deliveryMode, deliverySlot, deliveryInBag, deliveryInstructions, tipAmount, giftPackaging, gstNumber, useWallet, useGreenPoints, useSabjabCoins } = req.body;
 
         const customerData = await Customer.findById(userId);
         let branchData = await Branch.findById(branchId);
@@ -494,6 +494,11 @@ export const createOrder = async (req, reply) => {
             greenPointsConfig = await GreenPointsConfig.getConfig();
         }
 
+        let sabjabCoinsBalance = 0;
+        if (useSabjabCoins) {
+            sabjabCoinsBalance = customerData.sabjabCoinsBalance || 0;
+        }
+
         const pricingEstimate = calculateFees(
             pricingConfig,
             itemsTotal,
@@ -505,12 +510,18 @@ export const createOrder = async (req, reply) => {
             0,
             useGreenPoints,
             greenPointsBalance,
-            greenPointsConfig
+            greenPointsConfig,
+            useSabjabCoins,
+            sabjabCoinsBalance,
+            pricingConfig.sabjabCoinsToRupeesRatio || 0
         );
 
         const appliedEcoCoins = pricingEstimate.appliedEcoCoins || 0;
         const pointValue = greenPointsConfig?.settings?.pointValue !== undefined ? greenPointsConfig.settings.pointValue : 0.20;
         const appliedEcoAmount = appliedEcoCoins * pointValue;
+
+        const appliedSabjabCoins = pricingEstimate.appliedSabjabCoins || 0;
+        const appliedSabjabAmount = pricingEstimate.appliedSabjabAmount || 0;
 
         let finalTotalPrice = pricingEstimate.grandTotal;
 
@@ -567,6 +578,8 @@ export const createOrder = async (req, reply) => {
             walletAmountUsed: walletAmountUsed,
             greenPointsUsed: appliedEcoCoins,
             greenPointsAmountUsed: appliedEcoAmount,
+            sabjabCoinsUsed: appliedSabjabCoins,
+            sabjabCoinsAmountUsed: appliedSabjabAmount,
             paymentMethod: resolvedPaymentMethod,
             paymentStatus: resolvedPaymentStatus,
             razorpay_payment_id,
@@ -652,6 +665,13 @@ export const createOrder = async (req, reply) => {
             await Customer.findByIdAndUpdate(userId, {
                 greenPointsBalance: customerGreenPointsRecord.totalBalance,
             });
+        }
+
+        if (appliedSabjabCoins > 0) {
+            await Customer.findByIdAndUpdate(userId, {
+                $inc: { sabjabCoinsBalance: -appliedSabjabCoins }
+            });
+            console.log(`[CheckoutRewards] SUCCESS: Deducted ${appliedSabjabCoins} SabJab Coins from customer ${userId} for order ${savedOrder.orderId}`);
         }
 
         const populatedOrder = await Order.findById(savedOrder._id).populate(
