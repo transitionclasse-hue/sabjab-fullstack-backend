@@ -14,6 +14,7 @@ const categorySchema = new mongoose.Schema({
   isChoice: { type: Boolean, default: false },
   isAvailable: { type: Boolean, default: true },
   canEarnCoins: { type: Boolean, default: true }, // Whether products in this category earn SabJab Coins
+  isApprovedForFarmers: { type: Boolean, default: false },
 });
 
 const Category = mongoose.model("Category", categorySchema);

@@ -83,6 +83,11 @@ const productSchema = new mongoose.Schema({
     ref: "Seller",
     default: null
   },
+  farmerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Farmer",
+    default: null
+  },
   tags: [{ type: String }], // Search keywords (hidden from consumers)
   commissionRate: { type: Number, default: 0.05 },
 });

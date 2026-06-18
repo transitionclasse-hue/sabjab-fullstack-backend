@@ -69,6 +69,8 @@ import {
   updateFarmerQuote,
   getFarmers,
   approveFarmer,
+  getPendingFarmerProducts,
+  approveFarmerProduct,
 } from "../controllers/manager.js";
 
 import { getMediaLibrary, deleteMedia, bulkDeleteMedia } from "../controllers/mediaController.js";
@@ -253,4 +255,8 @@ export const managerRoutes = async (fastify) => {
   fastify.patch("/manager/farmer-quotes/:id", AUTH, updateFarmerQuote);
   fastify.get("/manager/farmers", AUTH, getFarmers);
   fastify.put("/manager/farmers/:id/approve", AUTH, approveFarmer);
+
+  // Farmer custom products approval
+  fastify.get("/manager/farmer-products/pending", AUTH, getPendingFarmerProducts);
+  fastify.put("/manager/farmer-products/:id/approve", AUTH, approveFarmerProduct);
 };

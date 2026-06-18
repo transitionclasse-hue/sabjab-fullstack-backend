@@ -2251,3 +2251,32 @@ export const approveFarmer = async (req, reply) => {
   }
 };
 
+export const getPendingFarmerProducts = async (req, reply) => {
+  try {
+    const Product = (await import("../models/products.js")).default;
+    const products = await Product.find({ farmerId: { $ne: null }, isApproved: false }).populate("farmerId", "name phone");
+    return reply.send({ success: true, products });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch pending farmer products", error: error.message });
+  }
+};
+
+export const approveFarmerProduct = async (req, reply) => {
+  try {
+    const { id } = req.params;
+    const { isApproved } = req.body;
+    
+    const Product = (await import("../models/products.js")).default;
+    const product = await Product.findById(id);
+    if (!product) return reply.status(404).send({ message: "Product not found" });
+
+    product.isApproved = isApproved;
+    await product.save();
+    
+    return reply.send({ success: true, product });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to approve product", error: error.message });
+  }
+};
+
+

@@ -26,11 +26,75 @@ export const farmerRoutes = async (fastify, options) => {
     }
   });
 
-  // Get items that can be sold
+  // Get items that can be sold (from approved categories or default Vegetables & Fruits)
   fastify.get("/farmer/produce-items", async (req, reply) => {
     try {
-      const products = await Product.find({ isAvailable: true }).select("name image");
+      const approvedCategories = await Category.find({
+        $or: [
+          { isApprovedForFarmers: true },
+          { name: { $regex: /vegetables?\s*(&|and)\s*fruits?/i } }
+        ]
+      });
+      const categoryIds = approvedCategories.map(cat => cat._id);
+
+      const products = await Product.find({ 
+        category: { $in: categoryIds },
+        isAvailable: true, 
+        isApproved: true 
+      }).select("name image");
       reply.send({ success: true, items: products });
+    } catch (error) {
+      reply.status(500).send({ success: false, message: "Server error" });
+    }
+  });
+
+  // Get categories available to farmers
+  fastify.get("/farmer/categories", async (req, reply) => {
+    try {
+      const categories = await Category.find({
+        $or: [
+          { isApprovedForFarmers: true },
+          { name: { $regex: /vegetables?\s*(&|and)\s*fruits?/i } }
+        ]
+      }).select("name image");
+      reply.send({ success: true, categories });
+    } catch (error) {
+      reply.status(500).send({ success: false, message: "Server error" });
+    }
+  });
+
+  // Upload a new product by farmer (pending manager approval)
+  fastify.post("/farmer/products", { preHandler: [verifyToken] }, async (req, reply) => {
+    try {
+      const { name, categoryId, description, price } = req.body;
+      if (!name || !categoryId) {
+        return reply.status(400).send({ success: false, message: "Name and Category are required." });
+      }
+
+      const category = await Category.findOne({
+        _id: categoryId,
+        $or: [
+          { isApprovedForFarmers: true },
+          { name: { $regex: /vegetables?\s*(&|and)\s*fruits?/i } }
+        ]
+      });
+      if (!category) {
+        return reply.status(400).send({ success: false, message: "Invalid or unauthorized category." });
+      }
+
+      const product = new Product({
+        name,
+        category: categoryId,
+        description: description || "",
+        price: Number(price) || 0,
+        quantity: "1 kg",
+        isApproved: false,
+        isAvailable: true,
+        farmerId: req.user.id
+      });
+
+      await product.save();
+      reply.status(201).send({ success: true, product, message: "Product uploaded successfully, pending approval." });
     } catch (error) {
       reply.status(500).send({ success: false, message: "Server error" });
     }
