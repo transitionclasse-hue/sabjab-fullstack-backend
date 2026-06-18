@@ -482,6 +482,23 @@ export async function buildAdminRouter(app) {
     );
   }
 
+  if (mongoose.models.Coupon) {
+    try {
+      const couponCount = await mongoose.models.Coupon.countDocuments();
+      if (couponCount === 0) {
+        const farFuture = new Date();
+        farFuture.setFullYear(farFuture.getFullYear() + 5);
+        await mongoose.models.Coupon.insertMany([
+          { code: 'SAVE50', description: 'Save ₹50 on orders above ₹150', discountType: 'flat', discountValue: 50, minOrderAmount: 150, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'green' },
+          { code: 'SAVE100', description: 'Save ₹100 on orders above ₹250', discountType: 'flat', discountValue: 100, minOrderAmount: 250, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'blue' },
+          { code: 'SAVE200', description: 'Save ₹200 on orders above ₹500', discountType: 'flat', discountValue: 200, minOrderAmount: 500, expirationDate: farFuture, isActive: true, isHidden: false, colorTheme: 'gold' }
+        ]);
+        console.log('✅ Default Coupons seeded successfully');
+      }
+    } catch (e) {
+      console.log('❌ Error seeding default coupons:', e.message);
+    }
+  }
 
   console.log("🛠️ Building Admin Router... Models found:", Object.keys(mongoose.models).length);
   const resources = Object.values(mongoose.models).map((model) => {
