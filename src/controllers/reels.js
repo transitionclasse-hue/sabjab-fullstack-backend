@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import Reel from "../models/reel.js";
 import Product from "../models/products.js";
 import WalletTransaction from "../models/walletTransaction.js";
@@ -50,18 +51,95 @@ export const createReel = async (req, reply) => {
  */
 export const getReels = async (req, reply) => {
   try {
+    // 1. Check optional user auth token
+    let userId = null;
+    const authHeader = req.headers["authorization"];
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        userId = decoded.userId;
+      } catch (err) {
+        // Ignore invalid token, treat as guest
+      }
+    }
+
+    // 2. Load followed and liked creators for personalization
+    let followedCreatorIds = [];
+    let likedCreatorIds = [];
+    if (userId) {
+      const { Customer } = await import("../models/user.js");
+      const currentUser = await Customer.findById(userId).select("following").lean();
+      if (currentUser && currentUser.following) {
+        followedCreatorIds = currentUser.following.map(id => id.toString());
+      }
+
+      const userLikedReels = await Reel.find({ likes: userId }).select("creator").lean();
+      likedCreatorIds = userLikedReels.map(r => r.creator?.toString()).filter(Boolean);
+    }
+
+    // 3. Fetch candidate pool (top 200 newest reels)
+    const candidates = await Reel.find()
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .populate("creator", "name phone email username profileImage")
+      .populate("product", "name price discountPrice image isAvailable stock variations isChoice")
+      .lean();
+
+    // 4. Set up seed-based random number generator
+    const seed = req.query.seed || Math.random().toString(36).substring(2, 15);
+    // Simple Mulberry32 generator
+    const createRandom = (seedStr) => {
+      let h = 0;
+      for (let i = 0; i < seedStr.length; i++) {
+        h = Math.imul(31, h) + seedStr.charCodeAt(i) | 0;
+      }
+      return function() {
+        let z = (h += 0x6D2B79F5);
+        z = Math.imul(z ^ (z >>> 15), z | 1);
+        z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
+        return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+      };
+    };
+    const random = createRandom(seed);
+
+    // 5. Score candidate reels
+    const scoredReels = candidates.map(reel => {
+      const likesCount = reel.likes?.length || 0;
+      const sharesCount = reel.shares || 0;
+      const viewsCount = reel.views || 0;
+      
+      const engagement = (likesCount * 10) + (sharesCount * 5) + (viewsCount * 0.5);
+      
+      let boost = 1.0;
+      const creatorIdStr = reel.creator?._id?.toString() || reel.creator?.toString();
+      if (creatorIdStr) {
+        if (followedCreatorIds.includes(creatorIdStr)) boost += 1.5;
+        if (likedCreatorIds.includes(creatorIdStr)) boost += 0.8;
+      }
+      
+      const ageInHours = (Date.now() - new Date(reel.createdAt).getTime()) / (1000 * 60 * 60);
+      const recencyFactor = Math.exp(-ageInHours / 168); // Decay over 1 week (168 hours)
+      
+      const baseScore = (1 + engagement) * boost * recencyFactor;
+      
+      // Introduce seed-based randomness (controlled noise between 0.5x and 1.5x of the base score)
+      const randomMultiplier = 0.5 + random() * 1.0;
+      const finalScore = baseScore * randomMultiplier;
+      
+      return { reel, finalScore };
+    });
+
+    // 6. Sort candidate reels by final score descending
+    scoredReels.sort((a, b) => b.finalScore - a.finalScore);
+    const sortedReels = scoredReels.map(item => item.reel);
+
+    // 7. Paginate results
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const reels = await Reel.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate("creator", "name phone email username profileImage")
-      .populate("product", "name price discountPrice image isAvailable stock variations isChoice");
-
-    // Add total count
+    const reels = sortedReels.slice(skip, skip + limit);
     const total = await Reel.countDocuments();
 
     return reply.send({
@@ -72,6 +150,7 @@ export const getReels = async (req, reply) => {
         limit,
         total,
         pages: Math.ceil(total / limit),
+        seed,
       },
     });
   } catch (error) {
