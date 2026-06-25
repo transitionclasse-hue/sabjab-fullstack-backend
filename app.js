@@ -218,6 +218,28 @@ const start = async () => {
             app.io.emit("admin:call-bridge-signal", payload);
         });
 
+        // --- NEIGHBOURHOOD GEO-ROOM SYSTEM ---
+        socket.on("neighbourhood:join", (data) => {
+          if (data?.lat && data?.lng) {
+            // Join a geo-room based on ~2km grid cell
+            const gridLat = Math.round(data.lat * 50) / 50;
+            const gridLng = Math.round(data.lng * 50) / 50;
+            const geoRoom = `geo:${gridLat}:${gridLng}`;
+            socket.join(geoRoom);
+            console.log(`📍 Socket ${socket.id} joined neighbourhood room ${geoRoom}`);
+          }
+        });
+
+        socket.on("neighbourhood:leave", (data) => {
+          if (data?.lat && data?.lng) {
+            const gridLat = Math.round(data.lat * 50) / 50;
+            const gridLng = Math.round(data.lng * 50) / 50;
+            const geoRoom = `geo:${gridLat}:${gridLng}`;
+            socket.leave(geoRoom);
+            console.log(`📍 Socket ${socket.id} left neighbourhood room ${geoRoom}`);
+          }
+        });
+
         socket.on("disconnect", async () => {
           console.log("🔴 User disconnected:", socket.id);
           if (socket.userId) {

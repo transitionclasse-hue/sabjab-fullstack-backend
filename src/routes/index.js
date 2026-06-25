@@ -29,6 +29,7 @@ import { reelsRoutes } from "./reels.js";
 import { paymentRoutes } from "./payment.js";
 import { splitBillRoutes } from "./splitBill.js";
 import { farmerRoutes } from "./farmer.js";
+import { neighbourhoodRoutes } from "./neighbourhood.js";
 
 const prefix = "/api";
 
@@ -114,4 +115,7 @@ export const registerRoutes = async (fastify) => {
 
   // Farmer App Operations
   fastify.register(farmerRoutes, { prefix });
+
+  // Neighbourhood Community Cards (Hyper-local)
+  fastify.register(neighbourhoodRoutes, { prefix });
 };
