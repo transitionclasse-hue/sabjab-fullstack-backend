@@ -35,7 +35,7 @@ export const createReel = async (req, reply) => {
     
     // Populate before sending
     const populated = await Reel.findById(reel._id)
-      .populate("creator", "name phone email username")
+      .populate("creator", "name phone email username profileImage")
       .populate("product", "name price discountPrice image isAvailable stock");
 
     return reply.code(201).send({ success: true, reel: populated });
@@ -58,7 +58,7 @@ export const getReels = async (req, reply) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("creator", "name phone email username")
+      .populate("creator", "name phone email username profileImage")
       .populate("product", "name price discountPrice image isAvailable stock variations isChoice");
 
     // Add total count
