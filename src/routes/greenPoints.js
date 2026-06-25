@@ -10,8 +10,9 @@ import {
   getScrapRequests,
   cancelScrapRequest,
   updateScrapRequestStatus,
+  getAllScrapRequests,
 } from "../controllers/scrapRequest.js";
-import { verifyToken } from "../middleware/auth.js";
+import { verifyToken, verifyManager } from "../middleware/auth.js";
 
 export const greenPointsRoutes = async (fastify) => {
   // Get balance
@@ -67,10 +68,18 @@ export const greenPointsRoutes = async (fastify) => {
     cancelScrapRequest
   );
 
+  // --- MANAGER / ADMIN ENDPOINTS ---
+  // Get all requests across the system
+  fastify.get(
+    "/manager/scrap-requests",
+    { preHandler: [verifyManager] },
+    getAllScrapRequests
+  );
+
   // Update status (Admin/Manager utility)
   fastify.put(
     "/manager/scrap-requests/:id/status",
-    { preHandler: [verifyToken] },
+    { preHandler: [verifyManager] },
     updateScrapRequestStatus
   );
 };

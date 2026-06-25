@@ -175,3 +175,27 @@ export const updateScrapRequestStatus = async (req, reply) => {
     });
   }
 };
+
+// =====================================================
+// GET ALL SCRAP REQUESTS (MANAGER/ADMIN USE)
+// =====================================================
+export const getAllScrapRequests = async (req, reply) => {
+  try {
+    const requests = await ScrapRequest.find({})
+      .populate("customer", "name phone email")
+      .populate("address")
+      .sort({ createdAt: -1 });
+
+    return reply.send({
+      success: true,
+      requests,
+    });
+  } catch (error) {
+    req.log.error(error);
+    return reply.code(500).send({
+      message: "Failed to fetch all scrap requests",
+      error: error.message,
+    });
+  }
+};
+

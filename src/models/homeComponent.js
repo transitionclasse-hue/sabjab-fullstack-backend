@@ -31,7 +31,8 @@ const homeComponentSchema = new mongoose.Schema({
             "PROMOTION_PAGINATION", // ✅ NEW: 4 pagination promo style
             "GROCERY_LIST_2X3", // ✅ NEW: 2by3 category list style
             "TIME_BASED_SCROLLER", // ✅ NEW: Changes based on time of day
-            "REORDER_SCROLLER" // ✅ NEW: Dynamic order history scroller
+            "REORDER_SCROLLER", // ✅ NEW: Dynamic order history scroller
+            "BAWAL_PREVIEW" // ✅ NEW: Bawal Reels Preview
         ],
         required: true,
     },
