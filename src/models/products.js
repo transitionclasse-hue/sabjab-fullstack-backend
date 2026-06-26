@@ -90,6 +90,12 @@ const productSchema = new mongoose.Schema({
   },
   tags: [{ type: String }], // Search keywords (hidden from consumers)
   commissionRate: { type: Number, default: 0.05 },
+  specifications: [
+    {
+      key: { type: String, required: true },
+      value: { type: String, required: true },
+    }
+  ],
 });
 
 // Pre-save hook to convert category string to ObjectId

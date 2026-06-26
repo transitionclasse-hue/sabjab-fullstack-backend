@@ -14,14 +14,13 @@ export const createReel = async (req, reply) => {
     if (!videoUrl) {
       return reply.code(400).send({ message: "Video URL is required" });
     }
-    if (!productId) {
-      return reply.code(400).send({ message: "Product ID is required" });
-    }
 
-    // Verify product exists
-    const product = await Product.findById(productId);
-    if (!product) {
-      return reply.code(404).send({ message: "Product not found" });
+    // Verify product exists if provided
+    if (productId) {
+      const product = await Product.findById(productId);
+      if (!product) {
+        return reply.code(404).send({ message: "Product not found" });
+      }
     }
 
     const reel = new Reel({
@@ -29,7 +28,7 @@ export const createReel = async (req, reply) => {
       thumbnailUrl: thumbnailUrl || "",
       caption: caption || "",
       creator: creatorId,
-      product: productId,
+      ...(productId && { product: productId }),
     });
 
     await reel.save();
