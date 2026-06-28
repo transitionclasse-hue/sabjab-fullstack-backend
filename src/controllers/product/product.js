@@ -255,16 +255,20 @@ export const validateCart = async (req, reply) => {
                     id: item.id,
                     productId: item.productId,
                     name: item.name,
+                    image: item.image || "",
                     reason: "deleted"
                 });
                 continue;
             }
 
+            const productImage = product.image || product.image_url || item.image || "";
+
             if (product.isAvailable === false) {
                 unavailableItems.push({
                     id: item.id,
                     productId: item.productId,
-                    name: item.name,
+                    name: product.name,
+                    image: productImage,
                     reason: "unavailable"
                 });
                 continue;
@@ -279,21 +283,26 @@ export const validateCart = async (req, reply) => {
                     unavailableItems.push({
                         id: item.id,
                         productId: item.productId,
-                        name: item.name,
+                        name: `${product.name} (${variationName})`,
+                        image: productImage,
                         reason: "variation_deleted"
                     });
                 } else if (dbVariation.isAvailable === false) {
                     unavailableItems.push({
                         id: item.id,
                         productId: item.productId,
-                        name: item.name,
+                        name: `${product.name} (${dbVariation.name})`,
+                        image: productImage,
+                        variation: dbVariation,
                         reason: "unavailable"
                     });
                 } else if (dbVariation.stock <= 0) {
                     unavailableItems.push({
                         id: item.id,
                         productId: item.productId,
-                        name: item.name,
+                        name: `${product.name} (${dbVariation.name})`,
+                        image: productImage,
+                        variation: dbVariation,
                         reason: "out_of_stock"
                     });
                 }
@@ -303,7 +312,8 @@ export const validateCart = async (req, reply) => {
                     unavailableItems.push({
                         id: item.id,
                         productId: item.productId,
-                        name: item.name,
+                        name: product.name,
+                        image: productImage,
                         reason: "out_of_stock"
                     });
                 }
