@@ -1,7 +1,7 @@
 import Razorpay from "razorpay";
 import dotenv from "dotenv";
 import PricingConfig from "../models/pricingConfig.js";
-import { Order } from "../models/index.js";
+import { Order, Product } from "../models/index.js";
 import { processSuccessfulDeliveryPayment } from "./order/order.js";
 
 dotenv.config();
@@ -12,14 +12,146 @@ export const razorpay = new Razorpay({
 });
 
 /**
+ * 🛒 Helper to validate stock before allowing online payment to be initiated.
+ * Aggregates all out-of-stock or invalid items into a list to provide Amazon Fresh style error details.
+ */
+const validateCartStock = async (cartItems) => {
+  if (!Array.isArray(cartItems) || cartItems.length === 0) return;
+
+  const resolvedItems = [];
+  const oosItems = [];
+
+  // Pass 1: Resolve products and check if they exist in the DB
+  for (const item of cartItems) {
+    const pid = item._id || item.id || item.productId;
+    if (!pid) continue;
+
+    const product = await Product.findById(pid);
+    if (!product) {
+      oosItems.push({
+        id: pid,
+        name: item.name || "Unknown Item",
+        reason: "not_found",
+        availableStock: 0
+      });
+      continue;
+    }
+
+    const requestedCount = item.qty || item.quantity || item.count || 1;
+    const variationId = item.variationId || item.variation?._id || item.variation?.id;
+
+    let stdPrice = product.discountPrice || product.price;
+    let targetObj = product;
+
+    if (variationId || item.variation?.name) {
+      let variation = null;
+      if (variationId) {
+        variation = product.variations.id(variationId);
+      }
+      if (!variation && item.variation?.name) {
+        variation = product.variations.find(v => v.name === item.variation.name);
+      }
+      if (variation) {
+        stdPrice = variation.discountPrice || variation.price;
+        targetObj = variation;
+      }
+    }
+
+    resolvedItems.push({
+      item,
+      product,
+      targetObj,
+      stdPrice,
+      requestedCount,
+      variationId
+    });
+  }
+
+  // Pass 2: Check stock availability
+  for (const resolved of resolvedItems) {
+    const { product, targetObj, requestedCount } = resolved;
+
+    if (!product.isAvailable) {
+      oosItems.push({
+        id: product._id.toString(),
+        name: product.name,
+        reason: "unavailable",
+        availableStock: 0
+      });
+      continue;
+    }
+
+    if (product.userStockLimit && requestedCount > product.userStockLimit) {
+      oosItems.push({
+        id: product._id.toString(),
+        name: product.name,
+        reason: "limit_exceeded",
+        limit: product.userStockLimit,
+        availableStock: product.stock || 0
+      });
+      continue;
+    }
+
+    if (targetObj !== product) { // variation
+      const variation = targetObj;
+      if (!variation.isAvailable) {
+        oosItems.push({
+          id: product._id.toString(),
+          name: `${product.name} (${variation.name})`,
+          reason: "unavailable",
+          availableStock: 0
+        });
+      } else if (variation.stock !== undefined && variation.stock < requestedCount) {
+        oosItems.push({
+          id: product._id.toString(),
+          name: `${product.name} (${variation.name})`,
+          reason: "insufficient",
+          availableStock: variation.stock
+        });
+      }
+    } else {
+      if (product.stock !== undefined && product.stock < requestedCount) {
+        oosItems.push({
+          id: product._id.toString(),
+          name: product.name,
+          reason: "insufficient",
+          availableStock: product.stock
+        });
+      }
+    }
+  }
+
+  if (oosItems.length > 0) {
+    const err = new Error("Inventory validation failed");
+    err.oosItems = oosItems;
+    throw err;
+  }
+};
+
+/**
  * 💳 Create Razorpay Order
  * This endpoint is called before opening the checkout payment flow
  */
 export const createRazorpayOrder = async (req, reply) => {
   try {
-    const { amount } = req.body;
+    const { amount, cartItems } = req.body;
     if (!amount || isNaN(amount) || amount <= 0) {
       return reply.code(400).send({ message: "Invalid payment amount" });
+    }
+
+    // Run stock validation check if cart items are provided
+    if (cartItems) {
+      try {
+        await validateCartStock(cartItems);
+      } catch (stockErr) {
+        console.warn(`[PaymentStockValidation] Out of stock check failed:`, stockErr.oosItems);
+        return reply.code(400).send({ 
+          success: false,
+          errorType: "OUT_OF_STOCK",
+          message: "Some items in your cart are currently out of stock or unavailable.",
+          outOfStockItems: stockErr.oosItems || []
+        });
+      }
     }
 
     const options = {
