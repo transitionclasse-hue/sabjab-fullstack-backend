@@ -2088,6 +2088,45 @@ export const updateBawalConfig = async (req, reply) => {
   }
 };
 
+export const getNeighbourhoodConfig = async (req, reply) => {
+  try {
+    const config = await GlobalConfig.findOne({ key: "neighbourhood_config" }).lean();
+    if (!config) {
+      return reply.send({
+        success: true,
+        data: {
+          enabled: true
+        }
+      });
+    }
+    return reply.send({ success: true, data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to fetch Neighbourhood config", error: error.message });
+  }
+};
+
+export const updateNeighbourhoodConfig = async (req, reply) => {
+  try {
+    const { enabled } = req.body;
+    let config = await GlobalConfig.findOne({ key: "neighbourhood_config" });
+
+    if (!config) {
+      config = new GlobalConfig({
+        key: "neighbourhood_config",
+        value: { enabled },
+        description: "Controls whether the Neighbourhood system is enabled globally"
+      });
+    } else {
+      config.value = { enabled };
+    }
+
+    await config.save();
+    return reply.send({ success: true, message: "Neighbourhood config updated successfully", data: config.value });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to update Neighbourhood config", error: error.message });
+  }
+};
+
 export const getManagerCoupons = async (req, reply) => {
   try {
     const coupons = await Coupon.find({}).sort({ createdAt: -1 });

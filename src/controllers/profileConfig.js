@@ -44,11 +44,16 @@ export const getProfileConfig = async (req, reply) => {
         const bawalConfig = await GlobalConfig.findOne({ key: "bawal_config" }).lean();
         const bawalEnabled = !bawalConfig || bawalConfig.value?.enabled !== false;
 
+        // Fetch global neighbourhood config
+        const neighbourhoodConfig = await GlobalConfig.findOne({ key: "neighbourhood_config" }).lean();
+        const neighbourhoodEnabled = !neighbourhoodConfig || neighbourhoodConfig.value?.enabled !== false;
+
         return reply.send({
             success: true,
             data: {
                 ...mergedData,
-                bawalEnabled
+                bawalEnabled,
+                neighbourhoodEnabled
             }
         });
     } catch (error) {
