@@ -44,6 +44,16 @@ export const getSabjabCoinsBalance = async (req, reply) => {
         const customer = await Customer.findById(userId).select("sabjabCoinsBalance");
         const pricingConfig = await PricingConfig.findOne() || {};
 
+        if (pricingConfig.sabjabCoinsSystemEnabled === false) {
+            return reply.send({
+                success: false,
+                enabled: false,
+                message: "SabJab Coins System is currently disabled.",
+                balance: 0,
+                conversionRatio: 0
+            });
+        }
+
         return reply.send({
             success: true,
             balance: customer?.sabjabCoinsBalance || 0,
@@ -64,6 +74,11 @@ export const redeemSabjabCoins = async (req, reply) => {
         }
 
         const pricingConfig = await PricingConfig.findOne() || {};
+        
+        if (pricingConfig.sabjabCoinsSystemEnabled === false) {
+            return reply.status(400).send({ message: "SabJab Coins System is currently disabled by the admin" });
+        }
+
         const ratio = pricingConfig.sabjabCoinsToRupeesRatio || 0;
 
         if (ratio <= 0) {

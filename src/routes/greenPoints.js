@@ -15,6 +15,21 @@ import {
 import { verifyToken, verifyManager } from "../middleware/auth.js";
 
 export const greenPointsRoutes = async (fastify) => {
+  // Check if Eco Points System is enabled globally
+  fastify.addHook("preHandler", async (req, reply) => {
+    if (req.url.startsWith("/green-points/")) {
+      const PricingConfig = (await import("../models/pricingConfig.js")).default;
+      const pricingConfig = await PricingConfig.findOne().lean();
+      if (pricingConfig && pricingConfig.ecoPointsSystemEnabled === false) {
+        return reply.status(400).send({
+          success: false,
+          enabled: false,
+          message: "Eco Points (Green Points) System is currently disabled by the admin."
+        });
+      }
+    }
+  });
+
   // Get balance
   fastify.get(
     "/green-points/balance",

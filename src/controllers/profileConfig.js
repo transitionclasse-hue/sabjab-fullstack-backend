@@ -1,5 +1,6 @@
 import ProfileConfig from "../models/profileConfig.js";
 import GlobalConfig from "../models/globalConfig.js";
+import PricingConfig from "../models/pricingConfig.js";
 
 const DEFAULT_CONFIG = {
     isPreferencesVisible: true,
@@ -48,12 +49,19 @@ export const getProfileConfig = async (req, reply) => {
         const neighbourhoodConfig = await GlobalConfig.findOne({ key: "neighbourhood_config" }).lean();
         const neighbourhoodEnabled = !neighbourhoodConfig || neighbourhoodConfig.value?.enabled !== false;
 
+        // Fetch global pricing config for ecoPoints and sabjabCoins toggles
+        const pricingConfig = await PricingConfig.findOne().sort({ createdAt: -1 }).lean();
+        const ecoPointsSystemEnabled = !pricingConfig || pricingConfig.ecoPointsSystemEnabled !== false;
+        const sabjabCoinsSystemEnabled = !pricingConfig || pricingConfig.sabjabCoinsSystemEnabled !== false;
+
         return reply.send({
             success: true,
             data: {
                 ...mergedData,
                 bawalEnabled,
-                neighbourhoodEnabled
+                neighbourhoodEnabled,
+                ecoPointsSystemEnabled,
+                sabjabCoinsSystemEnabled
             }
         });
     } catch (error) {
