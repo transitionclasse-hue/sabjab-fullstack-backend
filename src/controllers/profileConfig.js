@@ -14,6 +14,7 @@ const DEFAULT_CONFIG = {
     isVersionVisible: true,
     isQuickActionsVisible: true,
     isGstDetailsVisible: true,
+    isBecomeSellerVisible: true,
     isBawalEarningsVisible: true,
     isPaymentMethodsVisible: true,
     isRefundStatusVisible: true,

@@ -13,6 +13,7 @@ const profileConfigSchema = new mongoose.Schema({
     isQuickActionsVisible: { type: Boolean, default: true },
     isGstDetailsVisible: { type: Boolean, default: true },
     isNeighbourhoodVisible: { type: Boolean, default: true },
+    isBecomeSellerVisible: { type: Boolean, default: true },
     
     // Payments & Money Cards Visibility
     isBawalEarningsVisible: { type: Boolean, default: true },
