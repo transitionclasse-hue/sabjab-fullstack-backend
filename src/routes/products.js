@@ -1,6 +1,6 @@
 import { getAllCategories, getCategoriesBySuperCategoryId } from "../controllers/product/category.js"; //
 import { getAllSubCategories, getSubCategoriesByCategoryId } from "../controllers/product/subCategory.js"; //
-import { getProductsByCategoryId, getAllProducts, getProductById, searchProducts, validateCart } from "../controllers/product/product.js";
+import { getProductsByCategoryId, getAllProducts, getProductById, searchProducts, validateCart, commitTokriBasket, currentTokriBasket, checkoutTokriBasket } from "../controllers/product/product.js";
 import { uploadSellerProduct, getMySellerProducts, getPendingSellerProducts, approveSellerProduct } from "../controllers/product/sellerProduct.js";
 import { verifyToken } from "../middleware/auth.js";
 export const categoryRoutes = async (fastify, options) => {
@@ -17,6 +17,11 @@ export const productRoutes = async (fastify, options) => {
     fastify.get("/products/search", searchProducts);
     fastify.get("/product/:id", getProductById);
     fastify.post("/products/validate-cart", validateCart);
+
+    // Preorder Tokri Routes
+    fastify.post("/tokri/commit", { preHandler: [verifyToken] }, commitTokriBasket);
+    fastify.get("/tokri/current", { preHandler: [verifyToken] }, currentTokriBasket);
+    fastify.post("/tokri/checkout", { preHandler: [verifyToken] }, checkoutTokriBasket);
 
     // Seller Product Routes
     fastify.post("/seller/products", { preHandler: [verifyToken] }, uploadSellerProduct);

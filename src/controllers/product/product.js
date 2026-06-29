@@ -2,6 +2,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import Product from "../../models/products.js";
 import SubCategory from "../../models/subCategory.js";
 import { Seller } from "../../models/user.js";
+import { TokriPreorder } from "../../models/tokriPreorder.js";
 import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
 const isManagerCatalogRequest = (req) => req?.raw?.url?.includes("/manager/products");
@@ -324,6 +325,104 @@ export const validateCart = async (req, reply) => {
     } catch (error) {
         console.error("Cart validation error:", error);
         return reply.status(500).send({ message: "An error occurred during cart validation", error: error.message });
+    }
+};
+
+export const commitTokriBasket = async (req, reply) => {
+    try {
+        const { userId } = req.user;
+        const { items } = req.body;
+
+        if (!items || !Array.isArray(items) || items.length === 0) {
+            return reply.status(400).send({ message: "Preorder items list cannot be empty" });
+        }
+
+        // Delete any existing active committed preorders for this user
+        await TokriPreorder.deleteMany({ userId, status: "committed" });
+
+        const preorder = new TokriPreorder({
+            userId,
+            items: items.map(item => ({
+                productId: item.productId || item.id || item._id,
+                qty: item.qty || 1,
+                name: item.name,
+                unit: item.unit,
+                price: item.price,
+            })),
+            status: "committed"
+        });
+
+        await preorder.save();
+        return reply.status(201).send({ success: true, preorder });
+    } catch (error) {
+        console.error("Tokri Preorder Commit Error:", error);
+        return reply.status(500).send({ message: "An error occurred committing Tokri preorder", error: error.message });
+    }
+};
+
+export const currentTokriBasket = async (req, reply) => {
+    try {
+        const { userId } = req.user;
+        const preorder = await TokriPreorder.findOne({ userId, status: "committed" })
+            .populate("items.productId")
+            .exec();
+
+        if (!preorder) {
+            return reply.send({ success: true, preorder: null });
+        }
+
+        // Hydrate items with dynamic morning Tokri rates
+        const hydratedItems = preorder.items.map(item => {
+            const product = item.productId;
+            const nightPrice = item.price || 0;
+            const morningAppPrice = product ? (product.discountPrice || product.price || 0) : nightPrice;
+            // Apply 10% Tokri preorder discount off morning app price, capped at night price
+            const morningDiscounted = Math.floor(morningAppPrice * 0.9);
+            const finalTokriPrice = Math.min(nightPrice, morningDiscounted);
+
+            return {
+                _id: item._id,
+                productId: product ? {
+                    _id: product._id,
+                    name: product.name,
+                    image: product.image,
+                    unit: product.unit,
+                    stock: product.stock,
+                    isAvailable: product.isAvailable,
+                } : null,
+                qty: item.qty,
+                name: item.name,
+                unit: item.unit,
+                nightPrice,
+                morningPrice: morningAppPrice,
+                tokriPrice: finalTokriPrice,
+            };
+        });
+
+        return reply.send({
+            success: true,
+            preorder: {
+                _id: preorder._id,
+                userId: preorder.userId,
+                status: preorder.status,
+                items: hydratedItems,
+                createdAt: preorder.createdAt,
+            }
+        });
+    } catch (error) {
+        console.error("Tokri Preorder Fetch Error:", error);
+        return reply.status(500).send({ message: "An error occurred fetching Tokri preorder", error: error.message });
+    }
+};
+
+export const checkoutTokriBasket = async (req, reply) => {
+    try {
+        const { userId } = req.user;
+        await TokriPreorder.findOneAndUpdate({ userId, status: "committed" }, { status: "checked_out" });
+        return reply.send({ success: true });
+    } catch (error) {
+        console.error("Tokri Checkout Error:", error);
+        return reply.status(500).send({ message: "An error occurred checking out Tokri", error: error.message });
     }
 };
 

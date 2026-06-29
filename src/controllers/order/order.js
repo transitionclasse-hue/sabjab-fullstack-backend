@@ -137,7 +137,7 @@ export const createOrder = async (req, reply) => {
 
             const acceptChoiceForSuggestion = acceptChoiceReal && hasChoiceProduct;
 
-            if (storeConfig.acceptOrders === false) {
+            if (storeConfig.acceptOrders === false && orderType !== "tokri") {
                 return reply.status(400).send({ message: "Store is closed and fresh order not accepting" });
             }
 
