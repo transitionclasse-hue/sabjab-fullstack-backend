@@ -1,4 +1,4 @@
-import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule, Coupon, Seller } from "../models/index.js";
+import { Order, DeliveryPartner, Branch, Customer, Product, Category, Occasion, HomeComponent, Payout, WalletTransaction, GlobalConfig, GigSchedule, Coupon, Seller, Admin } from "../models/index.js";
 import { ProduceQuote } from "../models/produceQuote.js";
 import PricingConfig from "../models/pricingConfig.js";
 import GreenPointsConfig from "../models/greenPointsConfig.js";
@@ -1992,9 +1992,51 @@ export const sendManualNotification = async (req, reply) => {
     }
 
     if (target === "individual") {
-      if (!userId) return reply.status(400).send({ message: "UserId is required for individual target" });
-      await sendPushNotification(userId, title, body, data || {}, userType || "Customer");
-      return reply.send({ success: true, message: "Individual notification sent successfully" });
+      if (!userId) return reply.status(400).send({ message: "UserId, name, or phone number is required for individual target" });
+
+      let Model;
+      if (userType === 'Customer') Model = Customer;
+      else if (userType === 'DeliveryPartner') Model = DeliveryPartner;
+      else if (userType === 'Admin') Model = Admin;
+      else Model = Customer;
+
+      let targetUser = null;
+      const cleanUserId = String(userId).trim();
+
+      // 1. Try to find by MongoDB ID (if it looks like a valid ObjectId)
+      if (/^[0-9a-fA-F]{24}$/.test(cleanUserId)) {
+        targetUser = await Model.findById(cleanUserId);
+      }
+
+      // 2. If not found, check if it looks like a phone number (digits, length >= 8)
+      if (!targetUser) {
+        const cleanPhone = cleanUserId.replace(/\D/g, "");
+        if (cleanPhone.length >= 8) {
+          targetUser = await Model.findOne({
+            $or: [
+              { phone: cleanPhone },
+              { phone: Number(cleanPhone) || 0 }
+            ]
+          });
+        }
+      }
+
+      // 3. If not found, try to find by Name (case-insensitive)
+      if (!targetUser) {
+        // Try exact name match first
+        targetUser = await Model.findOne({ name: { $regex: new RegExp("^" + cleanUserId + "$", "i") } });
+        if (!targetUser) {
+          // Fallback to partial name match
+          targetUser = await Model.findOne({ name: { $regex: new RegExp(cleanUserId, "i") } });
+        }
+      }
+
+      if (!targetUser) {
+        return reply.status(404).send({ message: `No ${userType} found with ID, name, or phone number: "${userId}"` });
+      }
+
+      await sendPushNotification(targetUser._id, title, body, data || {}, userType || "Customer");
+      return reply.send({ success: true, message: `Individual notification sent successfully to ${targetUser.name || 'User'} (${cleanUserId})` });
     } else if (target === "broadcast") {
       await broadcastPushNotification(title, body, data || {}, userType || "Customer");
       return reply.send({ success: true, message: `Broadcast sent to all ${userType}s` });
