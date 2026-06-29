@@ -11,6 +11,7 @@ const DEFAULT_STORE_STATUS = {
   acceptInstantOrders: true,
   acceptSlotOrders: true,
   acceptChoiceOrders: true,
+  enableTokriPreorder: true,
 };
 
 const formatIn = (value) => {
@@ -94,6 +95,7 @@ export const buildStoreStatusResponse = (config) => {
       acceptInstantOrders: config.acceptInstantOrders !== false,
       acceptSlotOrders: config.acceptSlotOrders !== false,
       acceptChoiceOrders: config.acceptChoiceOrders !== false,
+      enableTokriPreorder: config.enableTokriPreorder !== false,
       showPrepTime: config.showPrepTime,
       storeName: config.storeName,
       phoneNumber: config.phoneNumber,
@@ -168,6 +170,7 @@ export const buildStoreStatusResponse = (config) => {
     acceptInstantOrders: config.acceptInstantOrders !== false,
     acceptSlotOrders: config.acceptSlotOrders !== false,
     acceptChoiceOrders: config.acceptChoiceOrders !== false,
+    enableTokriPreorder: config.enableTokriPreorder !== false,
     showPrepTime: config.showPrepTime !== false,
     storeName: config.storeName || "SabJab Store",
     phoneNumber: config.phoneNumber || "",
@@ -208,6 +211,9 @@ export const updateStoreStatus = async (req, reply) => {
     }
     if (payload.acceptChoiceOrders !== undefined) {
       update.acceptChoiceOrders = !!payload.acceptChoiceOrders;
+    }
+    if (payload.enableTokriPreorder !== undefined) {
+      update.enableTokriPreorder = !!payload.enableTokriPreorder;
     }
     if (payload.showPrepTime !== undefined) {
       update.showPrepTime = !!payload.showPrepTime;

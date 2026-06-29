@@ -63,6 +63,10 @@ const storeStatusSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    enableTokriPreorder: {
+      type: Boolean,
+      default: true,
+    },
     showPrepTime: {
       type: Boolean,
       default: true,
