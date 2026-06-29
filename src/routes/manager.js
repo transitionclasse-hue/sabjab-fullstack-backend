@@ -57,6 +57,7 @@ import {
   getComponentPreviews,
   updateComponentPreview,
   sendManualNotification,
+  searchManagerUsers,
   getAssignmentTimeoutConfig,
   updateAssignmentTimeoutConfig,
   getBawalConfig,
@@ -214,6 +215,7 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/previews", AUTH, getComponentPreviews);
   fastify.post("/manager/previews", AUTH, updateComponentPreview);
   fastify.post("/manager/send-notification", AUTH, sendManualNotification);
+  fastify.get("/manager/users/search", AUTH, searchManagerUsers);
   fastify.get("/manager/bawal-config", AUTH, getBawalConfig);
   fastify.post("/manager/bawal-config", AUTH, updateBawalConfig);
   fastify.get("/manager/neighbourhood-config", AUTH, getNeighbourhoodConfig);

@@ -2360,4 +2360,55 @@ export const approveFarmerProduct = async (req, reply) => {
   }
 };
 
+export const searchManagerUsers = async (req, reply) => {
+  try {
+    const { query, userType } = req.query;
+    if (!query || String(query).trim().length < 3) {
+      return reply.send([]);
+    }
+
+    const cleanQuery = String(query).trim();
+
+    let Model;
+    if (userType === 'Customer') Model = Customer;
+    else if (userType === 'DeliveryPartner') Model = DeliveryPartner;
+    else if (userType === 'Admin') Model = Admin;
+    else Model = Customer;
+
+    // Search query conditions (matches name containing search phrase case-insensitively)
+    const conditions = [
+      { name: { $regex: cleanQuery, $options: "i" } }
+    ];
+
+    // If it looks like a phone number, search for phone
+    const cleanPhone = cleanQuery.replace(/\D/g, "");
+    if (cleanPhone.length > 0) {
+      conditions.push({ phone: cleanPhone });
+      conditions.push({ phone: Number(cleanPhone) || 0 });
+    }
+
+    // If it's a 24-char hex string, search by ObjectId
+    if (/^[0-9a-fA-F]{24}$/.test(cleanQuery)) {
+      conditions.push({ _id: cleanQuery });
+    }
+
+    const users = await Model.find({ $or: conditions })
+      .select("name phone email")
+      .limit(10)
+      .lean();
+
+    const results = users.map(u => ({
+      _id: u._id,
+      name: u.name || `User (${u.phone || u.email || u._id})`,
+      phone: u.phone || "",
+      email: u.email || ""
+    }));
+
+    return reply.send(results);
+  } catch (error) {
+    console.error("Search Users Error:", error);
+    return reply.status(500).send({ message: "Failed to search users", error: error.message });
+  }
+};
+
 
