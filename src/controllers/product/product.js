@@ -388,145 +388,14 @@ export const validateCart = async (req, reply) => {
 };
 
 export const commitTokriBasket = async (req, reply) => {
-    try {
-        const { userId } = req.user;
-        const { items, merge = true } = req.body;
-
-        if (!items || !Array.isArray(items)) {
-            return reply.status(400).send({ message: "Preorder items list is invalid" });
-        }
-
-        let preorder = await TokriPreorder.findOne({ userId, status: "committed" });
-
-        if (preorder && merge !== false) {
-            // Merge newly added preorder items with existing locked items
-            for (const newItem of items) {
-                const targetPid = String(newItem.productId || newItem.id || newItem._id);
-                const existingItem = preorder.items.find(item => String(item.productId) === targetPid);
-
-                if (existingItem) {
-                    existingItem.qty = Number(existingItem.qty) + Number(newItem.qty || 1);
-                } else {
-                    preorder.items.push({
-                        productId: targetPid,
-                        qty: newItem.qty || 1,
-                        name: newItem.name,
-                        unit: newItem.unit,
-                        price: newItem.price,
-                    });
-                }
-            }
-            await preorder.save();
-        } else {
-            // Overwrite existing preorder or create new one
-            if (preorder) {
-                if (items.length === 0) {
-                    // If list is empty, delete preorder document
-                    await TokriPreorder.deleteOne({ _id: preorder._id });
-                    return reply.status(200).send({ success: true, preorder: null });
-                }
-                preorder.items = items.map(item => ({
-                    productId: item.productId || item.id || item._id,
-                    qty: item.qty || 1,
-                    name: item.name,
-                    unit: item.unit,
-                    price: item.price,
-                }));
-                await preorder.save();
-            } else {
-                if (items.length === 0) {
-                    return reply.status(200).send({ success: true, preorder: null });
-                }
-                preorder = new TokriPreorder({
-                    userId,
-                    items: items.map(item => ({
-                        productId: item.productId || item.id || item._id,
-                        qty: item.qty || 1,
-                        name: item.name,
-                        unit: item.unit,
-                        price: item.price,
-                    })),
-                    status: "committed"
-                });
-                await preorder.save();
-            }
-        }
-
-        return reply.status(201).send({ success: true, preorder });
-    } catch (error) {
-        console.error("Tokri Preorder Commit Error:", error);
-        return reply.status(500).send({ message: "An error occurred committing Tokri preorder", error: error.message });
-    }
+    return reply.status(410).send({ message: "This endpoint has been deprecated under the simplified Tokri flow" });
 };
 
 export const currentTokriBasket = async (req, reply) => {
-    try {
-        const { userId } = req.user;
-        const preorder = await TokriPreorder.findOne({ userId, status: "committed" })
-            .populate("items.productId")
-            .exec();
-
-        if (!preorder) {
-            return reply.send({ success: true, preorder: null });
-        }
-
-        // Hydrate items with dynamic morning Tokri rates
-        const hydratedItems = preorder.items.map(item => {
-            const product = item.productId;
-            const nightPrice = item.price || 0;
-            const morningAppPrice = product ? (product.discountPrice || product.price || 0) : nightPrice;
-            let finalTokriPrice;
-
-            if (product && product.tokriPrice !== undefined && product.tokriPrice !== null && product.tokriPrice > 0) {
-                finalTokriPrice = product.tokriPrice;
-            } else {
-                const morningDiscounted = Math.floor(morningAppPrice * 0.9);
-                finalTokriPrice = Math.min(nightPrice, morningDiscounted);
-            }
-
-            return {
-                _id: item._id,
-                productId: product ? {
-                    _id: product._id,
-                    name: product.name,
-                    image: product.image,
-                    unit: product.unit,
-                    stock: product.stock,
-                    isAvailable: product.isAvailable,
-                } : null,
-                qty: item.qty,
-                name: item.name,
-                unit: item.unit,
-                nightPrice,
-                morningPrice: morningAppPrice,
-                tokriPrice: finalTokriPrice,
-            };
-        });
-
-        return reply.send({
-            success: true,
-            preorder: {
-                _id: preorder._id,
-                userId: preorder.userId,
-                status: preorder.status,
-                items: hydratedItems,
-                createdAt: preorder.createdAt,
-            }
-        });
-    } catch (error) {
-        console.error("Tokri Preorder Fetch Error:", error);
-        return reply.status(500).send({ message: "An error occurred fetching Tokri preorder", error: error.message });
-    }
+    return reply.status(410).send({ message: "This endpoint has been deprecated under the simplified Tokri flow" });
 };
 
 export const checkoutTokriBasket = async (req, reply) => {
-    try {
-        const { userId } = req.user;
-        await TokriPreorder.findOneAndUpdate({ userId, status: "committed" }, { status: "checked_out" });
-        return reply.send({ success: true });
-    } catch (error) {
-        console.error("Tokri Checkout Error:", error);
-        return reply.status(500).send({ message: "An error occurred checking out Tokri", error: error.message });
-    }
+    return reply.status(410).send({ message: "This endpoint has been deprecated under the simplified Tokri flow" });
 };
 
