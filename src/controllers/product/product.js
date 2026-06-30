@@ -376,9 +376,14 @@ export const currentTokriBasket = async (req, reply) => {
             const product = item.productId;
             const nightPrice = item.price || 0;
             const morningAppPrice = product ? (product.discountPrice || product.price || 0) : nightPrice;
-            // Apply 10% Tokri preorder discount off morning app price, capped at night price
-            const morningDiscounted = Math.floor(morningAppPrice * 0.9);
-            const finalTokriPrice = Math.min(nightPrice, morningDiscounted);
+            let finalTokriPrice;
+
+            if (product && product.tokriPrice !== undefined && product.tokriPrice !== null && product.tokriPrice > 0) {
+                finalTokriPrice = product.tokriPrice;
+            } else {
+                const morningDiscounted = Math.floor(morningAppPrice * 0.9);
+                finalTokriPrice = Math.min(nightPrice, morningDiscounted);
+            }
 
             return {
                 _id: item._id,

@@ -292,13 +292,14 @@ export const createOrder = async (req, reply) => {
         // 2. Second pass: perform stock validation, compute dynamic offer pricing, and prepare stock updates
         for (const resolved of resolvedItems) {
             const { item, product, targetObj, stdPrice, requestedCount, variationId } = resolved;
+            const isTokriItem = orderType === "tokri" || item.preorderType === "tokri";
 
-            if (!product.isAvailable && orderType !== "tokri") {
+            if (!product.isAvailable && !isTokriItem) {
                 return reply.status(400).send({ message: `${product.name} is currently unavailable` });
             }
 
             // NEW: User Stock Limit per Product check
-            if (product.userStockLimit && requestedCount > product.userStockLimit && orderType !== "tokri") {
+            if (product.userStockLimit && requestedCount > product.userStockLimit && !isTokriItem) {
                 return reply.status(400).send({ 
                     message: `Limit exceeded: You can buy maximum ${product.userStockLimit} units of ${product.name}`,
                     limitExceeded: true
@@ -308,11 +309,11 @@ export const createOrder = async (req, reply) => {
             let variationData = null;
             if (targetObj !== product) { // variation
                 const variation = targetObj;
-                if (!variation.isAvailable && orderType !== "tokri") {
+                if (!variation.isAvailable && !isTokriItem) {
                     return reply.status(400).send({ message: `Variation ${variation.name} of ${product.name} is unavailable` });
                 }
 
-                if (variation.stock !== undefined && variation.stock < requestedCount && orderType !== "tokri") {
+                if (variation.stock !== undefined && variation.stock < requestedCount && !isTokriItem) {
                     return reply.status(400).send({
                         message: `Insufficient stock for ${product.name} (${variation.name}). Available: ${variation.stock}`,
                         shortage: true
@@ -324,15 +325,15 @@ export const createOrder = async (req, reply) => {
                     price: variation.price,
                     discountPrice: variation.discountPrice
                 };
-                stockUpdates.push({ product, requestedCount, variationId: variation._id, isVariation: true });
+                stockUpdates.push({ product, requestedCount, variationId: variation._id, isVariation: true, isTokriItem });
             } else {
-                if (product.stock !== undefined && product.stock < requestedCount && orderType !== "tokri") {
+                if (product.stock !== undefined && product.stock < requestedCount && !isTokriItem) {
                     return reply.status(400).send({
                         message: `Insufficient stock for ${product.name}. Available: ${product.stock}`,
                         shortage: true
                     });
                 }
-                stockUpdates.push({ product, requestedCount, isVariation: false });
+                stockUpdates.push({ product, requestedCount, isVariation: false, isTokriItem });
                 variationData = {
                     name: "Standard",
                     price: product.price,
@@ -369,7 +370,7 @@ export const createOrder = async (req, reply) => {
 
         // Atomic stock decrementing
         for (const update of stockUpdates) {
-            if (orderType === "tokri") continue;
+            if (orderType === "tokri" || update.isTokriItem) continue;
             if (update.isVariation) {
                 const variation = update.product.variations.id(update.variationId);
                 variation.stock -= update.requestedCount;
