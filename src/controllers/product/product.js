@@ -321,7 +321,9 @@ export const validateCart = async (req, reply) => {
 
             const productImage = product.image || product.image_url || item.image || "";
 
-            if (product.isAvailable === false) {
+            const isTokriItem = item.preorderType === "tokri";
+
+            if (product.isAvailable === false && !isTokriItem) {
                 unavailableItems.push({
                     id: item.id,
                     productId: item.productId,
@@ -345,7 +347,7 @@ export const validateCart = async (req, reply) => {
                         image: productImage,
                         reason: "variation_deleted"
                     });
-                } else if (dbVariation.isAvailable === false) {
+                } else if (dbVariation.isAvailable === false && !isTokriItem) {
                     unavailableItems.push({
                         id: item.id,
                         productId: item.productId,
@@ -354,7 +356,7 @@ export const validateCart = async (req, reply) => {
                         variation: dbVariation,
                         reason: "unavailable"
                     });
-                } else if (dbVariation.stock <= 0) {
+                } else if (dbVariation.stock <= 0 && !isTokriItem) {
                     unavailableItems.push({
                         id: item.id,
                         productId: item.productId,
@@ -366,7 +368,7 @@ export const validateCart = async (req, reply) => {
                 }
             } else {
                 // Check main product stock
-                if (product.stock <= 0) {
+                if (product.stock <= 0 && !isTokriItem) {
                     unavailableItems.push({
                         id: item.id,
                         productId: item.productId,

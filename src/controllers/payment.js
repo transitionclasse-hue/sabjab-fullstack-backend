@@ -69,7 +69,9 @@ const validateCartStock = async (cartItems) => {
 
   // Pass 2: Check stock availability
   for (const resolved of resolvedItems) {
-    const { product, targetObj, requestedCount } = resolved;
+    const { item, product, targetObj, requestedCount } = resolved;
+    const isTokriItem = item.preorderType === "tokri";
+    if (isTokriItem) continue;
 
     if (!product.isAvailable) {
       oosItems.push({
