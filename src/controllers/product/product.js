@@ -337,22 +337,42 @@ export const commitTokriBasket = async (req, reply) => {
             return reply.status(400).send({ message: "Preorder items list cannot be empty" });
         }
 
-        // Delete any existing active committed preorders for this user
-        await TokriPreorder.deleteMany({ userId, status: "committed" });
+        let preorder = await TokriPreorder.findOne({ userId, status: "committed" });
 
-        const preorder = new TokriPreorder({
-            userId,
-            items: items.map(item => ({
-                productId: item.productId || item.id || item._id,
-                qty: item.qty || 1,
-                name: item.name,
-                unit: item.unit,
-                price: item.price,
-            })),
-            status: "committed"
-        });
+        if (preorder) {
+            // Merge newly added preorder items with existing locked items
+            for (const newItem of items) {
+                const targetPid = String(newItem.productId || newItem.id || newItem._id);
+                const existingItem = preorder.items.find(item => String(item.productId) === targetPid);
 
-        await preorder.save();
+                if (existingItem) {
+                    existingItem.qty = Number(existingItem.qty) + Number(newItem.qty || 1);
+                } else {
+                    preorder.items.push({
+                        productId: targetPid,
+                        qty: newItem.qty || 1,
+                        name: newItem.name,
+                        unit: newItem.unit,
+                        price: newItem.price,
+                    });
+                }
+            }
+            await preorder.save();
+        } else {
+            preorder = new TokriPreorder({
+                userId,
+                items: items.map(item => ({
+                    productId: item.productId || item.id || item._id,
+                    qty: item.qty || 1,
+                    name: item.name,
+                    unit: item.unit,
+                    price: item.price,
+                })),
+                status: "committed"
+            });
+            await preorder.save();
+        }
+
         return reply.status(201).send({ success: true, preorder });
     } catch (error) {
         console.error("Tokri Preorder Commit Error:", error);
