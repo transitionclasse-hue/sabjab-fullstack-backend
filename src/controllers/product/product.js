@@ -3,6 +3,8 @@ import Product from "../../models/products.js";
 import SubCategory from "../../models/subCategory.js";
 import { Seller } from "../../models/user.js";
 import { TokriPreorder } from "../../models/tokriPreorder.js";
+import Order from "../../models/order.js";
+import WalletTransaction from "../../models/walletTransaction.js";
 import { getSafeSensitiveMode } from "../../utils/sensitiveMode.js";
 
 const isManagerCatalogRequest = (req) => req?.raw?.url?.includes("/manager/products");
@@ -163,6 +165,61 @@ export const updateProduct = async (req, reply) => {
         if (!product) {
             return reply.code(404).send({ message: "Product not found" });
         }
+
+        // Process morning price difference cashback refund to customer wallets
+        const newTokriPrice = Number(productData.tokriPrice);
+        if (productData.tokriPrice !== undefined && newTokriPrice > 0) {
+            try {
+                // Find all completed/processing orders from the last 24 hours containing this Tokri item
+                const targetDate = new Date();
+                targetDate.setHours(targetDate.getHours() - 24);
+
+                const orders = await Order.find({
+                    createdAt: { $gte: targetDate },
+                    status: { $nin: ["cancelled"] },
+                    "items.item": id,
+                    "items.preorderType": "tokri"
+                });
+
+                for (const order of orders) {
+                    const matchedItem = order.items.find(
+                        (i) => String(i.item) === String(id) && i.preorderType === "tokri"
+                    );
+
+                    if (matchedItem) {
+                        const orderedPrice = matchedItem.variation?.price || matchedItem.variation?.discountPrice || matchedItem.itemPrice || 0;
+                        const cashbackAmount = (orderedPrice - newTokriPrice) * (matchedItem.count || 1);
+
+                        if (cashbackAmount > 0) {
+                            // Prevent duplicate cashback adjustments for the same order and product
+                            const existingTxn = await WalletTransaction.findOne({
+                                customer: order.customer,
+                                order: order._id,
+                                txnType: "tokri_cashback",
+                                "meta.productId": id
+                            });
+
+                            if (!existingTxn) {
+                                await WalletTransaction.create({
+                                    customer: order.customer,
+                                    order: order._id,
+                                    amount: cashbackAmount,
+                                    type: "credit",
+                                    txnType: "tokri_cashback",
+                                    status: "completed",
+                                    description: `Tokri Price Guarantee cashback refund for ${product.name} (Order #${order.orderId || order._id})`,
+                                    meta: { productId: id }
+                                });
+                                console.log(`[TokriCashback] Credited ₹${cashbackAmount} to customer ${order.customer} for order ${order._id}`);
+                            }
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("[TokriCashback] Error during price update cashback trigger:", err);
+            }
+        }
+
         return reply.send(product);
     } catch (error) {
         return reply.code(500).send({ message: "An error occurred updating product", error });
@@ -331,15 +388,15 @@ export const validateCart = async (req, reply) => {
 export const commitTokriBasket = async (req, reply) => {
     try {
         const { userId } = req.user;
-        const { items } = req.body;
+        const { items, merge = true } = req.body;
 
-        if (!items || !Array.isArray(items) || items.length === 0) {
-            return reply.status(400).send({ message: "Preorder items list cannot be empty" });
+        if (!items || !Array.isArray(items)) {
+            return reply.status(400).send({ message: "Preorder items list is invalid" });
         }
 
         let preorder = await TokriPreorder.findOne({ userId, status: "committed" });
 
-        if (preorder) {
+        if (preorder && merge !== false) {
             // Merge newly added preorder items with existing locked items
             for (const newItem of items) {
                 const targetPid = String(newItem.productId || newItem.id || newItem._id);
@@ -359,18 +416,38 @@ export const commitTokriBasket = async (req, reply) => {
             }
             await preorder.save();
         } else {
-            preorder = new TokriPreorder({
-                userId,
-                items: items.map(item => ({
+            // Overwrite existing preorder or create new one
+            if (preorder) {
+                if (items.length === 0) {
+                    // If list is empty, delete preorder document
+                    await TokriPreorder.deleteOne({ _id: preorder._id });
+                    return reply.status(200).send({ success: true, preorder: null });
+                }
+                preorder.items = items.map(item => ({
                     productId: item.productId || item.id || item._id,
                     qty: item.qty || 1,
                     name: item.name,
                     unit: item.unit,
                     price: item.price,
-                })),
-                status: "committed"
-            });
-            await preorder.save();
+                }));
+                await preorder.save();
+            } else {
+                if (items.length === 0) {
+                    return reply.status(200).send({ success: true, preorder: null });
+                }
+                preorder = new TokriPreorder({
+                    userId,
+                    items: items.map(item => ({
+                        productId: item.productId || item.id || item._id,
+                        qty: item.qty || 1,
+                        name: item.name,
+                        unit: item.unit,
+                        price: item.price,
+                    })),
+                    status: "committed"
+                });
+                await preorder.save();
+            }
         }
 
         return reply.status(201).send({ success: true, preorder });

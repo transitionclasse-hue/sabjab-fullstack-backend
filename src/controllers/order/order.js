@@ -604,7 +604,8 @@ export const createOrder = async (req, reply) => {
                     returnWindow: stockUpdates[idx].product.returnWindow || 0,
                     isChoice: item.isChoice,
                     deliveryStatus: item.isChoice ? "pending" : "delivered", // Quick deliveries are "delivered" in terms of Choice logistics
-                    expectedDate: expectedDate
+                    expectedDate: expectedDate,
+                    preorderType: item.preorderType || null
                 };
             }),
             orderType: orderType || "quick",

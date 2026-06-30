@@ -66,6 +66,10 @@ const orderSchema = new mongoose.Schema({
         ref: "Customer",
         default: null,
       },
+      preorderType: {
+        type: String,
+        default: null,
+      },
     },
   ],
 
