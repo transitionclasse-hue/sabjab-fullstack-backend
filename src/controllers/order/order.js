@@ -4,6 +4,7 @@ import { sendPushNotification } from "../../utils/notification.js";
 import { calculateFees } from "../pricing.js";
 import { getDistanceKm, isValidLatLng } from "../../utils/geo.js";
 import { computeDriverEarning } from "../../utils/driverEarning.js";
+import { buildStoreStatusResponse } from "../storeStatus.js";
 import crypto from "crypto";
 
 const ORDER_STATUS = {
@@ -125,9 +126,18 @@ export const createOrder = async (req, reply) => {
         // --- STORE STATUS VALIDATION ---
         const storeConfig = await StoreStatus.findOne({ key: "primary" });
         if (storeConfig) {
-            const acceptInstant = storeConfig.acceptInstantOrders !== false;
-            const acceptSlot = storeConfig.acceptSlotOrders !== false;
-            const acceptChoiceReal = storeConfig.acceptChoiceOrders !== false;
+            const calculatedStatus = buildStoreStatusResponse(storeConfig);
+
+            // Check if store is dynamically closed (either by schedule closingHours or manual setting)
+            if (calculatedStatus.status === "closed" && orderType !== "tokri") {
+                return reply.status(400).send({ 
+                    message: calculatedStatus.note || "Store is currently closed and not accepting new orders." 
+                });
+            }
+
+            const acceptInstant = calculatedStatus.acceptInstantOrders !== false;
+            const acceptSlot = calculatedStatus.acceptSlotOrders !== false;
+            const acceptChoiceReal = calculatedStatus.acceptChoiceOrders !== false;
 
             // Check if cart contains choice products
             const itemIds = Array.isArray(items) ? items.map(item => item._id || item.id).filter(Boolean) : [];
@@ -136,10 +146,6 @@ export const createOrder = async (req, reply) => {
                 : false;
 
             const acceptChoiceForSuggestion = acceptChoiceReal && hasChoiceProduct;
-
-            if (storeConfig.acceptOrders === false && orderType !== "tokri") {
-                return reply.status(400).send({ message: "Store is closed and fresh order not accepting" });
-            }
 
             const isChoice = orderType === "choice";
             const isSlot = deliveryMode === "slot";
