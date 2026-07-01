@@ -425,6 +425,47 @@ export const updateInventoryStock = async (req, reply) => {
   }
 };
 
+export const bulkIncreaseInventoryStock = async (req, reply) => {
+  try {
+    const { amount } = req.body;
+    const increment = Number(amount);
+    if (isNaN(increment) || increment <= 0) {
+      return reply.status(400).send({ message: "Invalid increment amount" });
+    }
+
+    const products = await Product.find({});
+    let updatedCount = 0;
+
+    for (const product of products) {
+      let modified = false;
+      if (product.variations && product.variations.length > 0) {
+        for (const variation of product.variations) {
+          if (variation.stock !== undefined) {
+            variation.stock = (Number(variation.stock) || 0) + increment;
+            variation.lastRestockedAt = new Date();
+            modified = true;
+          }
+        }
+      } else {
+        if (product.stock !== undefined) {
+          product.stock = (Number(product.stock) || 0) + increment;
+          product.lastRestockedAt = new Date();
+          modified = true;
+        }
+      }
+
+      if (modified) {
+        await product.save();
+        updatedCount++;
+      }
+    }
+
+    return reply.send({ message: `Successfully increased stock of ${updatedCount} products by ${increment}.` });
+  } catch (error) {
+    return reply.status(500).send({ message: "Failed to perform bulk stock increase", error: error.message });
+  }
+};
+
 export const getManagerOrders = async (req, reply) => {
   try {
     await expireStaleAssignedOrders(req.server.io);

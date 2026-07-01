@@ -11,6 +11,7 @@ import {
   getInventoryStats,
   getFinanceStats,
   updateInventoryStock,
+  bulkIncreaseInventoryStock,
   getGreenPointsConfig,
   updateGreenPointsConfig,
   getGreenPointsStats,
@@ -162,6 +163,7 @@ export const managerRoutes = async (fastify) => {
   fastify.get("/manager/inventory/low-stock", AUTH, getLowStockProducts);
   fastify.get("/manager/inventory/stats", AUTH, getInventoryStats);
   fastify.post("/manager/inventory/update", AUTH, updateInventoryStock);
+  fastify.post("/manager/inventory/bulk-increase", AUTH, bulkIncreaseInventoryStock);
 
   // Green Points Management
   fastify.get("/manager/green-points/config", AUTH, getGreenPointsConfig);
