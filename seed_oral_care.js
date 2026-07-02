@@ -219,6 +219,286 @@ const scrapedProducts = [
     "mrp": 280,
     "packSize": "2 pcs",
     "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_523328.jpg"
+  },
+  {
+    "name": "Colgate MaxFresh Gel Toothpaste (Spicy Fresh)",
+    "price": 185,
+    "mrp": 280,
+    "packSize": "300 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_19191.jpg"
+  },
+  {
+    "name": "Colgate Visible White Sparkling Mint Toothpaste",
+    "price": 169,
+    "mrp": 198,
+    "packSize": "120 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_559395.jpg"
+  },
+  {
+    "name": "Oral-B Crisscross Sensitive Toothbrush Set - Buy 2 Get 1",
+    "price": 108,
+    "mrp": 110,
+    "packSize": "3 pcs",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_777767.jpg"
+  },
+  {
+    "name": "Colgate Extra Soft Baby Toothbrush (0 - 2 Years)",
+    "price": 27,
+    "mrp": 27,
+    "packSize": "1 pc",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_342498.jpg"
+  },
+  {
+    "name": "Patanjali Dant Kanti Advance Toothpaste",
+    "price": 129,
+    "mrp": 142,
+    "packSize": "2 x 100 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_748223.jpg"
+  },
+  {
+    "name": "Sensodyne Rapid Relief Sensitive Toothpaste",
+    "price": 161,
+    "mrp": 200,
+    "packSize": "80 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_978.jpg"
+  },
+  {
+    "name": "Colgate Kids Toothpaste ((2 - 5 years) - Strawberry Flavor)",
+    "price": 95,
+    "mrp": 99,
+    "packSize": "40 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_300716.jpg"
+  },
+  {
+    "name": "Colgate Smiles Barbie Extra Soft Kids Toothbrush (Ages 5+)",
+    "price": 73,
+    "mrp": 85,
+    "packSize": "1 pc",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_195168.jpg"
+  },
+  {
+    "name": "Colgate Total Advanced Health Antibacterial Toothpaste",
+    "price": 153,
+    "mrp": 179,
+    "packSize": "150 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_552802.jpg"
+  },
+  {
+    "name": "Colgate Zig Zag Deep Clean Toothbrush Medium) (Removes Bacteria Between The Teeth",
+    "price": 81,
+    "mrp": 81,
+    "packSize": "3 pcs",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_21646.jpg"
+  },
+  {
+    "name": "Himalaya Complete Care Herbal Toothpaste",
+    "price": 97,
+    "mrp": 97,
+    "packSize": "150 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_209345.jpg"
+  },
+  {
+    "name": "Sensodyne Alcohol Free Complete Protection + Mouthwash",
+    "price": 111,
+    "mrp": 130,
+    "packSize": "100 ml",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_554485.jpg"
+  },
+  {
+    "name": "Sensodyne Fresh Gel Sensitive Toothpaste",
+    "price": 197,
+    "mrp": 245,
+    "packSize": "150 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_92728.jpg"
+  },
+  {
+    "name": "Sensodyne Repair & Protect Sensitive Toothpaste",
+    "price": 194,
+    "mrp": 215,
+    "packSize": "70 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_193072.jpg"
+  },
+  {
+    "name": "Colgate Visible White O2 Whitening Toothpaste",
+    "price": 196,
+    "mrp": 279,
+    "packSize": "50 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_481424.jpg"
+  },
+  {
+    "name": "Himalaya Sparkling White - Whitening Toothpaste",
+    "price": 100,
+    "mrp": 106,
+    "packSize": "150 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_328948.jpg"
+  },
+  {
+    "name": "Parodontax Daily Fluoride Toothpaste",
+    "price": 100,
+    "mrp": 111,
+    "packSize": "75 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_63639.jpg"
+  },
+  {
+    "name": "Pepsodent 2 In 1 Toothpaste",
+    "price": 95,
+    "mrp": 118,
+    "packSize": "150 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_974.jpg"
+  },
+  {
+    "name": "Perfora Purple Magic Teeth Whitening Serum",
+    "price": 480,
+    "mrp": 499,
+    "packSize": "30 ml",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_539672.jpg"
+  },
+  {
+    "name": "Sensodyne Pronamel Toothpaste - Daily Protection",
+    "price": 126,
+    "mrp": 140,
+    "packSize": "70 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_726476.jpg"
+  },
+  {
+    "name": "Colgate Batman Bubble Fruit Flavour Kids Toothpaste (6+ Years)",
+    "price": 152,
+    "mrp": 190,
+    "packSize": "80 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_10626.jpg"
+  },
+  {
+    "name": "Colgate Pain Out Dental Gel",
+    "price": 76,
+    "mrp": 84,
+    "packSize": "10 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_240049.jpg"
+  },
+  {
+    "name": "Colgate Total Advanced Health Anti-Germ Toothpaste with Toothbrush",
+    "price": 190,
+    "mrp": 378,
+    "packSize": "2 x 150 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_552804.jpg"
+  },
+  {
+    "name": "Colgate Total Plaque Release Toothpaste 3X Powerful",
+    "price": 216,
+    "mrp": 269,
+    "packSize": "80 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_594437.jpg"
+  },
+  {
+    "name": "Colgate Total Ultra Soft Toothbrush Set - With Free Total Advanced Toothpaste",
+    "price": 152,
+    "mrp": 196,
+    "packSize": "3 pcs",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_632836.jpg"
+  },
+  {
+    "name": "Colgate Vedshakti Ayurvedic Herbal Toothpaste",
+    "price": 172,
+    "mrp": 172,
+    "packSize": "200 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_373525.jpg"
+  },
+  {
+    "name": "GUBB Dental Floss Toothpick",
+    "price": 133,
+    "mrp": 135,
+    "packSize": "24 pcs",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_512222.jpg"
+  },
+  {
+    "name": "Oral-B Sensitive Toothbrush Extra Soft",
+    "price": 135,
+    "mrp": 140,
+    "packSize": "4 pcs",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_83329.jpg"
+  },
+  {
+    "name": "Parodontax Ultra Clean Expert Gum Care Toothpaste",
+    "price": 104,
+    "mrp": 115,
+    "packSize": "75 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_618965.jpg"
+  },
+  {
+    "name": "Pepsodent G Expert Protection Gumcare + Toothpaste - 140 g",
+    "price": 98,
+    "mrp": 115,
+    "packSize": "140 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_85117.jpg"
+  },
+  {
+    "name": "Pepsodent Germicheck 8 Actions Toothpaste",
+    "price": 142,
+    "mrp": 202,
+    "packSize": "2 x 150 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_307446.jpg"
+  },
+  {
+    "name": "Sensodyne Deep Clean Toothbrush - Buy 2 Get 1 Free",
+    "price": 128,
+    "mrp": 160,
+    "packSize": "3 pcs",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_506534.jpg"
+  },
+  {
+    "name": "Chicco Apple-Banana Kids Toothpaste (6m to 6 yr)",
+    "price": 148,
+    "mrp": 159,
+    "packSize": "50 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_492174.jpg"
+  },
+  {
+    "name": "Colgate Bamboo Charcoal & Mint Toothpaste",
+    "price": 216,
+    "mrp": 420,
+    "packSize": "2 x 120 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_490673.jpg"
+  },
+  {
+    "name": "Colgate MaxFresh Charcoal Gel Toothpaste (130 g)",
+    "price": 122,
+    "mrp": 153,
+    "packSize": "130 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_498973.jpg"
+  },
+  {
+    "name": "Colgate MaxFresh Peppermint Mouthwash (250 ml)",
+    "price": 148,
+    "mrp": 210,
+    "packSize": "250 ml",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_967.jpg"
+  },
+  {
+    "name": "Colgate SlimSoft Charcoal Soft Toothbrush",
+    "price": 81,
+    "mrp": 85,
+    "packSize": "1 pc",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_126165.jpg"
+  },
+  {
+    "name": "ComfortPlus 3-in-1 Toothpick Dental Floss",
+    "price": 98,
+    "mrp": 199,
+    "packSize": "20 pcs",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_547655.jpg"
+  },
+  {
+    "name": "Dabur Meswak Complete Tooth & Gum Care Toothpaste - Mega Saver Pack",
+    "price": 165,
+    "mrp": 255,
+    "packSize": "2 x 200 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_366925.jpg"
+  },
+  {
+    "name": "Dabur Red Herbal Toothpaste",
+    "price": 154,
+    "mrp": 213,
+    "packSize": "300 g",
+    "imageUrl": "https://cdn.grofers.com/app/images/products/full_screen/pro_19593.jpg"
   }
 ];
 
@@ -253,7 +533,7 @@ const seedDatabases = async () => {
              console.log("🆕 Created new SubCategory: All Oral Care");
         }
 
-        // 3. Delete previously seeded products to avoid duplicates
+        // 3. Delete previously seeded products (under userStockLimit: 1, stock: 2) to avoid duplicates
         const productNames = scrapedProducts.map(p => p.name);
         const delResult = await Product.deleteMany({ name: { $in: productNames }, userStockLimit: 1, stock: 2 });
         console.log(`🧹 Cleared ${delResult.deletedCount} previously seeded oral care products.`);
