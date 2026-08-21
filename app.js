@@ -53,6 +53,68 @@ const start = async () => {
       return { status: 'API running' };
     });
 
+    // ---------------- OPEN GRAPH RICH PREVIEW LANDING (WHATSAPP / SOCIAL) ----------------
+    app.get('/p/:id', async (request, reply) => {
+      const { id } = request.params;
+      const { title, price, img, loc, seller } = request.query;
+
+      const itemTitle = title ? decodeURIComponent(title) : "Amazing Deal on Sabjab";
+      const itemPrice = price ? decodeURIComponent(price) : "";
+      const itemImg = img ? decodeURIComponent(img) : "https://sabjab.com/public/logo.png";
+      const itemLocation = loc ? decodeURIComponent(loc) : "";
+      const itemSeller = seller ? decodeURIComponent(seller) : "";
+      const itemDesc = `${itemPrice ? `Price: ${itemPrice} • ` : ""}${itemLocation ? `Location: ${itemLocation} • ` : ""}${itemSeller ? `${itemSeller} • ` : ""}Available on Sabjab App`;
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${itemTitle} | Sabjab</title>
+  
+  <!-- Open Graph / WhatsApp Preview Meta Tags -->
+  <meta property="og:type" content="product" />
+  <meta property="og:title" content="${itemTitle}" />
+  <meta property="og:description" content="${itemDesc}" />
+  <meta property="og:image" content="${itemImg}" />
+  <meta property="og:image:secure_url" content="${itemImg}" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="800" />
+  <meta property="og:image:height" content="800" />
+  <meta property="og:url" content="https://sabjab.com/p/${id}" />
+  <meta property="og:site_name" content="Sabjab" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${itemTitle}" />
+  <meta name="twitter:description" content="${itemDesc}" />
+  <meta name="twitter:image" content="${itemImg}" />
+
+  <!-- Direct fallback redirect to App or Play Store -->
+  <meta http-equiv="refresh" content="2;url=https://play.google.com/store/apps/details?id=com.sabjab.app" />
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0B0E14; color: #FFFFFF; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; text-align: center; }
+    .card { max-width: 420px; width: 100%; background: #16202C; border-radius: 20px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 1px solid #243242; }
+    img { width: 100%; height: 260px; object-fit: cover; border-radius: 14px; margin-bottom: 16px; }
+    h1 { font-size: 20px; margin: 0 0 8px; color: #FFFFFF; line-height: 1.3; }
+    .price { font-size: 24px; font-weight: 900; color: #00E5FF; margin-bottom: 12px; }
+    .btn { display: block; background: linear-gradient(135deg, #00F0FF, #0072FF); color: #FFF; text-decoration: none; padding: 14px 28px; border-radius: 25px; font-weight: 800; font-size: 16px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="${itemImg}" alt="${itemTitle}" />
+    <h1>${itemTitle}</h1>
+    <div class="price">${itemPrice}</div>
+    <p style="color: #94A3B8; font-size: 14px; margin: 0;">${itemDesc}</p>
+    <a class="btn" href="https://play.google.com/store/apps/details?id=com.sabjab.app">Open in Sabjab App</a>
+  </div>
+</body>
+</html>`;
+
+      reply.type('text/html').send(html);
+    });
+
     // ---------------- COOKIE + SESSION ----------------
 
     await app.register(fastifyCors, {
