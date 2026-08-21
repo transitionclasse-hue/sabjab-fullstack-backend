@@ -56,14 +56,34 @@ const start = async () => {
     // ---------------- OPEN GRAPH RICH PREVIEW LANDING (WHATSAPP / SOCIAL) ----------------
     app.get('/p/:id', async (request, reply) => {
       const { id } = request.params;
-      const { title, price, img, loc, seller } = request.query;
+      let { title, price, img, loc, seller } = request.query;
+
+      if (!title || !img) {
+        try {
+          const { ClassifiedAd } = await import("./src/models/classifiedAd.js");
+          const { Product } = await import("./src/models/products.js");
+
+          let item = null;
+          if (/^[0-9a-fA-F]{24}$/.test(id)) {
+            item = (await ClassifiedAd.findById(id)) || (await Product.findById(id));
+          }
+
+          if (item) {
+            title = title || item.title || item.name;
+            price = price || item.price;
+            img = img || item.primaryImage || item.image || (item.images && item.images[0]);
+            loc = loc || item.location;
+            seller = seller || (item.sellerType === 'shopkeeper' ? item.shopName || 'Verified Shop' : 'Personal Owner');
+          }
+        } catch (_) {}
+      }
 
       const itemTitle = title ? decodeURIComponent(title) : "Amazing Deal on Sabjab";
-      const itemPrice = price ? decodeURIComponent(price) : "";
+      const itemPrice = price ? decodeURIComponent(String(price)) : "";
       const itemImg = img ? decodeURIComponent(img) : "https://sabjab.com/public/logo.png";
       const itemLocation = loc ? decodeURIComponent(loc) : "";
       const itemSeller = seller ? decodeURIComponent(seller) : "";
-      const itemDesc = `${itemPrice ? `Price: ${itemPrice} • ` : ""}${itemLocation ? `Location: ${itemLocation} • ` : ""}${itemSeller ? `${itemSeller} • ` : ""}Available on Sabjab App`;
+      const itemDesc = `${itemPrice ? `Price: ₹${itemPrice} • ` : ""}${itemLocation ? `Location: ${itemLocation} • ` : ""}${itemSeller ? `${itemSeller} • ` : ""}Available on Sabjab App`;
 
       const html = `<!DOCTYPE html>
 <html lang="en">

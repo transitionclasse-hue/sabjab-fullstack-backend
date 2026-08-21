@@ -30,6 +30,7 @@ import { paymentRoutes } from "./payment.js";
 import { splitBillRoutes } from "./splitBill.js";
 import { farmerRoutes } from "./farmer.js";
 import { neighbourhoodRoutes } from "./neighbourhood.js";
+import { classifiedAdRoutes } from "./classifiedAdRoutes.js";
 
 const prefix = "/api";
 
@@ -44,6 +45,7 @@ export const registerRoutes = async (fastify) => {
 
   fastify.register(productRoutes, { prefix });
   fastify.register(categoryRoutes, { prefix });
+  fastify.register(classifiedAdRoutes, { prefix });
 
   // Dynamic Home Layout Engine
   fastify.register(homeLayoutRoutes, { prefix });
