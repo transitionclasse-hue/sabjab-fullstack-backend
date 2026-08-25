@@ -74,4 +74,63 @@ export const configRoutes = async (fastify) => {
     }
   });
 
+  fastify.get("/config/segments", async (req, reply) => {
+    try {
+      const config = await GlobalConfig.findOne({ key: "segment_config" }).lean();
+      const defaultConfig = {
+        grocery: {
+          enabled: true,
+          name: "Sabjab Flash",
+          badge: "10-15 Mins",
+          subText: "Quick Delivery",
+          icon: "flash"
+        },
+        classified: {
+          enabled: true,
+          name: "Sabjab Mela",
+          badge: "Buy & Sell",
+          subText: "Local Bazaar",
+          icon: "storefront"
+        },
+        defaultSegment: "grocery"
+      };
+
+      if (!config || !config.value) {
+        return reply.send({ success: true, data: defaultConfig });
+      }
+
+      return reply.send({
+        success: true,
+        data: {
+          grocery: { ...defaultConfig.grocery, ...(config.value.grocery || {}) },
+          classified: { ...defaultConfig.classified, ...(config.value.classified || {}) },
+          defaultSegment: config.value.defaultSegment || "grocery"
+        }
+      });
+    } catch (error) {
+      console.error("PUBLIC SEGMENT CONFIG API ERROR:", error);
+      return reply.send({
+        success: true,
+        data: {
+          grocery: {
+            enabled: true,
+            name: "Sabjab Flash",
+            badge: "10-15 Mins",
+            subText: "Quick Delivery",
+            icon: "flash"
+          },
+          classified: {
+            enabled: true,
+            name: "Sabjab Mela",
+            badge: "Buy & Sell",
+            subText: "Local Bazaar",
+            icon: "storefront"
+          },
+          defaultSegment: "grocery"
+        }
+      });
+    }
+  });
+
 };
+

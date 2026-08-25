@@ -65,6 +65,8 @@ import {
   updateBawalConfig,
   getNeighbourhoodConfig,
   updateNeighbourhoodConfig,
+  getSegmentConfig,
+  updateSegmentConfig,
   getManagerCoupons,
   createManagerCoupon,
   updateManagerCoupon,
@@ -222,6 +224,8 @@ export const managerRoutes = async (fastify) => {
   fastify.post("/manager/bawal-config", AUTH, updateBawalConfig);
   fastify.get("/manager/neighbourhood-config", AUTH, getNeighbourhoodConfig);
   fastify.post("/manager/neighbourhood-config", AUTH, updateNeighbourhoodConfig);
+  fastify.get("/manager/segment-config", AUTH, getSegmentConfig);
+  fastify.post("/manager/segment-config", AUTH, updateSegmentConfig);
 
   // Support Contact Configuration
   fastify.get("/manager/support-config", AUTH, getSupportConfig);
